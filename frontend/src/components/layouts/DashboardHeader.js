@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Icon, Logo } from '../common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon, Logo } from '@/components/common/UIComponents';
 
 export const DashboardHeader = ({ title, userRole }) => {
   const { dispatch } = useAppContext();

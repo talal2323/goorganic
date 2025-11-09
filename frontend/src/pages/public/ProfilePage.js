@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button } from '../../components/common/UIComponents';
-import api from '../../utils/api';
+import { useAppContext } from '@/context/AppContext';
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api';
 
 const ProfilePage = () => {
     const { state, dispatch } = useAppContext();

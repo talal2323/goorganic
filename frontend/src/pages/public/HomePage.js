@@ -1,7 +1,9 @@
-import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Icon, VerificationBadge } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon, VerificationBadge } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const features = [
     { title: '100% Organic', desc: 'All products are certified organic and sustainably sourced from top-tier vendors.', iconPath: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.192-2.058-.573-3.016z' },
@@ -62,6 +64,13 @@ const productMocks = [
 
 const HomePage = () => {
     const { dispatch } = useAppContext();
+    const [isClient, setIsClient] = useState(false);
+    const [showVendorButton, setShowVendorButton] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        setShowVendorButton(!localStorage.getItem('userInfo'));
+    }, []);
 
     const handleAddToCart = (product) => {
         dispatch({ type: 'ADD_TO_CART', payload: { ...product, qty: 1 } });
@@ -96,7 +105,7 @@ const HomePage = () => {
                             <div className="w-full h-full flex">
                                 <div className="w-full sm:w-1/2 p-6 sm:p-12 flex flex-col justify-center">
                                     <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
-                                         GO<span style={{ color: COLORS.secondary }}>organic</span>
+                                        GO<span style={{ color: COLORS.secondary }}>organic</span>
                                     </h1>
                                     <p className="text-lg mt-2 text-gray-700">
                                         Your path to natural living: Fresh, Verified, Sustainable.
@@ -107,7 +116,7 @@ const HomePage = () => {
                                 </div>
                                 <div className="w-2/2 hidden sm:flex items-center justify-center p-4">
                                     <img
-                                        src="hero.png"
+                                        src="/images/hero.png"
                                         alt="Organic products"
                                         className="object-cover rounded-lg shadow-2xl"
                                     />
@@ -205,7 +214,7 @@ const HomePage = () => {
                             >
                                 Start Shopping
                             </Button>
-                            {!localStorage.getItem('userInfo') && (
+                            {isClient && showVendorButton && (
                                 <Button
                                     onClick={() => dispatch({ type: 'SET_PAGE', payload: 'VendorRegister' })}
                                     className="bg-black border border-white text-white hover:bg-gray-700"

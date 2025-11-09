@@ -1,9 +1,11 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Button, Input } from '../../components/common/UIComponents';
-import { useAppContext } from '../../context/AppContext';
-import { Header } from '../../components/layouts/Header';
-import Footer from '../../components/layouts/Footer';
-import api from '../../utils/api';
+import { Button, Input } from '@/components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import { Header } from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
+import api from '@/utils/api';
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');

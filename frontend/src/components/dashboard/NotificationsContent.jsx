@@ -1,7 +1,9 @@
+'use client'
+
 // src/components/dashboard/NotificationsContent.jsx
 import React, { useState, useMemo } from 'react';
-import DashboardCard from '../ui/DashboardCard';
-import { Icon, COLORS } from '../../config/utils';
+import DashboardCard from '@/components/ui/DashboardCard';
+import { Icon, COLORS } from '@/config/utils';
 
 // Mock notifications data - replace with API fetch in real app
 const INITIAL_NOTIFICATIONS = [

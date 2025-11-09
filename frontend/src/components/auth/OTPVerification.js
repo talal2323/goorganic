@@ -1,8 +1,10 @@
+'use client'
+
 import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '@/context/AppContext';
 import AuthLayout from './AuthLayout';
-import { Button } from '../common/UIComponents';
-import api from '../../utils/api';
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api';
 
 const OTPVerification = () => {
   const { dispatch } = useAppContext();

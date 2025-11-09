@@ -1,7 +1,9 @@
+'use client'
+
 import React from 'react';
-import DashboardLayout from '../../components/layouts/DashboardLayout';
-import { DashboardCard, Button } from '../../components/common/UIComponents';
-import { useAppContext } from '../../context/AppContext';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { DashboardCard, Button } from '@/components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
 
 const AdminDashboard = () => {
     const { dispatch } = useAppContext();

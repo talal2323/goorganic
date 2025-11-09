@@ -1,10 +1,19 @@
-import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Icon } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const AboutPage = () => {
     const { dispatch } = useAppContext();
+    const [isClient, setIsClient] = useState(false);
+    const [showVendorButton, setShowVendorButton] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        setShowVendorButton(!localStorage.getItem('userInfo'));
+    }, []);
 
     const stats = [
         { number: '10,000+', label: 'Happy Customers' },
@@ -77,7 +86,7 @@ const AboutPage = () => {
                                 </p>
                                 <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
                                     <Button onClick={() => dispatch({ type: 'SET_PAGE', payload: 'Shop' })}>Start Shopping</Button>
-                                    {!localStorage.getItem('userInfo') && (
+                                    {isClient && showVendorButton && (
                                         <Button onClick={() => dispatch({ type: 'SET_PAGE', payload: 'VendorRegister' })} className="bg-transparent border border-secondary text-secondary hover:bg-secondary hover:text-white" primary={false}>Become a Vendor</Button>
                                     )}
                                 </div>

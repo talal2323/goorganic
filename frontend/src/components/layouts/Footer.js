@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Logo, Icon } from '../common/UIComponents'; // Import the Logo component & Icon for social logos
+import { useAppContext } from '@/context/AppContext';
+import { Logo, Icon } from '@/components/common/UIComponents'; // Import the Logo component & Icon for social logos
 
 const Footer = () => {
   const { dispatch } = useAppContext();
@@ -49,7 +51,7 @@ const Footer = () => {
 
           {/* Column 1: Logo, Tagline, Social */}
           <div className="lg:col-span-1">
-            <Logo src="/logo.png" alt="GOorganic" className="h-10" onClick={() => handleNav('Home')} />
+            <Logo src="/images/logo.png" alt="GOorganic" className="h-10" onClick={() => handleNav('Home')} />
             <p className="text-sm mt-4 text-gray-400">
               Connecting you with the best organic products from verified vendors.
             </p>

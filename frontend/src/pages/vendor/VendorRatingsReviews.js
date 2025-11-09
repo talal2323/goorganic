@@ -1,6 +1,6 @@
 import React from 'react';
-import DashboardLayout from '../../components/layouts/DashboardLayout';
-import { DashboardCard, StarRating, Icon } from '../../components/common/UIComponents';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { DashboardCard, StarRating, Icon } from '@/components/common/UIComponents';
 
 const VendorRatingsReviews = () => {
     const reviews = [

@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Icon, Button } from '../common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import { Icon, Button } from '@/components/common/UIComponents';
 
 const ShoppingCartSidebar = () => {
   const { state, dispatch } = useAppContext();

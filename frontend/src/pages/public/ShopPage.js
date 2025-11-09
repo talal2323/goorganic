@@ -1,6 +1,8 @@
+'use client'
+
 import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Icon, Button } from '../../components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import { Icon, Button } from '@/components/common/UIComponents';
 
 const mockProducts = [
     { id: 1, name: 'Fresh farm-grown spinach', desc: 'Fresh leafy greens from certified organic farms', price: 'Rs. 120 / kg', category: 'Vegetables', img: 'https://placehold.co/200x200/175017/FFFFFF?text=Spinach', vendor: 'Green Valley Farms', vendorId: 'gvf1', rating: 4.5, longDesc: 'Our spinach is grown using 100% organic methods, free from pesticides and chemical fertilizers. Harvested daily for maximum freshness.' },

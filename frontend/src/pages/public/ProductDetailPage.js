@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useMemo, useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Icon, StarRating } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon, StarRating } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const ProductDetailPage = () => {
     const { state, dispatch } = useAppContext();

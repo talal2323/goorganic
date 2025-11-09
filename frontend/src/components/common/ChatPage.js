@@ -1,6 +1,6 @@
 import React from 'react';
-import DashboardLayout from '../layouts/DashboardLayout';
-import { DashboardCard, Button, Icon } from '../common/UIComponents';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { DashboardCard, Button, Icon } from '@/components/common/UIComponents';
 
 const ChatPage = ({ userRole }) => {
     const messages = [

@@ -1,7 +1,9 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+import { useAppContext } from '@/context/AppContext';
+import { Button } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const CheckoutPage = () => {
     const { state, dispatch } = useAppContext();

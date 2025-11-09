@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Button, Icon, StarRating } from '../../components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon, StarRating } from '@/components/common/UIComponents';
 
 const VendorPage = () => {
   const { dispatch } = useAppContext();

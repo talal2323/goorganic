@@ -1,7 +1,9 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Icon, Logo } from '../common/UIComponents';
-import { COLORS } from '../../utils/config';
+import { useAppContext } from '@/context/AppContext';
+import { Icon, Logo } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const Sidebar = ({ navItems = [], userRole }) => {
   const { dispatch, state } = useAppContext();
