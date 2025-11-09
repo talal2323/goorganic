@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
 import AuthLayout from './AuthLayout';
-import { Button } from '../../components/common/UIComponents';
-import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api';
+import { showToast } from '@/utils/toast';
 
 const LoginPage = () => {
     const { dispatch } = useAppContext();
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+    const [showAuthLinks, setShowAuthLinks] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        setShowAuthLinks(!localStorage.getItem('userInfo'));
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -33,6 +41,9 @@ const LoginPage = () => {
             localStorage.setItem('userInfo', JSON.stringify(user));
             dispatch({ type: 'LOGIN', payload: user });
 
+            // Show success toast
+            showToast.success(`Welcome back, ${user.name || 'User'}!`);
+
             // Redirect based on primary role
             const roles = user.roles || [];
             if (roles.includes('admin')) {
@@ -43,7 +54,9 @@ const LoginPage = () => {
                 dispatch({ type: 'SET_PAGE', payload: 'Shop' });
             }
         } catch (err) {
-            setError(err.response && err.response.data.message ? err.response.data.message : err.message);
+            const errorMsg = err.response?.data?.message || err.message;
+            setError(errorMsg);
+            showToast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -81,7 +94,6 @@ const LoginPage = () => {
                         onClick={(e) => {
                             e.preventDefault();
                             dispatch({ type: 'SET_PAGE', payload: 'ForgotPassword' });
-                            navigate('/forgot-password');
                         }}
                         className="text-primary hover:underline"
                     >
@@ -92,7 +104,7 @@ const LoginPage = () => {
                     {loading ? 'Logging in...' : 'Login'}
                 </Button>
             </form>
-            {!localStorage.getItem('userInfo') && (
+            {isClient && showAuthLinks && (
                 <p className="text-sm mt-4 text-center">
                     Don't have an account?
                     <button type="button" onClick={(e) => { e.preventDefault(); dispatch({ type: 'SET_PAGE', payload: 'Register' }); }} className="ml-1 text-primary font-semibold hover:underline">
@@ -100,7 +112,7 @@ const LoginPage = () => {
                     </button>
                 </p>
             )}
-            {!localStorage.getItem('userInfo') && (
+            {isClient && showAuthLinks && (
                 <p className="text-sm mt-2 text-center">
                     Want to be a Vendor?
                     <button type="button" onClick={(e) => { e.preventDefault(); dispatch({ type: 'SET_PAGE', payload: 'VendorRegister' }); }} className="ml-1 text-secondary font-semibold hover:underline">

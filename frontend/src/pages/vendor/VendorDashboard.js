@@ -1,6 +1,6 @@
 import React from 'react';
-import DashboardLayout from '../../components/layouts/DashboardLayout';
-import { DashboardCard, Icon } from '../../components/common/UIComponents';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { DashboardCard, Icon } from '@/components/common/UIComponents';
 
 const VendorDashboard = () => (
     <DashboardLayout title="Vendor Dashboard" userRole="vendor">

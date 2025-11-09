@@ -1,5 +1,5 @@
 import React from 'react';
-import { vendorNavItems, adminNavItems } from '../../utils/config';
+import { vendorNavItems, adminNavItems } from '@/utils/config';
 import { DashboardHeader } from './DashboardHeader';
 import Sidebar from './Sidebar';
 

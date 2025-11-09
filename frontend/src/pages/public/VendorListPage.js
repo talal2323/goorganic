@@ -1,9 +1,10 @@
+'use client'
+
 import React, { useState } from 'react'; // Import useState
-import { useAppContext } from '../../context/AppContext';
-import { useNavigate } from 'react-router-dom';
-// import { Header } from '../layouts/Header'; // <-- REMOVED
-// import Footer from '../layouts/Footer'; // <-- REMOVED
-import { Button, VerificationBadge } from '../../components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+// import { Header } from '@/components/layouts/Header'; // <-- REMOVED
+// import Footer from '@/components/layouts/Footer'; // <-- REMOVED
+import { Button, VerificationBadge } from '@/components/common/UIComponents';
 
 // --- UPDATED: Expanded list for pagination ---
 const vendorsList = [
@@ -92,7 +93,6 @@ const vendorsList = [
 
 const VendorListPage = () => {
   const { dispatch } = useAppContext();
-  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const vendorsPerPage = 6;
 
@@ -108,7 +108,6 @@ const VendorListPage = () => {
     // Set the selected vendor in global state and navigate to detail page
     dispatch({ type: 'SELECT_VENDOR', payload: vendor });
     dispatch({ type: 'SET_PAGE', payload: 'VendorDetail' });
-    navigate(`/vendor/${vendor.id}`);
   };
 
   return (

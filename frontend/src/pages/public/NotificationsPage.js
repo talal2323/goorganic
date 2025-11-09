@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '@/context/AppContext';
 
 const NotificationsPage = () => {
     const { state } = useAppContext();

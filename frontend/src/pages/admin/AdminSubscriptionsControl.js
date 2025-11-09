@@ -1,7 +1,7 @@
 import React from 'react';
-import DashboardLayout from '../../components/layouts/DashboardLayout';
-import { DashboardCard, Button } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { DashboardCard, Button } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const AdminSubscriptionsControl = () => {
     return (

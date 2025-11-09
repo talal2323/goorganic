@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '@/context/AppContext';
 // Assuming COLORS is in a config file. If not, we can hardcode them.
-// import { COLORS } from '../../utils/config';
+// import { COLORS } from '@/utils/config';
 const COLORS = {
   primary: '#164A26',
   secondary: '#4CAF50',

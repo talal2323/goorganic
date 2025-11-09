@@ -1,6 +1,6 @@
 // src/components/ui/DashboardCard.js
 import React from 'react';
-import { COLORS } from '../../config/utils';
+import { COLORS } from '@/config/utils';
 
 const DashboardCard = ({ title, actions, children }) => {
   return (

@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { Button } from '../../components/common/UIComponents';
-import { useAppContext } from '../../context/AppContext';
+import { Button } from '@/components/common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
 
 const OrderConfirmationPage = () => {
     const { state } = useAppContext();

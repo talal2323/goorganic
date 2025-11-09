@@ -61,6 +61,15 @@ api.interceptors.response.use(
 
             if (!isRefreshing) {
                 isRefreshing = true;
+
+                // Show loading indicator
+                if (typeof window !== 'undefined') {
+                    try {
+                        const { setTokenRefreshing } = await import('@/components/common/TokenRefreshIndicator');
+                        setTokenRefreshing(true);
+                    } catch { }
+                }
+
                 try {
                     const { data } = await api.post('/users/refresh-token');
                     const newAccessToken = data?.accessToken;
@@ -77,10 +86,36 @@ api.interceptors.response.use(
 
                     onRrefreshed(newAccessToken);
                     isRefreshing = false;
+
+                    // Hide loading indicator
+                    if (typeof window !== 'undefined') {
+                        try {
+                            const { setTokenRefreshing } = await import('@/components/common/TokenRefreshIndicator');
+                            setTokenRefreshing(false);
+                        } catch { }
+                    }
                 } catch (refreshErr) {
                     isRefreshing = false;
-                    // Clear invalid session
-                    localStorage.removeItem('userInfo');
+
+                    // Hide loading indicator
+                    if (typeof window !== 'undefined') {
+                        try {
+                            const { setTokenRefreshing } = await import('@/components/common/TokenRefreshIndicator');
+                            setTokenRefreshing(false);
+                        } catch { }
+                    }
+
+                    // Clear invalid session and notify app to logout
+                    try {
+                        localStorage.removeItem('userInfo');
+                    } catch { }
+
+                    // Dispatch custom event for global logout handling
+                    if (typeof window !== 'undefined' && window.dispatchEvent) {
+                        window.dispatchEvent(new CustomEvent('goorganic:unauthorized', {
+                            detail: { error: refreshErr }
+                        }));
+                    }
                     return Promise.reject(refreshErr);
                 }
             }

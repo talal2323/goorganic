@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
 import AuthLayout from './AuthLayout';
-import { Button } from '../../components/common/UIComponents';
-import api from '../../utils/api'; // API client
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api'; // API client
 
 const RegisterPage = () => {
     const { dispatch } = useAppContext();
@@ -14,7 +16,16 @@ const RegisterPage = () => {
 
     const [stage, setStage] = useState('register'); // register | verify
     const [otp, setOtp] = useState('');
-    const [pendingUserId, setPendingUserId] = useState(localStorage.getItem('pendingUserId') || '');
+    const [pendingUserId, setPendingUserId] = useState('');
+    const [isClient, setIsClient] = useState(false);
+    const [showAuthLinks, setShowAuthLinks] = useState(false);
+
+    // Initialize pendingUserId from localStorage on mount
+    useEffect(() => {
+        setIsClient(true);
+        setPendingUserId(localStorage.getItem('pendingUserId') || '');
+        setShowAuthLinks(!localStorage.getItem('userInfo'));
+    }, []);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -130,7 +141,7 @@ const RegisterPage = () => {
                     </div>
                 </form>
             )}
-            {!localStorage.getItem('userInfo') && (
+            {isClient && showAuthLinks && (
                 <p className="text-sm mt-4 text-center">
                     Already have an account?
                     <button type="button" onClick={(e) => { e.preventDefault(); dispatch({ type: 'SET_PAGE', payload: 'Login' }); }} className="ml-1 text-primary font-semibold hover:underline">
@@ -138,7 +149,7 @@ const RegisterPage = () => {
                     </button>
                 </p>
             )}
-            {!localStorage.getItem('userInfo') && (
+            {isClient && showAuthLinks && (
                 <div className="text-sm mt-2 text-center">
                     <button type="button" onClick={(e) => { e.preventDefault(); dispatch({ type: 'SET_PAGE', payload: 'VendorRegister' }); }} className="text-secondary font-semibold hover:underline">
                         Register as a Vendor &rarr;

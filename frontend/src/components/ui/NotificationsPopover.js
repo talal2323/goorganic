@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useEffect, useRef } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import NotificationsContent from '../dashboard/NotificationsContent';
-import { Button } from '../common/UIComponents';
+import { useAppContext } from '@/context/AppContext';
+import NotificationsContent from '@/components/dashboard/NotificationsContent';
+import { Button } from '@/components/common/UIComponents';
 
 const NotificationsPopover = ({ onClose }) => {
   const { state, dispatch } = useAppContext();

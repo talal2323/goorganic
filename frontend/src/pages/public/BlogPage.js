@@ -1,6 +1,8 @@
+'use client'
+
 import React, { useState, useMemo } from 'react';
-import Icon from '../../components/ui/Icon';
-import { COLORS, posts as POSTS } from '../../config/theme';
+import Icon from '@/components/ui/Icon';
+import { COLORS, posts as POSTS } from '@/config/theme';
 
 const BlogCard = ({ post }) => {
     return (

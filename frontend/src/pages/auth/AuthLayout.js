@@ -1,7 +1,7 @@
 import React from 'react';
-import { Logo } from '../../components/common/UIComponents';
-import { Header } from '../../components/layouts/Header';
-import Footer from '../../components/layouts/Footer';
+import { Logo } from '@/components/common/UIComponents';
+import { Header } from '@/components/layouts/Header';
+import Footer from '@/components/layouts/Footer';
 
 const AuthLayout = ({ children, title }) => (
     <div className="min-h-screen flex flex-col">

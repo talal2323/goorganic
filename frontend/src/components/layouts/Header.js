@@ -1,9 +1,11 @@
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Icon, Logo } from '../common/UIComponents';
-import ShoppingCartSidebar from '../ui/ShoppingCartSidebar';
-import NotificationsPopover from '../ui/NotificationsPopover';
-import api from '../../utils/api';
+import { useAppContext } from '@/context/AppContext';
+import { Icon, Logo } from '@/components/common/UIComponents';
+import ShoppingCartSidebar from '@/components/ui/ShoppingCartSidebar';
+import NotificationsPopover from '@/components/ui/NotificationsPopover';
+import api from '@/utils/api';
 
 // Account menu dropdown component (kept local to Header)
 const AccountMenuButton = ({ state }) => {
@@ -106,7 +108,7 @@ export const Header = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Logo
-              src="/logo.png"
+              src="/images/logo.png"
               alt="GOorganic"
               className="h-8 cursor-pointer"
               onClick={() => dispatch({ type: 'SET_PAGE', payload: 'Home' })}

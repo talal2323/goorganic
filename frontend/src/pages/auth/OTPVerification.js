@@ -1,8 +1,10 @@
+'use client'
+
 import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '@/context/AppContext';
 import AuthLayout from './AuthLayout';
-import { Button } from '../../components/common/UIComponents';
-import api from '../../utils/api';
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api';
 
 // Unified OTP verification component for both customer + vendor flows.
 // Reads pending user id from sessionStorage (vendor) or localStorage (customer fallback) for resilience.
@@ -13,6 +15,7 @@ const OTPVerification = () => {
     const [error, setError] = useState(null);
 
     const resolvePendingUserId = () => {
+        if (typeof window === 'undefined') return null;
         return sessionStorage.getItem('pendingVerifyUserId') || localStorage.getItem('pendingUserId');
     };
 

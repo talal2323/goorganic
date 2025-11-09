@@ -3,9 +3,8 @@
 @tailwind utilities;
 
 /* Ensure no default browser margin causes gaps under the footer */
-html, body, #root, #go-organic-app {
-	height: 100%;
-}
+html,
 body {
-	margin: 0;
+    height: 100%;
+    margin: 0;
 }

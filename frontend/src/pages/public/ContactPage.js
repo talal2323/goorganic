@@ -1,6 +1,8 @@
+'use client'
+
 import React from 'react';
-import { Button, Icon } from '../../components/common/UIComponents';
-import { COLORS } from '../../utils/config';
+import { Button, Icon } from '@/components/common/UIComponents';
+import { COLORS } from '@/utils/config';
 
 const ContactPage = () => {
     const [formData, setFormData] = React.useState({ name: '', email: '', subject: '', message: '' });

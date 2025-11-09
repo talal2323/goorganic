@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { useAppContext } from '@/context/AppContext';
 import AuthLayout from './AuthLayout';
-import { Button } from '../../components/common/UIComponents';
-import api from '../../utils/api';
+import { Button } from '@/components/common/UIComponents';
+import api from '@/utils/api';
 
 const VendorRegisterPage = () => {
     const { dispatch, state } = useAppContext();
     const step = state.vendorRegStep || 1;
+    const [isClient, setIsClient] = useState(false);
+    const [showBackButton, setShowBackButton] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        setShowBackButton(!localStorage.getItem('userInfo'));
+    }, []);
 
     // State for the entire multi-step form mapped to backend expectation
     const [vendorData, setVendorData] = useState({
@@ -151,6 +160,8 @@ const VendorRegisterPage = () => {
                     handleInputChange={handleInputChange}
                     dispatch={dispatch}
                     goNext={goNext}
+                    isClient={isClient}
+                    showBackButton={showBackButton}
                 />
             )}
             {step === 2 && (
@@ -184,7 +195,7 @@ const VendorRegisterPage = () => {
 export default VendorRegisterPage;
 
 // Extracted stable components to prevent remounting on each keystroke (preserves input focus)
-const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInputChange, dispatch, goNext }) {
+const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInputChange, dispatch, goNext, isClient, showBackButton }) {
     return (
         <>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Personal Information</h2>
@@ -207,7 +218,7 @@ const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInput
                     <input type="password" name="password" value={vendorData.password} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Create a password" />
                 </div>
                 <div className="flex justify-between items-center pt-4">
-                    {!localStorage.getItem('userInfo') && (
+                    {isClient && showBackButton && (
                         <Button type="button" onClick={() => dispatch({ type: 'SET_PAGE', payload: 'Login' })}>
                             &larr; Back to Login
                         </Button>
