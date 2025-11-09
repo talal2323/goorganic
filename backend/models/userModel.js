@@ -1,12 +1,9 @@
-// models/userModel.js
-
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
 import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
-    // --- Common Fields (All Roles) ---
     name: { type: String, required: true },
     email: {
         type: String,
@@ -28,48 +25,64 @@ const userSchema = new mongoose.Schema({
                     minLowercase: 1,
                     minUppercase: 1,
                     minNumbers: 1,
+                    minSymbols: 1,
                 });
             },
-            message: 'Password must be strong: min 8 chars, with uppercase, lowercase, and a number.',
+            message: 'Password must be strong: min 8 chars, with uppercase, lowercase, special character and a number.',
         },
     },
     isEmailVerified: { type: Boolean, default: false },
-    role: { type: String, enum: ['customer', 'vendor', 'admin'], default: 'customer' },
+    emailOtp: String,
+    emailOtpExpires: Date,
+    roles: {
+        type: [String],
+        enum: ['customer', 'vendor', 'admin'],
+        default: ['customer']
+    },
     avatar: { public_id: String, url: String },
-    
-    // ✅ KEPT YOUR EXISTING phoneNumber FIELD (IT'S PERFECT)
-    phoneNumber: { type: String, required: function () { return this.role === 'vendor'; } },
-
-    // ✅ ADDED shippingAddress for customers
+    phoneNumber: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
     shippingAddress: {
         street: String,
         city: String,
         postalCode: String,
         country: String,
     },
-
-    // ✅ ADDED Fields for Password Reset
     passwordResetToken: String,
     passwordResetExpires: Date,
-
-    // ✅ ADDED Fields for Email OTP 2FA
-    emailOtp: String,
-    emailOtpExpires: Date,
-    isEmailTwoFactorEnabled: { type: Boolean, default: false },
-
-
-    // --- Vendor-Specific Fields (Unchanged) ---
-    shopName: { type: String, required: function () { return this.role === 'vendor'; } },
-    shopDescription: { type: String, required: function () { return this.role === 'vendor'; } },
-    businessCategory: { type: String, enum: ['Farmer', 'Retailer', 'Distributor'], required: function () { return this.role === 'vendor'; } },
-    productCategories: [{ type: String, required: function () { return this.role === 'vendor'; } }],
+    shopName: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
+    shopDescription: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
+    businessCategory: { type: String, enum: ['Farmer', 'Retailer', 'Distributor'], required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
+    productCategories: [{ type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } }],
     shopAddress: {
-        city: { type: String, required: function () { return this.role === 'vendor'; } },
-        address: { type: String, required: function () { return this.role === 'vendor'; } },
+        city: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
+        address: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
     },
+
+    shopImages: [{
+        public_id: { type: String },
+        url: { type: String }
+    }],
     certifications: [{ public_id: String, url: String, name: String }],
-    cnic: { public_id: String, url: String },
-    isVerified: { type: Boolean, default: false },
+    cnic: {
+        front: {
+            public_id: { type: String },
+            url: { type: String }
+        },
+        back: {
+            public_id: { type: String },
+            url: { type: String }
+        }
+    },
+    vendorStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending',
+        required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); }
+    },
+    rejectionReason: {
+        type: String,
+        required: function () { return this.vendorStatus === 'Rejected'; }
+    },
     subscription: {
         plan: { type: String, enum: ['free', 'paid'], default: 'free' },
         status: { type: String, enum: ['active', 'inactive', 'expired'], default: 'active' },
@@ -77,12 +90,9 @@ const userSchema = new mongoose.Schema({
     },
     averageRating: { type: Number, default: 0 },
 
-    // --- Customer-Specific Fields (Unchanged) ---
     loyaltyPoints: { type: Number, default: 0 },
 
 }, { timestamps: true });
-
-// --- Password Hashing Hook (Unchanged) ---
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         return next();
@@ -91,7 +101,6 @@ userSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// ✅ ADDED Method to Create Password Reset Token
 userSchema.methods.createPasswordResetToken = function () {
     const resetToken = crypto.randomBytes(32).toString('hex');
 
@@ -100,9 +109,9 @@ userSchema.methods.createPasswordResetToken = function () {
         .update(resetToken)
         .digest('hex');
 
-    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // Expires in 10 minutes
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
-    return resetToken; // Return plain token to be emailed
+    return resetToken;
 };
 
 

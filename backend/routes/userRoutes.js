@@ -1,48 +1,43 @@
-// routes/userRoutes.js
-
 import express from 'express';
 const router = express.Router();
 
 import {
     registerCustomer,
-    registerVendor,
     loginUser,
-    verifyLoginEmailOtp,
     getUserProfile,
     updateUserProfile,
     changeUserPassword,
-    getUserOrders,
     forgotPassword,
     resetPassword,
-    toggleTwoFactorAuth,
     logoutUser,
     verifyEmail,
+    getAllVendors,
+    getVendorById,
+    getFeaturedVendors,
+    refreshAccessToken,
+    deleteUserProfile
 } from '../controllers/userController.js';
 
 import { protect } from '../middleware/authMiddleware.js';
 
-// --- AUTHENTICATION ---
+router.get('/featured-vendors', getFeaturedVendors);
+router.get('/vendors', getAllVendors);
+router.get('/vendors/:id', getVendorById);
 router.post('/register-customer', registerCustomer);
 router.post('/verify-email', verifyEmail);
-router.post('/register-vendor', registerVendor); // Assuming you still have this
 router.post('/login', loginUser);
-router.post('/login/verify-otp', verifyLoginEmailOtp);
 router.post('/logout', logoutUser);
-
-// --- PASSWORD RESET ---
+router.post('/refresh-token', refreshAccessToken);
 router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:token', resetPassword);
 
-// --- USER PROFILE & ACTIVITY (Protected Routes) ---
 router.route('/profile')
     .get(protect, getUserProfile)
-    .put(protect, updateUserProfile);
+    .put(protect, updateUserProfile)
+    .delete(protect, deleteUserProfile);
 
 router.put('/profile/change-password', protect, changeUserPassword);
-router.get('/profile/orders', protect, getUserOrders);
 
-// --- 2FA SETUP (Protected Route) ---
-router.post('/profile/2fa/toggle', protect, toggleTwoFactorAuth);
 
 
 export default router;

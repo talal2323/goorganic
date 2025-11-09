@@ -1,11 +1,17 @@
-// utils/generateToken.js
 import jwt from 'jsonwebtoken';
 
-const generateToken = (id) => { // You pass user._id here
-  // The fix is inside the curly braces {}
-  return jwt.sign({ id: id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+export const generateAccessToken = (user) => {
+    return jwt.sign(
+        { id: user._id, roles: user.roles },
+        process.env.JWT_ACCESS_SECRET,
+        { expiresIn: '15m' }
+    );
 };
 
-export default generateToken;
+export const generateRefreshToken = (user) => {
+    return jwt.sign(
+        { id: user._id },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: '7d' }
+    );
+};

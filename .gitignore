@@ -4,4 +4,7 @@
 /backend/node_modules
 
 # Environment variables
-.env 
+.env
+
+# Seeder script
+seeder.js
