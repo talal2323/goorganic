@@ -13,19 +13,21 @@ cloudinary.config({
 });
 
 // Configure Multer storage for different file types
-const createStorage = (folderName) => {
+const createStorage = (folderName, resourceType = 'auto') => {
     return new CloudinaryStorage({
         cloudinary: cloudinary,
         params: {
             folder: `goorganic/${folderName}`, // sub-folder in Cloudinary account
             allowed_formats: ['jpg', 'png', 'jpeg', 'pdf'],
+            resource_type: resourceType, // 'auto', 'image', or 'raw' for PDFs
+            access_mode: 'public', // Make files publicly accessible
         },
     });
 };
 
 //  separate upload middleware for each use case
-export const uploadCnic = multer({ storage: createStorage('cnic_images') });
-export const uploadCertification = multer({ storage: createStorage('certifications') });
-export const uploadAvatar = multer({ storage: createStorage('avatars') });
-export const uploadShopImage = multer({ storage: createStorage('shop_images') });
-export const uploadProductImage = multer({ storage: createStorage('product_images') });
+export const uploadCnic = multer({ storage: createStorage('cnic_images', 'image') });
+export const uploadCertification = multer({ storage: createStorage('certifications', 'auto') }); // auto handles both images and PDFs
+export const uploadAvatar = multer({ storage: createStorage('avatars', 'image') });
+export const uploadShopImage = multer({ storage: createStorage('shop_images', 'image') });
+export const uploadProductImage = multer({ storage: createStorage('product_images', 'image') });

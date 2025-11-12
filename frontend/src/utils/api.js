@@ -12,18 +12,17 @@ const api = axios.create({
  */
 api.interceptors.request.use(
     (config) => {
-        let userInfo = null;
+        let authToken = null;
         try {
-            const raw = localStorage.getItem('userInfo');
-            userInfo = raw ? JSON.parse(raw) : null;
+            authToken = localStorage.getItem('authToken');
         } catch (e) {
-            // If parsing fails due to bad value like "undefined", clean it up
-            localStorage.removeItem('userInfo');
-            userInfo = null;
+            // If parsing fails, clean it up
+            localStorage.removeItem('authToken');
+            authToken = null;
         }
 
-        if (userInfo && userInfo.accessToken) {
-            config.headers['Authorization'] = `Bearer ${userInfo.accessToken}`;
+        if (authToken) {
+            config.headers['Authorization'] = `Bearer ${authToken}`;
         }
         return config;
     },
@@ -76,10 +75,11 @@ api.interceptors.response.use(
 
                     // Update localStorage
                     try {
-                        const raw = localStorage.getItem('userInfo');
-                        const userInfo = raw ? JSON.parse(raw) : {};
-                        userInfo.accessToken = newAccessToken;
-                        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                        localStorage.setItem('authToken', newAccessToken);
+                        const raw = localStorage.getItem('user');
+                        const user = raw ? JSON.parse(raw) : {};
+                        user.accessToken = newAccessToken;
+                        localStorage.setItem('user', JSON.stringify(user));
                     } catch {
                         // ignore storage errors
                     }
@@ -107,7 +107,8 @@ api.interceptors.response.use(
 
                     // Clear invalid session and notify app to logout
                     try {
-                        localStorage.removeItem('userInfo');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
                     } catch { }
 
                     // Dispatch custom event for global logout handling

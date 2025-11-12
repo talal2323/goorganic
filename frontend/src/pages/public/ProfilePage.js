@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/common/UIComponents';
 import api from '@/utils/api';
+import { showToast } from '@/utils/toast';
+import Layout from '@/components/layouts/Layout';
 
 const ProfilePage = () => {
     const { state, dispatch } = useAppContext();
@@ -18,6 +20,13 @@ const ProfilePage = () => {
     const [pwdError, setPwdError] = useState('');
     const [avatarLoading, setAvatarLoading] = useState(false);
 
+    // Deletion states
+    const [showDeletionConfirm, setShowDeletionConfirm] = useState(false);
+    const [deletionReason, setDeletionReason] = useState('');
+    const [confirmationText, setConfirmationText] = useState('');
+    const [hasPendingRequest, setHasPendingRequest] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
         const fetchUserProfile = async () => {
             setLoading(true);
@@ -25,6 +34,10 @@ const ProfilePage = () => {
                 const { data } = await api.get('/users/profile');
                 setUser(data);
                 dispatch({ type: 'UPDATE_USER', payload: data });
+                // Check if user has pending deletion request
+                if (data.deletionRequested) {
+                    setHasPendingRequest(true);
+                }
             } catch (err) {
                 setError(err.response && err.response.data.message ? err.response.data.message : err.message);
             } finally {
@@ -112,18 +125,43 @@ const ProfilePage = () => {
         }
     };
 
-    const handleDeleteAccount = async () => {
-        if (!window.confirm('This action is permanent. Delete your account?')) return;
-        setLoading(true);
+    // Handle deletion request with confirmation
+    const handleRequestDeletion = async () => {
+        // Validation: Must type "DELETE" to confirm
+        if (confirmationText !== 'DELETE') {
+            showToast.error('Please type DELETE to confirm');
+            return;
+        }
+
+        if (!deletionReason.trim()) {
+            showToast.error('Please provide a reason for deletion');
+            return;
+        }
+
+        setIsSubmitting(true);
+
         try {
-            await api.delete('/users/profile');
-            localStorage.removeItem('userInfo');
-            dispatch({ type: 'LOGOUT' });
-            dispatch({ type: 'SET_PAGE', payload: 'Home' });
-        } catch (err) {
-            setError(err.response?.data?.message || err.message);
+            const { data } = await api.post('/users/request-deletion', {
+                reason: deletionReason
+            });
+
+            showToast.success(data.message, { duration: 5000 });
+
+            // Update local state
+            setHasPendingRequest(true);
+            setShowDeletionConfirm(false);
+
+            // Update user in context
+            dispatch({
+                type: 'UPDATE_USER',
+                payload: { deletionRequested: true }
+            });
+
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || 'Failed to submit deletion request';
+            showToast.error(errorMsg);
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -203,7 +241,42 @@ const ProfilePage = () => {
                                     </div>
                                     <div className="border-t pt-4">
                                         <h3 className="text-lg font-semibold mb-2 text-red-600">Danger Zone</h3>
-                                        <Button className="bg-red-500 hover:bg-red-600" onClick={handleDeleteAccount} disabled={loading}>Delete Account</Button>
+                                        {hasPendingRequest ? (
+                                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                                                <div className="flex items-start">
+                                                    <div className="flex-shrink-0">
+                                                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <h3 className="text-sm font-medium text-yellow-800">
+                                                            Account Deletion Request Pending
+                                                        </h3>
+                                                        <div className="mt-2 text-sm text-yellow-700">
+                                                            <p>
+                                                                Your account deletion request has been submitted and is pending admin review.
+                                                                You will receive an email notification once your request is processed.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="border border-red-300 rounded-lg p-4">
+                                                <h4 className="font-semibold text-gray-900 mb-2">Delete Account</h4>
+                                                <p className="text-sm text-gray-600 mb-4">
+                                                    Once you request account deletion, an admin will review your request.
+                                                    This action cannot be undone by you.
+                                                </p>
+                                                <Button
+                                                    onClick={() => setShowDeletionConfirm(true)}
+                                                    className="bg-red-600 hover:bg-red-700"
+                                                >
+                                                    Request Account Deletion
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -230,6 +303,82 @@ const ProfilePage = () => {
                     )}
                 </div>
             </main>
+
+            {/* CONFIRMATION MODAL */}
+            {showDeletionConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="flex items-center mb-4">
+                            <div className="flex-shrink-0">
+                                <svg className="h-12 w-12 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="ml-3 text-xl font-bold text-gray-900">
+                                Confirm Account Deletion Request
+                            </h3>
+                        </div>
+
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-4">
+                                ⚠️ <strong>Important:</strong> Once you submit this request, you cannot cancel it.
+                                An admin will review and process your request.
+                            </p>
+
+                            {/* Reason Input */}
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Reason for deletion <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={deletionReason}
+                                onChange={(e) => setDeletionReason(e.target.value)}
+                                placeholder="Please tell us why you want to delete your account..."
+                                rows={4}
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                required
+                            />
+
+                            {/* Confirmation Text Input */}
+                            <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                                Type <span className="font-mono font-bold">DELETE</span> to confirm
+                            </label>
+                            <input
+                                type="text"
+                                value={confirmationText}
+                                onChange={(e) => setConfirmationText(e.target.value)}
+                                placeholder="Type DELETE"
+                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleRequestDeletion}
+                                disabled={isSubmitting || confirmationText !== 'DELETE' || !deletionReason.trim()}
+                                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition ${confirmationText === 'DELETE' && deletionReason.trim()
+                                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                            >
+                                {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowDeletionConfirm(false);
+                                    setDeletionReason('');
+                                    setConfirmationText('');
+                                }}
+                                disabled={isSubmitting}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

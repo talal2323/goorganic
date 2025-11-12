@@ -32,19 +32,26 @@ const OTPVerification = () => {
         setError(null);
         try {
             const { data } = await api.post('/users/verify-email', { otp: code, userId });
+
             const userPayload = {
                 _id: data._id,
                 name: data.name,
                 email: data.email,
                 roles: data.roles,
                 accessToken: data.accessToken,
+                vendorStatus: data.vendorStatus || null,
+                rejectionReason: data.rejectionReason || null,
             };
-            localStorage.setItem('userInfo', JSON.stringify(userPayload));
+
+            // Store user data and token
+            localStorage.setItem('user', JSON.stringify(userPayload));
+            localStorage.setItem('authToken', data.accessToken);
+
             // Clean up any pending IDs
             sessionStorage.removeItem('pendingVerifyUserId');
             localStorage.removeItem('pendingUserId');
+
             dispatch({ type: 'LOGIN', payload: userPayload });
-            dispatch({ type: 'SET_PAGE', payload: 'Shop' });
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         } finally {

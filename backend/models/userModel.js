@@ -92,6 +92,14 @@ const userSchema = new mongoose.Schema({
 
     loyaltyPoints: { type: Number, default: 0 },
 
+    // Soft Delete Fields
+    isDeleted: { type: Boolean, default: false },
+    deletionRequested: { type: Boolean, default: false },
+    deletionRequestDate: { type: Date, default: null },
+    deletionReason: { type: String, default: null },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
 }, { timestamps: true });
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {

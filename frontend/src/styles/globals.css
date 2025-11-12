@@ -7,4 +7,12 @@ html,
 body {
     height: 100%;
     margin: 0;
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+}
+
+/* Prevent horizontal scroll only on body level */
+body {
+    width: 100%;
 }

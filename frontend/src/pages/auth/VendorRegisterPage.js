@@ -14,7 +14,7 @@ const VendorRegisterPage = () => {
 
     useEffect(() => {
         setIsClient(true);
-        setShowBackButton(!localStorage.getItem('userInfo'));
+        setShowBackButton(!localStorage.getItem('authToken'));
     }, []);
 
     // State for the entire multi-step form mapped to backend expectation

@@ -25,7 +25,7 @@ const NotificationsPopover = ({ onClose }) => {
   const isLoggedIn = state.isLoggedIn;
 
   return (
-    <div ref={ref} className="absolute right-0 mt-2 w-[22rem] sm:w-[28rem] bg-white border rounded-lg shadow-2xl z-[100]">
+    <div ref={ref} className="absolute right-0 top-full mt-2 w-[22rem] sm:w-[28rem] bg-white border rounded-lg shadow-2xl z-[100]">
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-800">

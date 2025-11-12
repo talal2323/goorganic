@@ -24,7 +24,7 @@ const RegisterPage = () => {
     useEffect(() => {
         setIsClient(true);
         setPendingUserId(localStorage.getItem('pendingUserId') || '');
-        setShowAuthLinks(!localStorage.getItem('userInfo'));
+        setShowAuthLinks(!localStorage.getItem('authToken'));
     }, []);
 
     const handleRegister = async (e) => {

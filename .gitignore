@@ -8,3 +8,8 @@
 
 # Seeder script
 seeder.js
+
+# Compressed archives
+*.zip
+*.rar
+*.7z

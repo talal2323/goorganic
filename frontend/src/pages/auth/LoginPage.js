@@ -18,7 +18,7 @@ const LoginPage = () => {
 
     useEffect(() => {
         setIsClient(true);
-        setShowAuthLinks(!localStorage.getItem('userInfo'));
+        setShowAuthLinks(!localStorage.getItem('authToken'));
     }, []);
 
     const handleLogin = async (e) => {
@@ -34,11 +34,14 @@ const LoginPage = () => {
                 name: data.name,
                 email: data.email,
                 roles: data.roles || [],
+                vendorStatus: data.vendorStatus || null,
+                rejectionReason: data.rejectionReason || null,
                 accessToken: data.accessToken,
             };
 
             // Persist and update global state
-            localStorage.setItem('userInfo', JSON.stringify(user));
+            localStorage.setItem('authToken', data.accessToken);
+            localStorage.setItem('user', JSON.stringify(user));
             dispatch({ type: 'LOGIN', payload: user });
 
             // Show success toast
@@ -54,7 +57,19 @@ const LoginPage = () => {
                 dispatch({ type: 'SET_PAGE', payload: 'Shop' });
             }
         } catch (err) {
-            const errorMsg = err.response?.data?.message || err.message;
+            const errorData = err.response?.data;
+
+            // Special handling for deleted accounts
+            if (errorData?.accountDeleted) {
+                setError(errorData.message);
+                showToast.error(errorData.message, {
+                    duration: 6000,
+                    icon: '🚫'
+                });
+                return;
+            }
+
+            const errorMsg = errorData?.message || err.message;
             setError(errorMsg);
             showToast.error(errorMsg);
         } finally {

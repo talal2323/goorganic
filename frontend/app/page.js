@@ -43,7 +43,6 @@ import AdminProductsCategories from '@/pages/admin/AdminProductsCategories'
 import AdminSubscriptionsControl from '@/pages/admin/AdminSubscriptionsControl'
 import AdminAnalytics from '@/pages/admin/AdminAnalytics'
 import DashboardPage from '@/pages/admin/DashboardPage'
-import VendorsPage from '@/pages/admin/VendorsPage'
 import OrdersPage from '@/pages/admin/OrdersPage'
 import ProductsPage from '@/pages/admin/ProductsPage'
 import CustomersPage from '@/pages/admin/CustomersPage'
@@ -53,6 +52,7 @@ import DisputesPage from '@/pages/admin/DisputesPage'
 import FAQsPage from '@/pages/admin/FAQsPage'
 import AnalyticsPage from '@/pages/admin/AnalyticsPage'
 import SubscriptionPlansPage from '@/pages/admin/SubscriptionPlansPage'
+import DeletionRequestsPage from '@/pages/admin/DeletionRequestsPage'
 
 // Chat Component
 import ChatPage from '@/components/common/ChatPage'
@@ -101,6 +101,17 @@ const PageRenderer = () => {
 
     // 2. Handle Vendor Dashboard Pages
     if (userRole === 'vendor') {
+        // Check vendor approval status
+        const vendorStatus = state.user?.vendorStatus;
+        const isVendorNotApproved = vendorStatus && vendorStatus !== 'Approved';
+        const allowedPages = ['VendorDashboard', 'VendorBusinessInfo', 'Home'];
+
+        // Redirect unapproved vendors to dashboard if trying to access restricted vendor pages
+        // Allow Home page and other public pages
+        if (isVendorNotApproved && page.startsWith('Vendor') && !allowedPages.includes(page)) {
+            return <VendorDashboard />;
+        }
+
         switch (page) {
             case 'VendorDashboard': return <VendorDashboard />;
             case 'VendorOrders': return <VendorOrders />;
@@ -121,11 +132,11 @@ const PageRenderer = () => {
             case 'AdminUsersVendors': return <AdminUsersVendors />;
             case 'AdminOrders': return <AdminOrders />;
             case 'AdminProductsCategories': return <AdminProductsCategories />;
+            case 'DeletionRequests': return <DeletionRequestsPage />;
             case 'AdminSubscriptionsControl': return <AdminSubscriptionsControl />;
             case 'AdminAnalytics': return <AdminAnalytics />;
             case 'Chat': return <ChatPage userRole="admin" />;
             case 'Dashboard': return <DashboardPage />;
-            case 'Vendors': return <VendorsPage />;
             case 'Orders': return <OrdersPage />;
             case 'Products': return <ProductsPage />;
             case 'Customers': return <CustomersPage />;
@@ -146,7 +157,7 @@ const PageRenderer = () => {
 
 export default function Home() {
     return (
-        <div id="go-organic-app">
+        <div id="go-organic-app" className="w-full">
             <PageRenderer />
         </div>
     )

@@ -6,11 +6,11 @@ import Sidebar from './Sidebar';
 const DashboardLayout = ({ title, userRole, children }) => {
   const navItems = userRole === 'admin' ? adminNavItems : vendorNavItems;
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen relative overflow-x-hidden">
       <Sidebar navItems={navItems} userRole={userRole} />
-      <div className="flex-1 flex flex-col overflow-x-hidden bg-gray-50">
+      <div className="flex-1 flex flex-col overflow-x-hidden bg-gray-50 w-full md:w-auto min-w-0">
         <DashboardHeader title={title} userRole={userRole} />
-        <main className="p-4 sm:p-6 flex-1">
+        <main className="p-4 sm:p-6 flex-1 pb-20 md:pb-6">
           {children}
         </main>
         <footer className="p-3 text-center text-xs text-gray-500 border-t border-gray-200">

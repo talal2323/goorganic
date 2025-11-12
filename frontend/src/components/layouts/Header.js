@@ -39,7 +39,8 @@ const AccountMenuButton = ({ state }) => {
       console.error('Logout failed', error);
     } finally {
       dispatch({ type: 'LOGOUT' });
-      localStorage.removeItem('userInfo');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       setOpen(false);
       dispatch({ type: 'SET_PAGE', payload: 'Login' });
     }
@@ -69,7 +70,7 @@ const AccountMenuButton = ({ state }) => {
         </div>
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+        <div role="menu" className="absolute right-0 top-full mt-2 w-48 bg-white border rounded shadow-lg z-[100]">
           <div className="py-1">
             <div className="px-4 py-2 text-xs text-gray-500">Account</div>
             <button onClick={() => goto('Profile')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Profile</button>
@@ -90,6 +91,7 @@ const AccountMenuButton = ({ state }) => {
 export const Header = () => {
   const { dispatch, state } = useAppContext();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const notifRef = useRef(null);
   const navItems = [
     { label: 'Home', page: 'Home' },
@@ -104,9 +106,9 @@ export const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <header className="sticky top-0 z-50 bg-white shadow-md w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex justify-between items-center h-16 w-full">
             <Logo
               src="/images/logo.png"
               alt="GOorganic"
@@ -129,7 +131,18 @@ export const Header = () => {
             </nav>
 
             {/* Vendor/Admin quick link (if role matches) + Cart, Account Icons */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4 relative">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded hover:bg-gray-100"
+                aria-label="Toggle menu"
+              >
+                <Icon
+                  path={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                  className="w-6 h-6 text-gray-700"
+                />
+              </button>
               {state.isLoggedIn && (state.userRole === 'vendor' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('vendor'))) && (
                 <button
                   type="button"
@@ -151,7 +164,7 @@ export const Header = () => {
 
 
               {/* Notifications bell - navigates to Notifications page state */}
-              <div className="relative" ref={notifRef}>
+              <div className="relative z-[60]" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(o => !o)}
                   className="p-1 rounded hover:bg-gray-100"
@@ -183,13 +196,60 @@ export const Header = () => {
               </div>
               <span className="text-gray-700 text-sm hidden md:inline">|</span>
               {/* Account dropdown */}
-              <div className="relative">
+              <div className="relative z-[60]">
                 {/* Toggle button */}
                 <AccountMenuButton state={state} setOpen={() => { }} />
               </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t">
+            <nav className="px-4 py-3 space-y-2">
+              {navItems.map(item => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    dispatch({ type: 'SET_PAGE', payload: item.page });
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded hover:bg-gray-100 ${state.page === item.page ? 'bg-secondary text-white font-bold' : 'text-gray-700'}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+
+              {/* Mobile Dashboard Buttons */}
+              {state.isLoggedIn && (state.userRole === 'vendor' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('vendor'))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatch({ type: 'SET_PAGE', payload: 'VendorDashboard' });
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  Vendor Dashboard
+                </button>
+              )}
+              {state.isLoggedIn && (state.userRole === 'admin' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('admin'))) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatch({ type: 'SET_PAGE', payload: 'AdminDashboard' });
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                  Admin Dashboard
+                </button>
+              )}
+            </nav>
+          </div>
+        )}
       </header>
       <ShoppingCartSidebar />
     </>

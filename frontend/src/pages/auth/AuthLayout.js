@@ -7,19 +7,19 @@ const AuthLayout = ({ children, title }) => (
     <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-grow bg-gray-50 flex items-center justify-center py-10 px-4">
-            <div className="max-w-5xl w-full bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-                {/* Auth Form Area */}
-                <div className="w-full md:w-1/2 p-6 sm:p-10 flex flex-col justify-center relative">
-                    <Logo className="text-3xl mb-8" />
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">{title}</h2>
+            <div className="w-full max-w-fit bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+                {/* Auth Form Area - Fixed Width */}
+                <div className="w-full md:w-[450px] p-6 sm:p-8 flex flex-col justify-center">
+                    <Logo className="text-2xl mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
                     {children}
                 </div>
-                {/* Decorative Image Area (Figma Match) */}
-                <div className="w-full md:w-1/2 p-6 md:p-10 hidden md:flex items-center justify-center bg-gray-100">
+                {/* Decorative Image Area - Dynamic Width */}
+                <div className="hidden md:block relative overflow-hidden">
                     <img
-                        src="https://placehold.co/400x500/E9F5E9/164A26?text=Organic+Marketplace+Image"
+                        src="/images/login-reg.png"
                         alt="Organic products background"
-                        className="object-cover w-full h-full rounded-xl shadow-inner"
+                        className="h-full w-full object-cover min-h-[500px]"
                     />
                 </div>
             </div>

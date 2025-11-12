@@ -24,9 +24,9 @@ const protect = async (req, res, next) => {
 
 //   MIDDLEWARE FOR ADMINS
 const admin = (req, res, next) => {
-    
+
     if (req.user && Array.isArray(req.user.roles) && req.user.roles.includes('admin')) {
-        next(); 
+        next();
     } else {
         res.status(403).json({ message: 'Not authorized as an admin' });
     }
@@ -34,9 +34,9 @@ const admin = (req, res, next) => {
 
 //  MIDDLEWARE FOR VENDORS
 const vendor = (req, res, next) => {
-    
+
     if (req.user && Array.isArray(req.user.roles) && req.user.roles.includes('vendor')) {
-        next(); 
+        next();
     } else {
         res.status(403).json({ message: 'Not authorized as a vendor' });
     }
@@ -44,15 +44,16 @@ const vendor = (req, res, next) => {
 
 const premiumVendor = (req, res, next) => {
     if (req.user && req.user.subscription && req.user.subscription.plan === 'paid') {
-        return next(); 
+        return next();
     }
-    return res.status(403).json({ message: 'This is a premium feature. Please upgrade your plan to access it.' }); 
+    return res.status(403).json({ message: 'This is a premium feature. Please upgrade your plan to access it.' });
 };
 
 const isApprovedVendor = (req, res, next) => {
-    
-    if (Array.isArray(req.user.roles) && req.user.roles.includes('vendor') && req.user.vendorStatus === 'Approved') {
-        next(); 
+
+    if (Array.isArray(req.user.roles) && req.user.roles.includes('vendor') &&
+        (req.user.vendorStatus === 'Approved' || req.user.vendorStatus === 'Rejected')) {
+        next();
     } else {
         res.status(403).json({ message: 'Access denied. Your account is not approved to perform this action.' });
     }

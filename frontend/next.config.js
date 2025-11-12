@@ -2,12 +2,22 @@
 const nextConfig = {
     reactStrictMode: true,
     async rewrites() {
-        return [
-            {
-                source: '/api/:path*',
-                destination: 'http://localhost:5000/api/:path*',
-            },
-        ]
+        return {
+            beforeFiles: [
+                // Proxy API requests to backend
+                {
+                    source: '/api/:path*',
+                    destination: 'http://localhost:5000/api/:path*',
+                },
+            ],
+            afterFiles: [
+                // Rewrite all other routes to the root page for client-side routing
+                {
+                    source: '/:path*',
+                    destination: '/',
+                },
+            ],
+        }
     },
 }
 

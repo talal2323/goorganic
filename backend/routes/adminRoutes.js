@@ -13,7 +13,11 @@ import {
     getAllSubscriptionPlans,
     updateSubscriptionPlan,
     deleteSubscriptionPlan,
-    getAllOrders
+    getAllOrders,
+    getDeletionRequests,
+    approveDeletion,
+    rejectDeletion,
+    restoreAccount
 } from '../controllers/adminController.js';
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 router.use(protect, isAdmin);
@@ -41,5 +45,11 @@ router.route('/subscriptions/:id')
 router.route('/subscriptions')
     .post(createSubscriptionPlan)
     .get(getAllSubscriptionPlans);
+
+// Account deletion management routes
+router.get('/deletion-requests', getDeletionRequests);
+router.put('/users/:userId/approve-deletion', approveDeletion);
+router.put('/users/:userId/reject-deletion', rejectDeletion);
+router.put('/users/:userId/restore', restoreAccount);
 
 export default router;

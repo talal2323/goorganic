@@ -98,7 +98,9 @@ export const verifyEmail = async (req, res) => {
             name: user.name,
             email: user.email,
             roles: user.roles,
-            accessToken
+            accessToken,
+            vendorStatus: user.vendorStatus || null,
+            rejectionReason: user.vendorStatus === 'Rejected' ? user.rejectionReason : null
         });
 
     } catch (error) {
@@ -115,6 +117,14 @@ export const loginUser = async (req, res) => {
         const user = await User.findOne({ email }).select('+password');
 
         if (user && (await bcrypt.compare(password, user.password))) {
+            // Check if account is deleted
+            if (user.isDeleted) {
+                return res.status(403).json({
+                    message: 'This account has been deleted. Please contact goorganic.co.pk@gmail.com or register with a new email address.',
+                    accountDeleted: true
+                });
+            }
+
             if (!user.isEmailVerified) {
                 return res.status(403).json({ message: 'Please verify your email before logging in.' });
             }
@@ -136,6 +146,8 @@ export const loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 roles: user.roles,
+                vendorStatus: user.vendorStatus || null,
+                rejectionReason: user.vendorStatus === 'Rejected' ? user.rejectionReason : null,
                 accessToken
             });
 
@@ -217,60 +229,90 @@ export const updateUserProfile = async (req, res) => {
     }
 };
 
-// delete user profile
-export const deleteUserProfile = async (req, res) => {
+// SOFT DELETE: Request account deletion (user initiated)
+export const requestAccountDeletion = async (req, res) => {
     try {
+        const { reason } = req.body;
+
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        if (user.roles.includes('vendor')) {
-
-            const products = await Product.find({ vendor: user._id });
-
-            for (const product of products) {
-                for (const image of product.images) {
-                    await cloudinary.uploader.destroy(image.public_id);
-                }
-            }
-
-            await Product.deleteMany({ vendor: user._id });
-
-            if (user.cnic && user.cnic.front) await cloudinary.uploader.destroy(user.cnic.front.public_id);
-            if (user.cnic && user.cnic.back) await cloudinary.uploader.destroy(user.cnic.back.public_id);
-            if (user.certifications) {
-                for (const cert of user.certifications) {
-                    await cloudinary.uploader.destroy(cert.public_id);
-                }
-            }
-            if (user.shopImages) {
-                for (const image of user.shopImages) {
-                    await cloudinary.uploader.destroy(image.public_id);
-                }
-            }
+        if (user.isDeleted) {
+            return res.status(400).json({
+                message: 'Account already deleted'
+            });
         }
 
-        if (user.avatar && user.avatar.public_id) {
-            await cloudinary.uploader.destroy(user.avatar.public_id);
+        if (user.deletionRequested) {
+            return res.status(400).json({
+                message: 'Deletion request already submitted and pending admin review'
+            });
         }
 
-        await Token.deleteMany({ user: user._id });
+        // Flag for deletion request
+        user.deletionRequested = true;
+        user.deletionRequestDate = Date.now();
+        user.deletionReason = reason || 'No reason provided';
+        await user.save({ validateBeforeSave: false });
 
-        await user.deleteOne();
+        // Send email notification to admins
+        try {
+            const admins = await User.find({ roles: 'admin' });
+            for (const admin of admins) {
+                await sendEmail({
+                    email: admin.email,
+                    subject: '🚨 New Account Deletion Request - GO Organic Admin',
+                    message: `
+Dear Admin,
 
-        res.cookie('refreshToken', '', {
-            httpOnly: true,
-            expires: new Date(0),
+A user has requested account deletion:
+
+User Details:
+- Name: ${user.name}
+- Email: ${user.email}
+- Role: ${user.roles.join(', ')}
+- Request Date: ${new Date(user.deletionRequestDate).toLocaleString()}
+
+Reason for Deletion:
+${user.deletionReason}
+
+Please review this request in the admin dashboard and take appropriate action.
+
+Best regards,
+GO Organic System
+                    `,
+                });
+            }
+        } catch (emailError) {
+            console.error('Failed to send admin notification:', emailError);
+            // Don't fail the request if email fails
+        }
+
+        res.status(200).json({
+            message: 'Account deletion request submitted successfully. An admin will review your request. You will be notified via email once processed.'
         });
-
-        res.status(200).json({ message: 'Your account has been permanently deleted.' });
-
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
+
+// COMMENTED OUT: Permanent deletion (replaced with soft delete)
+// export const deleteUserProfile = async (req, res) => {
+//     try {
+//         const user = await User.findById(req.user._id);
+//         if (!user) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+//         // ... cloudinary cleanup and permanent deletion logic
+//         await user.deleteOne();
+//         res.status(200).json({ message: 'Your account has been permanently deleted.' });
+//     } catch (error) {
+//         res.status(500).json({ message: 'Server error', error: error.message });
+//     }
+// };
 
 //     Change user password
 
