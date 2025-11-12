@@ -15,7 +15,7 @@ import {
     getVendorById,
     getFeaturedVendors,
     refreshAccessToken,
-    deleteUserProfile
+    requestAccountDeletion
 } from '../controllers/userController.js';
 
 import { protect } from '../middleware/authMiddleware.js';
@@ -33,10 +33,12 @@ router.put('/reset-password/:token', resetPassword);
 
 router.route('/profile')
     .get(protect, getUserProfile)
-    .put(protect, updateUserProfile)
-    .delete(protect, deleteUserProfile);
+    .put(protect, updateUserProfile);
 
 router.put('/profile/change-password', protect, changeUserPassword);
+
+// Account deletion (soft delete with admin approval)
+router.post('/request-deletion', protect, requestAccountDeletion);
 
 
 

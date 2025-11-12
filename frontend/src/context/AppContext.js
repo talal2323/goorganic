@@ -104,6 +104,8 @@ const stateReducer = (state, action) => {
             return { ...state, cartItems: [] };
         case 'SET_CART_OPEN':
             return { ...state, isCartOpen: action.payload };
+        case 'TOGGLE_CART':
+            return { ...state, isCartOpen: !state.isCartOpen };
         default:
             return state;
     }
@@ -113,28 +115,178 @@ const AppContext = createContext(null);
 
 export const AppContextProvider = ({ children }) => {
     const [state, dispatch] = useReducer(stateReducer, initialState);
+    const [isInitialized, setIsInitialized] = React.useState(false);
 
+    // Restore auth and sync page from URL on mount
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
+        // Map URL path to page name
+        const path = window.location.pathname;
+        const pageMap = {
+            '/': 'Home',
+            '/shop': 'Shop',
+            '/vendors': 'Vendors',
+            '/vendorlist': 'VendorList',
+            '/about': 'About',
+            '/contact': 'Contact',
+            '/faqs': 'FAQs',
+            '/login': 'Login',
+            '/register': 'Register',
+            '/vendorregister': 'VendorRegister',
+            '/forgotpassword': 'ForgotPassword',
+            '/resetpassword': 'ResetPassword',
+            '/profile': 'Profile',
+            '/cart': 'Cart',
+            '/checkout': 'Checkout',
+            '/orders': 'Orders',
+            '/orderhistory': 'OrderHistory',
+            '/vendordashboard': 'VendorDashboard',
+            '/vendorproducts': 'VendorProducts',
+            '/vendororders': 'VendorOrders',
+            '/vendoranalytics': 'VendorAnalytics',
+            '/admindashboard': 'AdminDashboard',
+            '/adminproductscategories': 'AdminProductsCategories',
+            '/adminuservendors': 'AdminUsersVendors',
+            '/adminorders': 'AdminOrders',
+            '/adminanalytics': 'AdminAnalytics',
+            '/adminsubscriptionscontrol': 'AdminSubscriptionsControl',
+            '/dashboardpage': 'DashboardPage',
+            '/customerspage': 'CustomersPage',
+            '/orderspage': 'OrdersPage',
+            '/productspage': 'ProductsPage',
+            '/categoriespage': 'CategoriesPage',
+            '/vendorspage': 'VendorsPage',
+            '/analyticspage': 'AnalyticsPage',
+            '/faqspage': 'FAQsPage',
+            '/deletionrequests': 'DeletionRequests',
+        };
+
+        const pageName = pageMap[path.toLowerCase()] || 'Home';
+
+        // Restore authentication
+        let token = localStorage.getItem('authToken');
         const storedUser = localStorage.getItem('user');
-        if (token && storedUser) {
+
+        // Try to restore auth if we have either token or storedUser
+        if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
-                dispatch({ type: 'LOGIN', payload: user, meta: { preservePage: true } });
+
+                // If token is missing but user has accessToken, use that
+                if (!token && user.accessToken) {
+                    token = user.accessToken;
+                    localStorage.setItem('authToken', token);
+                }
+
+                if (token) {
+                    dispatch({ type: 'LOGIN', payload: user, meta: { preservePage: true } });
+                    // Set the page from URL after login
+                    dispatch({ type: 'SET_PAGE', payload: pageName });
+                } else {
+                    localStorage.removeItem('user');
+                    dispatch({ type: 'SET_PAGE', payload: pageName });
+                }
             } catch (e) {
                 console.error('Failed to parse stored user:', e);
+                // If auth fails, go to the page anyway (might redirect to login if protected)
+                dispatch({ type: 'SET_PAGE', payload: pageName });
             }
-        }
+        } else if (token) {
+            // Have token but no user - invalid state, clear it
+            localStorage.removeItem('authToken');
+            dispatch({ type: 'SET_PAGE', payload: pageName });
+        } else {
+            // No auth, just set the page from URL
+            dispatch({ type: 'SET_PAGE', payload: pageName });
+        }        // Mark as initialized after first load
+        setIsInitialized(true);
     }, []);
 
     useEffect(() => {
+        // Only sync to localStorage after initial load is complete
+        if (!isInitialized) return;
+
         if (state.user && state.isLoggedIn) {
-            localStorage.setItem('user', JSON.stringify(state.user));
-        } else {
+            const userString = JSON.stringify(state.user);
+            const currentUser = localStorage.getItem('user');
+
+            // Only update if changed to prevent infinite loops
+            if (userString !== currentUser) {
+                console.log('Syncing user to localStorage');
+                localStorage.setItem('user', userString);
+            }
+
+            // Also store the authToken separately if it exists in user object
+            if (state.user.accessToken) {
+                const currentToken = localStorage.getItem('authToken');
+                if (currentToken !== state.user.accessToken) {
+                    localStorage.setItem('authToken', state.user.accessToken);
+                }
+            }
+        } else if (state.isLoggedIn === false) {
+            // Only clear if explicitly logged out (not during initialization)
             localStorage.removeItem('user');
             localStorage.removeItem('authToken');
         }
-    }, [state.user, state.isLoggedIn]);
+    }, [state.user, state.isLoggedIn, isInitialized]);
+
+    // Sync URL with current page
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const path = state.page === 'Home' ? '/' : `/${state.page.toLowerCase()}`;
+            window.history.pushState({}, '', path);
+        }
+    }, [state.page]);
+
+    // Handle browser back/forward navigation
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            const pageMap = {
+                '/': 'Home',
+                '/shop': 'Shop',
+                '/vendors': 'Vendors',
+                '/vendorlist': 'VendorList',
+                '/about': 'About',
+                '/contact': 'Contact',
+                '/faqs': 'FAQs',
+                '/login': 'Login',
+                '/register': 'Register',
+                '/vendorregister': 'VendorRegister',
+                '/forgotpassword': 'ForgotPassword',
+                '/resetpassword': 'ResetPassword',
+                '/profile': 'Profile',
+                '/cart': 'Cart',
+                '/checkout': 'Checkout',
+                '/orders': 'Orders',
+                '/orderhistory': 'OrderHistory',
+                '/vendordashboard': 'VendorDashboard',
+                '/vendorproducts': 'VendorProducts',
+                '/vendororders': 'VendorOrders',
+                '/vendoranalytics': 'VendorAnalytics',
+                '/admindashboard': 'AdminDashboard',
+                '/adminproductscategories': 'AdminProductsCategories',
+                '/adminuservendors': 'AdminUsersVendors',
+                '/adminorders': 'AdminOrders',
+                '/adminanalytics': 'AdminAnalytics',
+                '/adminsubscriptionscontrol': 'AdminSubscriptionsControl',
+                '/dashboardpage': 'DashboardPage',
+                '/customerspage': 'CustomersPage',
+                '/orderspage': 'OrdersPage',
+                '/productspage': 'ProductsPage',
+                '/categoriespage': 'CategoriesPage',
+                '/vendorspage': 'VendorsPage',
+                '/analyticspage': 'AnalyticsPage',
+                '/faqspage': 'FAQsPage',
+                '/deletionrequests': 'DeletionRequests',
+            };
+
+            const pageName = pageMap[path.toLowerCase()] || 'Home';
+            dispatch({ type: 'SET_PAGE', payload: pageName });
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     // Listen for unauthorized events from API interceptor (refresh token failure)
     useEffect(() => {

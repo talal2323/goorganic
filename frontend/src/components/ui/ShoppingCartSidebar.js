@@ -109,7 +109,7 @@ const ShoppingCartSidebar = () => {
             <Button onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Checkout' }); dispatch({ type: 'SET_CART_OPEN', payload: false }); }} primary>
               Go to Checkout
             </Button>
-            <Button onClick={close} primary={false} className="w-full">Continue Shopping</Button>
+            <Button onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Shop' }); dispatch({ type: 'SET_CART_OPEN', payload: false }); }} primary={false} className="w-full">Continue Shopping</Button>
           </div>
         </div>
       </aside>

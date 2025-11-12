@@ -12,7 +12,7 @@ const AboutPage = () => {
 
     useEffect(() => {
         setIsClient(true);
-        setShowVendorButton(!localStorage.getItem('userInfo'));
+        setShowVendorButton(!localStorage.getItem('authToken'));
     }, []);
 
     const stats = [

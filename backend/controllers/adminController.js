@@ -202,7 +202,7 @@ export const getAllProductsForAdmin = async (req, res) => {
         if (req.query.vendorId) {
             filter.vendor = req.query.vendorId;
         }
-        
+
         if (req.query.status) {
             filter.status = req.query.status;
         }
@@ -219,7 +219,7 @@ export const getAllProductsForAdmin = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(pageSize)
             .skip(pageSize * (page - 1));
-        
+
         res.status(200).json({
             products,
             page,
@@ -267,7 +267,7 @@ export const getAllCustomers = async (req, res) => {
         const totalCustomers = await User.countDocuments(filter);
 
         const customers = await User.find(filter)
-            
+
             .select('name email createdAt')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
@@ -324,5 +324,187 @@ export const getAllOrders = async (req, res) => {
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// ==================== ACCOUNT DELETION MANAGEMENT ====================
+
+// Get all pending deletion requests
+export const getDeletionRequests = async (req, res) => {
+    try {
+        const requests = await User.find({
+            deletionRequested: true,
+            isDeleted: false
+        })
+            .select('name email deletionRequestDate deletionReason roles createdAt')
+            .sort({ deletionRequestDate: -1 });
+
+        res.status(200).json(requests);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Admin approves deletion (soft delete)
+export const approveDeletion = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.isDeleted) {
+            return res.status(400).json({ message: 'User already deleted' });
+        }
+
+        // Soft delete
+        user.isDeleted = true;
+        user.deletedAt = Date.now();
+        user.deletedBy = req.user._id;
+        user.deletionRequested = false;
+        await user.save({ validateBeforeSave: false });
+
+        // Send email notification to user
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Account Deletion Confirmation - GO Organic',
+                message: `
+Dear ${user.name},
+
+Your account deletion request has been processed and your account has been successfully deleted.
+
+Account Details:
+- Email: ${user.email}
+- Deletion Date: ${new Date(user.deletedAt).toLocaleString()}
+
+If you wish to use our services again in the future, you have two options:
+1. Register with a new email address
+2. Contact our support team at goorganic.co.pk@gmail.com to request account restoration
+
+Thank you for being part of the GO Organic community.
+
+Best regards,
+GOorganic Team
+                `,
+            });
+        } catch (emailError) {
+            console.error('Failed to send user notification:', emailError);
+            // Don't fail the request if email fails
+        }
+
+        res.status(200).json({
+            message: 'User account has been deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Admin rejects deletion request
+export const rejectDeletion = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { rejectionReason } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Clear deletion request
+        user.deletionRequested = false;
+        user.deletionRequestDate = null;
+        user.deletionReason = null;
+        await user.save({ validateBeforeSave: false });
+
+        // Send email to user
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Account Deletion Request Update - GO Organic',
+                message: `
+Dear ${user.name},
+
+Your account deletion request has been reviewed by our admin team.
+
+Status: Request Denied
+
+${rejectionReason ? `Reason: ${rejectionReason}` : ''}
+
+Your account remains active and you can continue using our services.
+
+If you have any questions or concerns, please contact us at admin@goorganic.com
+
+Best regards,
+GO Organic Team
+                `,
+            });
+        } catch (emailError) {
+            console.error('Failed to send user notification:', emailError);
+        }
+
+        res.status(200).json({
+            message: 'Deletion request rejected successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Admin restores deleted account
+export const restoreAccount = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.isDeleted) {
+            return res.status(400).json({ message: 'User account is not deleted' });
+        }
+
+        // Restore account
+        user.isDeleted = false;
+        user.deletedAt = null;
+        user.deletedBy = null;
+        await user.save({ validateBeforeSave: false });
+
+        // Send email notification
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Account Restored - GO Organic',
+                message: `
+Dear ${user.name},
+
+Great news! Your GO Organic account has been restored.
+
+You can now log in and continue using our services:
+- Email: ${user.email}
+- Restoration Date: ${new Date().toLocaleString()}
+
+Welcome back to GO Organic!
+
+Best regards,
+GO Organic Team
+                `,
+            });
+        } catch (emailError) {
+            console.error('Failed to send user notification:', emailError);
+        }
+
+        res.status(200).json({
+            message: 'User account restored successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };

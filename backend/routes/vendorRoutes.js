@@ -28,16 +28,16 @@ router.get('/orders', isApprovedVendor, getMyVendorOrders);
 router.put('/orders/:id/status', isApprovedVendor, updateOrderStatus);
 
 router.route('/profile/shop-images')
-    .post(addShopImage);
+    .post(isApprovedVendor, addShopImage);
 
 router.route('/profile/shop-images/:img_id')
-    .delete(deleteShopImage);
+    .delete(isApprovedVendor, deleteShopImage);
 
 router.route('/profile/certifications')
-    .post(addCertification);
+    .post(isApprovedVendor, addCertification);
 
 router.route('/profile/certifications/:cert_id')
-    .delete(deleteCertification);
+    .delete(isApprovedVendor, deleteCertification);
 
 
 export default router;

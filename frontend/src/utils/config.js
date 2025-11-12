@@ -59,6 +59,7 @@ export const adminNavItems = [
     { id: 'AdminUsersVendors', label: 'Users & Vendors', path: 'M17 20h-10a2 2 0 01-2-2v-1a2 2 0 012-2h10a2 2 0 012 2v1a2 2 0 01-2 2zM9 9a3 3 0 106 0 3 3 0 00-6 0z' },
     { id: 'AdminOrders', label: 'Orders', path: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { id: 'AdminProductsCategories', label: 'Products & Categories', path: 'M5 8h14M5 12h14M5 16h14M12 3v18' },
+    { id: 'DeletionRequests', label: 'Deletion Requests', path: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' },
     { id: 'AdminSubscriptionsControl', label: 'Subscriptions', path: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
     { id: 'AdminAnalytics', label: 'Analytics', path: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { id: 'Chat', label: 'Chat', path: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.693C5.165 15.908 6.5 15 8 15c4.97 0 9-3.582 9-8s-4.03-8-9-8-9 3.582-9 8h.08a2.5 2.5 0 012.5-2.5 2.5 2.5 0 012.5 2.5V13' },
