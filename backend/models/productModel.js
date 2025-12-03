@@ -3,16 +3,16 @@ import mongoose from 'mongoose';
 const productSchema = new mongoose.Schema({
   vendor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', 
+    ref: 'User',
     required: true,
   },
   name: { type: String, required: true },
   description: { type: String, required: true },
   category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',
-        required: true,
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  },
   price: { type: Number, required: true },
   stock: { type: Number, required: true, default: 0 },
   images: [
@@ -27,6 +27,8 @@ const productSchema = new mongoose.Schema({
     enum: ['Active', 'Unlisted'],
     default: 'Active',
   },
+
+  unlistReason: { type: String }, // Reason why product was unlisted by admin
 
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
   averageRating: { type: Number, default: 0 },

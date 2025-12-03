@@ -22,7 +22,7 @@ export const createProduct = async (req, res) => {
 
         const productCount = await Product.countDocuments({ vendor: vendor._id });
         if (productCount >= currentPlan.productLimit) {
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: `You have reached the ${currentPlan.name} plan limit of ${currentPlan.productLimit} products. Please upgrade your plan to add more.`
             });
         }
@@ -37,16 +37,34 @@ export const createProduct = async (req, res) => {
     }
 };
 
-//     Get all featured products for the homepage
+//     Get all featured products for the homepage (first 3 products from each paid vendor)
 
 export const getFeaturedProducts = async (req, res) => {
     try {
-        const featuredVendors = await User.find({ roles: 'vendor', isFeatured: true }).select('_id');
+        // Get featured vendors (paid subscription, active, approved)
+        const featuredVendors = await User.find({
+            roles: 'vendor',
+            vendorStatus: 'Approved',
+            'subscription.plan': 'paid',
+            'subscription.status': 'active'
+        }).select('_id').limit(10);
+
         const vendorIds = featuredVendors.map(v => v._id);
-        const products = await Product.find({ vendor: { $in: vendorIds } })
-            .populate('vendor', 'name shopName avatar')
-            .populate('category', 'name')
-            .limit(10);
+
+        // Get first 3 products from each featured vendor
+        const products = [];
+        for (const vendorId of vendorIds) {
+            const vendorProducts = await Product.find({
+                vendor: vendorId,
+                status: 'Active'
+            })
+                .populate('vendor', 'name shopName avatar')
+                .populate('category', 'name')
+                .limit(3)
+                .sort({ createdAt: -1 });
+
+            products.push(...vendorProducts);
+        }
 
         res.status(200).json(products);
     } catch (error) {
@@ -73,7 +91,11 @@ export const getAllProducts = async (req, res) => {
         if (req.query.category) {
             filter.category = req.query.category;
         }
-        
+
+        if (req.query.vendor) {
+            filter.vendor = req.query.vendor;
+        }
+
         if (req.query.price_min || req.query.price_max) {
             filter.price = {};
             if (req.query.price_min) {
@@ -108,7 +130,7 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-            .populate('vendor', 'shopName averageRating')
+            .populate('vendor', 'name shopName averageRating vendorStatus')
             .populate('category', 'name');
 
         if (!product) {
@@ -180,11 +202,11 @@ export const getMyProducts = async (req, res) => {
     try {
         const pageSize = 10;
         const page = Number(req.query.page) || 1;
-        
+
         const filter = { vendor: req.user._id };
 
         if (req.query.keyword) {
-            
+
             filter.name = { $regex: req.query.keyword, $options: 'i' };
         }
 
@@ -195,7 +217,7 @@ export const getMyProducts = async (req, res) => {
         const totalProducts = await Product.countDocuments(filter);
 
         const products = await Product.find(filter)
-        .populate('category', 'name')
+            .populate('category', 'name')
             .sort({ createdAt: -1 })
             .limit(pageSize)
             .skip(pageSize * (page - 1));

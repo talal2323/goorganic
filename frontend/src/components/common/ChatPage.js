@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Button, Icon } from '@/components/common/UIComponents';
@@ -24,10 +26,10 @@ const ChatPage = ({ userRole }) => {
                     ))}
                 </div>
                 <div className="p-4 flex space-x-3">
-                    <input 
-                        type="text" 
-                        placeholder="Type your message..." 
-                        className="flex-1 border border-gray-300 rounded-full p-3 focus:ring-secondary focus:border-secondary" 
+                    <input
+                        type="text"
+                        placeholder="Type your message..."
+                        className="flex-1 border border-gray-300 rounded-full p-3 focus:ring-secondary focus:border-secondary"
                     />
                     <Button onClick={() => console.log('Message sent!')} className="px-4 py-2">
                         <Icon path="M14 5l7 7m0 0l-7 7m7-7H3" className="w-5 h-5" color="white" />

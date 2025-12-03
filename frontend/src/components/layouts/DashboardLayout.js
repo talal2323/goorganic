@@ -1,10 +1,38 @@
-import React from 'react';
+'use client'
+
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { vendorNavItems, adminNavItems } from '@/utils/config';
 import { DashboardHeader } from './DashboardHeader';
 import Sidebar from './Sidebar';
 
 const DashboardLayout = ({ title, userRole, children }) => {
+  const router = useRouter();
   const navItems = userRole === 'admin' ? adminNavItems : vendorNavItems;
+
+  useEffect(() => {
+    // Check authentication on mount and on history navigation
+    const checkAuth = () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        window.location.replace('/auth/login');
+      }
+    };
+
+    checkAuth();
+
+    // Handle browser back/forward buttons
+    const handlePopState = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen relative overflow-x-hidden">
       <Sidebar navItems={navItems} userRole={userRole} />

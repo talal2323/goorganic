@@ -1,11 +1,13 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import NotificationsContent from '@/components/dashboard/NotificationsContent';
 import { Button } from '@/components/common/UIComponents';
 
 const NotificationsPopover = ({ onClose }) => {
+  const router = useRouter();
   const { state, dispatch } = useAppContext();
   const ref = useRef(null);
 
@@ -41,13 +43,13 @@ const NotificationsPopover = ({ onClose }) => {
             <p className="text-sm text-gray-700 font-medium">No notifications</p>
             <p className="text-xs text-gray-500 mt-1">Sign in to see your updates and alerts.</p>
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
-              <Button primary={false} className="bg-white border" onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Blog' }); onClose?.(); }}>
+              <Button primary={false} className="bg-white border" onClick={() => { router.push('/blog'); onClose?.(); }}>
                 Visit our Blogs
               </Button>
-              <Button onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Login' }); onClose?.(); }}>
+              <Button onClick={() => { router.push('/auth/login'); onClose?.(); }}>
                 Sign In
               </Button>
-              <Button primary={false} onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Register' }); onClose?.(); }}>
+              <Button primary={false} onClick={() => { router.push('/auth/register'); onClose?.(); }}>
                 Sign Up
               </Button>
             </div>
@@ -59,7 +61,7 @@ const NotificationsPopover = ({ onClose }) => {
 
       <div className="px-4 py-2 border-t text-right">
         <button
-          onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'Notifications' }); onClose?.(); }}
+          onClick={() => { router.push('/notifications'); onClose?.(); }}
           className="text-xs text-gray-600 hover:text-gray-900 underline"
         >
           Open full notifications

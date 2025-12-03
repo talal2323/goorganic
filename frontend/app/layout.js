@@ -1,7 +1,7 @@
 import { AppContextProvider } from '@/context/AppContext'
 import '@/styles/globals.css'
 import { Toaster } from 'react-hot-toast'
-import ErrorBoundary from '@/components/common/ErrorBoundary'
+import ClientErrorBoundary from '@/components/common/ClientErrorBoundary'
 import TokenRefreshIndicator from '@/components/common/TokenRefreshIndicator'
 
 export const metadata = {
@@ -18,7 +18,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <body className="overflow-x-hidden">
-                <ErrorBoundary>
+                <ClientErrorBoundary>
                     <AppContextProvider>
                         <TokenRefreshIndicator />
                         {children}
@@ -47,7 +47,7 @@ export default function RootLayout({ children }) {
                             }}
                         />
                     </AppContextProvider>
-                </ErrorBoundary>
+                </ClientErrorBoundary>
             </body>
         </html>
     )

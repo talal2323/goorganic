@@ -27,8 +27,23 @@ export const registerCustomer = async (req, res) => {
             await user.save({ validateBeforeSave: false });
             await sendEmail({
                 email: user.email,
-                subject: 'Your New GOorganic Verification Code',
+                subject: '🔐 Your New GOorganic Verification Code',
                 message: `Welcome back! Your new verification code is: ${otp}\nThis code will expire in 15 minutes.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #2d6a4f; margin-top: 0;">🔐 New Verification Code</h2>
+                            <p style="font-size: 16px; color: #374151;">Welcome back!</p>
+                            <p style="font-size: 16px; color: #374151;">Your new verification code is:</p>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                                <h1 style="color: #065f46; margin: 0; font-size: 36px; letter-spacing: 8px; font-family: monospace;">${otp}</h1>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">This code will expire in <strong>15 minutes</strong>.</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">If you didn't request this code, please ignore this email.</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Thank you,<br/>GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
             });
             return res.status(200).json({
                 message: 'This email is already registered but not verified. We have sent a new OTP.',
@@ -45,8 +60,25 @@ export const registerCustomer = async (req, res) => {
 
             await sendEmail({
                 email: newUser.email,
-                subject: 'Verify Your GOorganic Account',
+                subject: '🌱 Verify Your GOorganic Account',
                 message: `Welcome to GOorganic! Your verification code is: ${otp}\nThis code will expire in 15 minutes.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #2d6a4f; margin-top: 0;">🌱 Welcome to GOorganic!</h2>
+                            <p style="font-size: 16px; color: #374151;">Thank you for joining us! We're excited to have you.</p>
+                            <p style="font-size: 16px; color: #374151;">To complete your registration, please verify your email with this code:</p>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                                <h1 style="color: #065f46; margin: 0; font-size: 36px; letter-spacing: 8px; font-family: monospace;">${otp}</h1>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">This code will expire in <strong>15 minutes</strong>.</p>
+                            <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">💡 <strong>Tip:</strong> Enter this code in the verification page to get started with fresh, organic products!</p>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Welcome to a healthier lifestyle!<br/>GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
             });
 
             res.status(201).json({
@@ -264,26 +296,30 @@ export const requestAccountDeletion = async (req, res) => {
             for (const admin of admins) {
                 await sendEmail({
                     email: admin.email,
-                    subject: '🚨 New Account Deletion Request - GO Organic Admin',
-                    message: `
-Dear Admin,
-
-A user has requested account deletion:
-
-User Details:
-- Name: ${user.name}
-- Email: ${user.email}
-- Role: ${user.roles.join(', ')}
-- Request Date: ${new Date(user.deletionRequestDate).toLocaleString()}
-
-Reason for Deletion:
-${user.deletionReason}
-
-Please review this request in the admin dashboard and take appropriate action.
-
-Best regards,
-GO Organic System
-                    `,
+                    subject: '🚨 New Account Deletion Request - GOorganic Admin',
+                    message: `Dear Admin,\n\nA user has requested account deletion:\n\nUser Details:\n- Name: ${user.name}\n- Email: ${user.email}\n- Role: ${user.roles.join(', ')}\n- Request Date: ${new Date(user.deletionRequestDate).toLocaleString()}\n\nReason for Deletion:\n${user.deletionReason}\n\nPlease review this request in the admin dashboard and take appropriate action.\n\nBest regards,\nGOorganic System`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #dc2626; margin-top: 0;">🚨 New Account Deletion Request</h2>
+                                <p style="font-size: 16px; color: #374151;">Dear Admin,</p>
+                                <p style="font-size: 16px; color: #374151;">A user has requested account deletion:</p>
+                                <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+                                    <h4 style="color: #991b1b; margin-top: 0;">User Details:</h4>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> ${user.name}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> ${user.email}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Role:</strong> ${user.roles.join(', ')}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Request Date:</strong> ${new Date(user.deletionRequestDate).toLocaleString()}</p>
+                                </div>
+                                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                    <h4 style="color: #374151; margin-top: 0;">Reason for Deletion:</h4>
+                                    <p style="margin: 0; color: #6b7280;">${user.deletionReason}</p>
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280;">Please review this request in the admin dashboard and take appropriate action.</p>
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Best regards,<br/>GOorganic System</p>
+                            </div>
+                        </div>
+                    `
                 });
             }
         } catch (emailError) {
@@ -359,13 +395,34 @@ export const forgotPassword = async (req, res) => {
         const resetToken = user.createPasswordResetToken();
         await user.save({ validateBeforeSave: false });
 
-        const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+        const resetURL = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
         const message = `Forgot your password? Please go to this URL to reset it: \n\n ${resetURL} \n\nThis link is valid for 10 minutes. If you didn't request this, please ignore this email.`;
 
         await sendEmail({
             email: user.email,
-            subject: 'Your GoOrganic Password Reset Link',
+            subject: '🔐 Password Reset Request - GOorganic',
             message,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                    <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h2 style="color: #2d6a4f; margin-top: 0;">🔐 Password Reset Request</h2>
+                        <p style="font-size: 16px; color: #374151;">We received a request to reset your password.</p>
+                        <p style="font-size: 16px; color: #374151;">Click the button below to reset your password:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetURL}" style="background-color: #2d6a4f; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Reset Password</a>
+                        </div>
+                        <p style="font-size: 14px; color: #6b7280;">Or copy and paste this link into your browser:</p>
+                        <div style="background-color: #f3f4f6; padding: 12px; border-radius: 6px; word-break: break-all;">
+                            <code style="color: #374151; font-size: 12px;">${resetURL}</code>
+                        </div>
+                        <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #f59e0b;">
+                            <p style="margin: 0; color: #92400e; font-size: 14px;">⚠️ This link will expire in <strong>10 minutes</strong>.</p>
+                        </div>
+                        <p style="font-size: 14px; color: #6b7280; margin-top: 20px;">If you didn't request a password reset, please ignore this email. Your password will remain unchanged.</p>
+                        <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Stay secure,<br/>GOorganic Team 🌱</p>
+                    </div>
+                </div>
+            `
         });
 
         res.status(200).json({ message: 'If a user with that email exists, a reset link has been sent.' });
@@ -451,7 +508,7 @@ export const getAllVendors = async (req, res) => {
         const totalVendors = await User.countDocuments(filter);
 
         const vendors = await User.find(filter)
-            .select('_id shopName shopDescription averageRating avatar shopAddress.city name')
+            .select('_id shopName shopDescription averageRating avatar shopAddress.city name vendorStatus')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
 
@@ -472,7 +529,7 @@ export const getAllVendors = async (req, res) => {
 export const getVendorById = async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
-            .select('name shopName shopDescription avatar shopAddress certifications averageRating createdAt roles vendorStatus');
+            .select('name email phoneNumber shopName shopDescription avatar shopAddress shopImages certifications businessCategory productCategories averageRating subscription createdAt roles vendorStatus');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });

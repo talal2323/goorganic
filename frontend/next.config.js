@@ -1,6 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    // Enable SWC minification for faster builds
+    swcMinify: true,
+    // Optimize images
+    images: {
+        domains: ['localhost'],
+        formats: ['image/webp', 'image/avif'],
+    },
+    // Compiler optimizations
+    compiler: {
+        removeConsole: process.env.NODE_ENV === 'production',
+    },
+    // Performance optimizations
+    experimental: {
+        optimizeCss: true,
+        optimizePackageImports: ['@heroicons/react'],
+    },
     async rewrites() {
         return {
             beforeFiles: [
@@ -10,13 +26,7 @@ const nextConfig = {
                     destination: 'http://localhost:5000/api/:path*',
                 },
             ],
-            afterFiles: [
-                // Rewrite all other routes to the root page for client-side routing
-                {
-                    source: '/:path*',
-                    destination: '/',
-                },
-            ],
+            // Removed afterFiles that was breaking App Router
         }
     },
 }

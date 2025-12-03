@@ -1,14 +1,18 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
 import { Icon, Logo } from '@/components/common/UIComponents';
 import ShoppingCartSidebar from '@/components/ui/ShoppingCartSidebar';
 import NotificationsPopover from '@/components/ui/NotificationsPopover';
 import api from '@/utils/api';
+import { clearAuthCookies } from '@/utils/cookies';
 
 // Account menu dropdown component (kept local to Header)
 const AccountMenuButton = ({ state }) => {
+  const router = useRouter();
   const { dispatch } = useAppContext();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -21,13 +25,11 @@ const AccountMenuButton = ({ state }) => {
     return () => document.removeEventListener('click', onDocClick);
   }, []);
 
-  const goto = (page) => {
-    if (!state.isLoggedIn && (page === 'Profile' || page === 'OrderHistory')) {
-      dispatch({ type: 'SET_PAGE', payload: 'Login' });
-      // Set a return path in state so we can redirect after login
-      dispatch({ type: 'SET_RETURN_PATH', payload: page });
+  const goto = (route) => {
+    if (!state.isLoggedIn && (route === '/profile' || route === '/orders')) {
+      router.push('/auth/login?redirect=' + route);
     } else {
-      dispatch({ type: 'SET_PAGE', payload: page });
+      router.push(route);
     }
     setOpen(false);
   };
@@ -37,13 +39,22 @@ const AccountMenuButton = ({ state }) => {
       await api.post('/users/logout');
     } catch (error) {
       console.error('Logout failed', error);
-    } finally {
-      dispatch({ type: 'LOGOUT' });
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      setOpen(false);
-      dispatch({ type: 'SET_PAGE', payload: 'Login' });
     }
+
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Clear all authentication cookies
+    clearAuthCookies();
+
+    dispatch({ type: 'LOGOUT' });
+    setOpen(false);
+
+    // Use setTimeout to ensure cookies are cleared before redirect
+    setTimeout(() => {
+      router.push('/');
+    }, 100);
   };
 
   return (
@@ -73,13 +84,13 @@ const AccountMenuButton = ({ state }) => {
         <div role="menu" className="absolute right-0 top-full mt-2 w-48 bg-white border rounded shadow-lg z-[100]">
           <div className="py-1">
             <div className="px-4 py-2 text-xs text-gray-500">Account</div>
-            <button onClick={() => goto('Profile')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Profile</button>
-            <button onClick={() => goto('OrderHistory')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Order History</button>
+            <button onClick={() => goto('/profile')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Profile</button>
+            <button onClick={() => goto('/orders')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Order History</button>
             <hr className="my-1 border-gray-200" />
             {state.isLoggedIn ? (
               <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</button>
             ) : (
-              <button onClick={() => goto('Login')} className="w-full text-left px-4 py-2 text-sm text-primary hover:bg-gray-100">Sign in / Sign up</button>
+              <button onClick={() => goto('/auth/login')} className="w-full text-left px-4 py-2 text-sm text-primary hover:bg-gray-100">Sign in / Sign up</button>
             )}
           </div>
         </div>
@@ -89,18 +100,27 @@ const AccountMenuButton = ({ state }) => {
 };
 
 export const Header = () => {
+  const router = useRouter();
+  const pathname = usePathname();
   const { dispatch, state } = useAppContext();
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const notifRef = useRef(null);
   const navItems = [
-    { label: 'Home', page: 'Home' },
-    { label: 'Shop', page: 'Shop' },
-    { label: 'Vendors', page: 'VendorList' }, // Navigate to vendor list page
-    { label: 'Blog', page: 'Blog' },
-    { label: 'About', page: 'About' },
-    { label: 'Contact', page: 'Contact' },
+    { label: 'Home', href: '/' },
+    { label: 'Shop', href: '/shop' },
+    { label: 'Vendors', href: '/vendors' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ];
+
+  const isActive = (href) => {
+    if (href === '/') {
+      return pathname === '/';
+    }
+    return pathname.startsWith(href);
+  };
 
   // state and dispatch are used directly below
 
@@ -109,24 +129,25 @@ export const Header = () => {
       <header className="sticky top-0 z-50 bg-white shadow-md w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex justify-between items-center h-16 w-full">
-            <Logo
-              src="/images/logo.png"
-              alt="GOorganic"
-              className="h-8 cursor-pointer"
-              onClick={() => dispatch({ type: 'SET_PAGE', payload: 'Home' })}
-            />
+            <Link href="/">
+              <Logo
+                src="/images/logo.png"
+                alt="GOorganic"
+                className="h-8 cursor-pointer"
+              />
+            </Link>
 
             {/* Main Navigation - Hidden on Mobile */}
             <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
               {navItems.map(item => (
-                <button
+                <Link
                   key={item.label}
-                  type="button"
-                  onClick={() => dispatch({ type: 'SET_PAGE', payload: item.page })}
-                  className={`hover:text-secondary transition duration-150 ${state.page === item.page || (state.page.startsWith(item.page.substring(0, 5)) && item.page !== 'Home') ? 'text-secondary font-bold' : ''}`}
+                  href={item.href}
+                  className={`hover:text-secondary transition duration-150 ${isActive(item.href) ? 'text-secondary font-semibold' : ''
+                    }`}
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
             </nav>
 
@@ -144,22 +165,20 @@ export const Header = () => {
                 />
               </button>
               {state.isLoggedIn && (state.userRole === 'vendor' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('vendor'))) && (
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'SET_PAGE', payload: 'VendorDashboard' })}
+                <Link
+                  href="/vendor"
                   className="hidden md:inline px-3 py-1.5 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700"
                 >
                   Vendor Dashboard
-                </button>
+                </Link>
               )}
               {state.isLoggedIn && (state.userRole === 'admin' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('admin'))) && (
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'SET_PAGE', payload: 'AdminDashboard' })}
+                <Link
+                  href="/admin"
                   className="hidden md:inline px-3 py-1.5 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700"
                 >
                   Admin Dashboard
-                </button>
+                </Link>
               )}
 
 
@@ -209,43 +228,35 @@ export const Header = () => {
           <div className="md:hidden border-t">
             <nav className="px-4 py-3 space-y-2">
               {navItems.map(item => (
-                <button
+                <Link
                   key={item.label}
-                  type="button"
-                  onClick={() => {
-                    dispatch({ type: 'SET_PAGE', payload: item.page });
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded hover:bg-gray-100 ${state.page === item.page ? 'bg-secondary text-white font-bold' : 'text-gray-700'}`}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block w-full text-left px-4 py-2 rounded hover:bg-gray-100 ${isActive(item.href) ? 'text-secondary font-semibold bg-gray-50' : 'text-gray-700'
+                    }`}
                 >
                   {item.label}
-                </button>
+                </Link>
               ))}
 
               {/* Mobile Dashboard Buttons */}
               {state.isLoggedIn && (state.userRole === 'vendor' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('vendor'))) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    dispatch({ type: 'SET_PAGE', payload: 'VendorDashboard' });
-                    setMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/vendor"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-left px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
                 >
                   Vendor Dashboard
-                </button>
+                </Link>
               )}
               {state.isLoggedIn && (state.userRole === 'admin' || (state.user && Array.isArray(state.user.roles) && state.user.roles.includes('admin'))) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    dispatch({ type: 'SET_PAGE', payload: 'AdminDashboard' });
-                    setMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-left px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
                 >
                   Admin Dashboard
-                </button>
+                </Link>
               )}
             </nav>
           </div>

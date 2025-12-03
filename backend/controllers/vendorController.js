@@ -3,7 +3,7 @@ import sendEmail from '../utils/sendEmail.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
-import { SubOrder } from '../models/orderModel.js';
+import { Order, SubOrder } from '../models/orderModel.js';
 
 //     Get dashboard statistics for a logged-in vendor
 
@@ -237,8 +237,22 @@ export const registerVendor = async (req, res) => {
 
             await sendEmail({
                 email: user.email,
-                subject: 'Your New GOorganic Vendor Verification Code',
+                subject: '🔐 Your New GOorganic Vendor Verification Code',
                 message: `Welcome back! Your new verification code is: ${otp}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #2d6a4f; margin-top: 0;">🔐 New Vendor Verification Code</h2>
+                            <p style="font-size: 16px; color: #374151;">Welcome back, ${user.name}!</p>
+                            <p style="font-size: 16px; color: #374151;">Your new verification code is:</p>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                                <h1 style="color: #065f46; margin: 0; font-size: 36px; letter-spacing: 8px; font-family: monospace;">${otp}</h1>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">This code will expire in <strong>15 minutes</strong>.</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Thank you for being a vendor partner!<br/>GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
             });
 
             return res.status(200).json({
@@ -263,20 +277,50 @@ export const registerVendor = async (req, res) => {
 
             await sendEmail({
                 email: newVendor.email,
-                subject: 'Verify Your GOorganic Vendor Account',
+                subject: '🎉 Verify Your GOorganic Vendor Account',
                 message: `Your verification code is: ${otp}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #2d6a4f; margin-top: 0;">🎉 Welcome to GOorganic Vendor Community!</h2>
+                            <p style="font-size: 16px; color: #374151;">Hi ${newVendor.name},</p>
+                            <p style="font-size: 16px; color: #374151;">Thank you for registering as a vendor! Your application has been submitted successfully.</p>
+                            <p style="font-size: 16px; color: #374151;">Please verify your email with this code:</p>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                                <h1 style="color: #065f46; margin: 0; font-size: 36px; letter-spacing: 8px; font-family: monospace;">${otp}</h1>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">This code will expire in <strong>15 minutes</strong>.</p>
+                            <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">📝 <strong>Next Steps:</strong> After verification, our admin team will review your application. You'll be notified via email once approved.</p>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Excited to have you on board!<br/>GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
             });
 
             try {
                 const adminReviewLink = `${process.env.FRONTEND_URL}/admin/vendors`;
                 await sendEmail({
                     email: process.env.ADMIN_EMAIL,
-                    subject: 'New Vendor Application - GOorganic',
-                    message: `A new vendor has registered on GOorganic and is awaiting approval.\n\n` +
-                        `Name: ${newVendor.name}\n` +
-                        `Shop Name: ${newVendor.shopName}\n` +
-                        `Email: ${newVendor.email}\n\n` +
-                        `Please review their application here: ${adminReviewLink}`
+                    subject: '🎉 New Vendor Application - GOorganic',
+                    message: `A new vendor has registered on GOorganic and is awaiting approval.\n\nName: ${newVendor.name}\nShop Name: ${newVendor.shopName}\nEmail: ${newVendor.email}\n\nPlease review their application here: ${adminReviewLink}`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #2d6a4f; margin-top: 0;">🎉 New Vendor Application</h2>
+                                <p style="font-size: 16px; color: #374151;">A new vendor has registered and is awaiting approval.</p>
+                                <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d6a4f;">
+                                    <h4 style="color: #065f46; margin-top: 0;">Vendor Details:</h4>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> ${newVendor.name}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Shop Name:</strong> ${newVendor.shopName}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> ${newVendor.email}</p>
+                                    <p style="margin: 5px 0; color: #374151;"><strong>Business Category:</strong> ${newVendor.businessCategory}</p>
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Please review the application promptly.<br/>GOorganic System</p>
+                            </div>
+                        </div>
+                    `
                 });
             } catch (emailError) {
                 console.error('Failed to send admin notification email:', emailError);
@@ -414,7 +458,10 @@ export const getMyVendorOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const subOrder = await SubOrder.findById(req.params.id);
+        const subOrder = await SubOrder.findById(req.params.id).populate({
+            path: 'order',
+            populate: { path: 'customer', select: 'name email' }
+        });
 
         if (!subOrder) {
             return res.status(404).json({ message: 'Order not found' });
@@ -427,17 +474,55 @@ export const updateOrderStatus = async (req, res) => {
         subOrder.orderStatus = status;
         if (status === 'Delivered') {
             subOrder.deliveredAt = Date.now();
-            // TODO: Update parent order payment status if all sub-orders are delivered
+
+            // Check if all sub-orders for this parent order are delivered
+            const allSubOrders = await SubOrder.find({ order: subOrder.order._id });
+            const allDelivered = allSubOrders.every(so =>
+                so._id.toString() === subOrder._id.toString() ? true : so.orderStatus === 'Delivered'
+            );
+
+            // If all sub-orders are delivered, mark parent order payment as completed (for COD)
+            if (allDelivered) {
+                await Order.findByIdAndUpdate(subOrder.order._id, {
+                    paymentStatus: 'Completed'
+                });
+            }
         }
         await subOrder.save();
 
         try {
-            const customer = await User.findById(subOrder.order.customer);
+            const customer = subOrder.order.customer;
             if (customer) {
+                const statusEmoji = status === 'Shipped' ? '🚚' : status === 'Delivered' ? '✅' : '📦';
+                const itemsList = subOrder.items.map(item => `• ${item.name} x${item.quantity}`).join('\n');
+
                 await sendEmail({
                     email: customer.email,
-                    subject: `Your GoOrganic order status has been updated to: ${status}`,
-                    message: `Hi ${customer.name},\n\nYour order for items from ${req.user.shopName} has been updated to: ${status}.\n\nYou can view your order details in your dashboard.`
+                    subject: `${statusEmoji} Order Update: ${status} - GOorganic`,
+                    message: `Hi ${customer.name},\n\nGreat news! Your order status has been updated to: ${status}\n\nVendor: ${req.user.businessName || req.user.name}\n\nItems:\n${itemsList}\n\nOrder Total: Rs. ${subOrder.subTotal.toLocaleString()}\n\nYou can view full order details in your dashboard.\n\nThank you for shopping with GOorganic!`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #2d6a4f; margin-top: 0;">${statusEmoji} Order Status Updated!</h2>
+                                <p style="font-size: 16px; color: #374151;">Hi ${customer.name},</p>
+                                <p style="font-size: 16px; color: #374151;">Great news! Your order status has been updated to:</p>
+                                <div style="background-color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                                    <h3 style="color: #065f46; margin: 0; font-size: 24px;">${status}</h3>
+                                </div>
+                                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                    <p style="margin: 5px 0; color: #6b7280;"><strong>Vendor:</strong> ${req.user.businessName || req.user.name}</p>
+                                    <p style="margin: 5px 0; color: #6b7280;"><strong>Order Total:</strong> Rs. ${subOrder.subTotal.toLocaleString()}</p>
+                                </div>
+                                <div style="margin: 20px 0;">
+                                    <h4 style="color: #374151;">Items in this order:</h4>
+                                    <ul style="list-style: none; padding: 0;">
+                                        ${subOrder.items.map(item => `<li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">• ${item.name} <strong>x${item.quantity}</strong></li>`).join('')}
+                                    </ul>
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Thank you for shopping with GOorganic!</p>
+                            </div>
+                        </div>
+                    `
                 });
             }
         } catch (emailError) {
@@ -447,5 +532,143 @@ export const updateOrderStatus = async (req, res) => {
         res.status(200).json(subOrder);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Request subscription upgrade (notify admin)
+export const requestSubscriptionUpgrade = async (req, res) => {
+    try {
+        const { planName } = req.body;
+        const vendor = req.user;
+
+        const plan = await SubscriptionPlan.findOne({ name: planName });
+        if (!plan) {
+            return res.status(404).json({ message: 'Plan not found' });
+        }
+
+        // Get admin emails
+        const admins = await User.find({ roles: 'admin' }).select('email name');
+
+        // Send email to all admins
+        const emailPromises = admins.map(admin =>
+            sendEmail({
+                email: admin.email,
+                subject: '💳 Vendor Subscription Upgrade Request - GOorganic',
+                message: `Hi ${admin.name},\n\nA vendor has requested a subscription upgrade.\n\nVendor Details:\n- Name: ${vendor.name}\n- Shop: ${vendor.shopName || 'N/A'}\n- Email: ${vendor.email}\n- Current Plan: ${vendor.subscription?.plan || 'free'}\n\nRequested Plan:\n- Plan: ${plan.name.toUpperCase()}\n- Price: PKR ${plan.price}/month\n- Product Limit: ${plan.productLimit} products\n\nPlease log in to the admin dashboard to process this upgrade request.\n\nBest regards,\nGOorganic System`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #2d6a4f; margin-top: 0;">💳 Subscription Upgrade Request</h2>
+                            <p style="font-size: 16px; color: #374151;">Hi ${admin.name},</p>
+                            <p style="font-size: 16px; color: #374151;">A vendor has requested a subscription upgrade.</p>
+                            <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d6a4f;">
+                                <h4 style="color: #065f46; margin-top: 0;">Vendor Details:</h4>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> ${vendor.name}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Shop:</strong> ${vendor.shopName || 'N/A'}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> ${vendor.email}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Current Plan:</strong> ${(vendor.subscription?.plan || 'free').toUpperCase()}</p>
+                            </div>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <h4 style="color: #065f46; margin-top: 0;">Requested Plan:</h4>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Plan:</strong> ${plan.name.toUpperCase()}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Price:</strong> PKR ${plan.price}/month</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Product Limit:</strong> ${plan.productLimit} products</p>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">Please log in to the admin dashboard to process this upgrade request.</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Best regards,<br/>GOorganic System</p>
+                        </div>
+                    </div>
+                `
+            })
+        );
+
+        await Promise.all(emailPromises);
+
+        res.status(200).json({
+            message: 'Your upgrade request has been sent to the administrator. You will be contacted soon.'
+        });
+
+    } catch (error) {
+        console.error('Error sending upgrade request:', error);
+        res.status(500).json({ message: 'Failed to send upgrade request' });
+    }
+};
+
+// Cancel/Downgrade subscription to free plan
+export const cancelSubscription = async (req, res) => {
+    try {
+        const vendor = await User.findById(req.user._id);
+
+        if (!vendor) {
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        const currentPlan = vendor.subscription?.plan || 'free';
+
+        if (currentPlan === 'free') {
+            return res.status(400).json({ message: 'You are already on the free plan' });
+        }
+
+        // Check if vendor has more products than free plan limit
+        const freePlan = await SubscriptionPlan.findOne({ name: 'free' });
+        const productCount = await Product.countDocuments({ vendor: vendor._id });
+
+        if (productCount > freePlan.productLimit) {
+            return res.status(400).json({
+                message: `You have ${productCount} products. Please reduce to ${freePlan.productLimit} or fewer before downgrading to the free plan.`,
+                productCount,
+                maxAllowed: freePlan.productLimit
+            });
+        }
+
+        // Downgrade to free plan
+        const previousPlan = vendor.subscription.plan;
+        vendor.subscription.plan = 'free';
+        vendor.subscription.status = 'active';
+        vendor.subscription.endDate = null;
+
+        await vendor.save();
+
+        // Get admin emails to notify
+        const admins = await User.find({ roles: 'admin' }).select('email name');
+
+        // Send notification to admins
+        const emailPromises = admins.map(admin =>
+            sendEmail({
+                email: admin.email,
+                subject: '❌ Vendor Subscription Cancelled - GOorganic',
+                message: `Hi ${admin.name},\n\nA vendor has cancelled their subscription.\n\nVendor Details:\n- Name: ${vendor.name}\n- Shop: ${vendor.shopName || 'N/A'}\n- Email: ${vendor.email}\n- Previous Plan: ${previousPlan.toUpperCase()}\n- New Plan: FREE\n\nThis is for your information.\n\nBest regards,\nGOorganic System`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h2 style="color: #dc2626; margin-top: 0;">❌ Subscription Cancelled</h2>
+                            <p style="font-size: 16px; color: #374151;">Hi ${admin.name},</p>
+                            <p style="font-size: 16px; color: #374151;">A vendor has cancelled their subscription.</p>
+                            <div style="background-color: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+                                <h4 style="color: #991b1b; margin-top: 0;">Vendor Details:</h4>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> ${vendor.name}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Shop:</strong> ${vendor.shopName || 'N/A'}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> ${vendor.email}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Previous Plan:</strong> ${previousPlan.toUpperCase()}</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>New Plan:</strong> FREE</p>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280;">This is for your information.</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Best regards,<br/>GOorganic System</p>
+                        </div>
+                    </div>
+                `
+            })
+        );
+
+        await Promise.all(emailPromises);
+
+        res.status(200).json({
+            message: 'Your subscription has been cancelled. You are now on the free plan.',
+            plan: 'free'
+        });
+
+    } catch (error) {
+        console.error('Error cancelling subscription:', error);
+        res.status(500).json({ message: 'Failed to cancel subscription' });
     }
 };

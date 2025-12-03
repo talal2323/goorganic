@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
 import { Icon, Logo } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
@@ -8,6 +10,7 @@ import { COLORS } from '@/utils/config';
 const Sidebar = ({ navItems = [], userRole }) => {
   const { dispatch, state } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   // Check vendor status for restricting access
   const user = state.user || {};
@@ -15,16 +18,22 @@ const Sidebar = ({ navItems = [], userRole }) => {
   const isVendor = userRole === 'vendor';
   const isVendorNotApproved = isVendor && vendorStatus && vendorStatus !== 'Approved';
 
-  const handleNavigation = (pageId) => {
+  const router = useRouter();
+
+  const isActive = (href) => {
+    return pathname === href;
+  };
+
+  const handleNavigation = (route) => {
     // Block navigation for unapproved vendors (except Dashboard, Business Info, and Home)
     if (isVendorNotApproved) {
-      const allowedPages = ['VendorDashboard', 'VendorBusinessInfo', 'Home'];
-      if (!allowedPages.includes(pageId)) {
+      const allowedRoutes = ['/vendor', '/vendor/business-info', '/'];
+      if (!allowedRoutes.includes(route)) {
         return; // Don't navigate
       }
     }
 
-    dispatch({ type: 'SET_PAGE', payload: pageId });
+    router.push(route);
     setMobileMenuOpen(false); // Close mobile menu after navigation
   };
 
@@ -69,25 +78,26 @@ const Sidebar = ({ navItems = [], userRole }) => {
         <nav className="p-4 space-y-2">
           {(Array.isArray(navItems) ? navItems : []).map(item => {
             // Check if this item should be disabled for unapproved vendors
-            const allowedPages = ['VendorDashboard', 'VendorBusinessInfo'];
-            const isDisabled = isVendorNotApproved && !allowedPages.includes(item.id);
+            const allowedRoutes = ['/vendor', '/vendor/business-info'];
+            const isDisabled = isVendorNotApproved && !allowedRoutes.includes(item.href);
+            const active = isActive(item.href);
 
             return (
               <button
-                key={item.id}
+                key={item.href}
                 type="button"
-                onClick={() => handleNavigation(item.id)}
+                onClick={() => handleNavigation(item.href)}
                 disabled={isDisabled}
                 className={`flex items-center space-x-3 p-3 rounded-lg transition duration-150 text-sm w-full
                   ${isDisabled
                     ? 'opacity-40 cursor-not-allowed text-gray-500'
-                    : state.page === item.id
-                      ? 'bg-white text-primary font-semibold shadow-md'
+                    : active
+                      ? 'bg-white/20 text-white font-semibold'
                       : 'text-gray-300 hover:bg-gray-700'
                   }
                 `}
               >
-                <Icon path={item.path} className="w-5 h-5" color={isDisabled ? 'currentColor' : state.page === item.id ? COLORS.primary : 'currentColor'} />
+                <Icon path={item.path} className="w-5 h-5" color={isDisabled ? 'currentColor' : 'currentColor'} />
                 <span>{item.label}</span>
                 {isDisabled && <span className="ml-auto text-xs">🔒</span>}
               </button>
@@ -97,19 +107,11 @@ const Sidebar = ({ navItems = [], userRole }) => {
           <div className="pt-4 border-t border-gray-700 space-y-2">
             <button
               type="button"
-              onClick={() => handleNavigation('Home')}
+              onClick={() => router.push('/')}
               className="flex items-center space-x-3 p-3 rounded-lg transition duration-150 text-sm text-gray-300 hover:bg-gray-700 w-full"
             >
               <Icon path="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" className="w-5 h-5" color="currentColor" />
               <span>Go to Customer Site</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'LOGOUT' })}
-              className="flex items-center space-x-3 p-3 rounded-lg transition duration-150 text-sm text-red-400 hover:bg-gray-700 w-full"
-            >
-              <Icon path="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3m6-4V7a3 3 0 013-3h3" className="w-5 h-5" color="currentColor" />
-              <span>Logout</span>
             </button>
           </div>
         </nav>
