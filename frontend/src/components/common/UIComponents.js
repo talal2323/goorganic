@@ -17,12 +17,12 @@ export const Icon = ({ path, className = "w-5 h-5", color = 'currentColor' }) =>
 
 // --- THIS IS THE MISSING COMPONENT ---
 export const VerificationBadge = () => (
-    <div className="relative group flex items-center">
-        <Icon path="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.192-2.058-.573-3.016z" className="w-5 h-5 text-green-600" color="currentColor" />
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            Verified
-        </div>
+  <div className="relative group flex items-center">
+    <Icon path="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.192-2.058-.573-3.016z" className="w-5 h-5 text-green-600" color="currentColor" />
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      Verified
     </div>
+  </div>
 );
 // ----------------------------------------
 
@@ -53,7 +53,7 @@ export const Logo = ({ className = 'text-2xl', color = COLORS.primary, src, alt 
     </div>
   );
 };
- 
+
 
 export const Button = ({ children, onClick, primary = true, className = '', disabled = false, type = 'button' }) => {
   const darkGreen = '#175017'; // Using the hardcoded color from your example
@@ -91,9 +91,9 @@ export const DashboardCard = ({ title, children, className = 'p-6' }) => (
 export const StarRating = ({ rating }) => (
   <div className="flex items-center text-yellow-500">
     {[...Array(5)].map((_, i) => (
-      <Icon 
-        key={i} 
-        path="M11.049 2.222a.75.75 0 00-.707 0l-5.385 2.146a.75.75 0 00-.401.678v11.754a.75.75 0 00.401.678l5.385 2.146a.75.75 0 00.707 0l5.385-2.146a.75.75 0 00.401-.678V5.046a.75.75 0 00-.401-.678l-5.385-2.146z" 
+      <Icon
+        key={i}
+        path="M11.049 2.222a.75.75 0 00-.707 0l-5.385 2.146a.75.75 0 00-.401.678v11.754a.75.75 0 00.401.678l5.385 2.146a.75.75 0 00.707 0l5.385-2.146a.75.75 0 00.401-.678V5.046a.75.75 0 00-.401-.678l-5.385-2.146z"
         className="w-4 h-4 fill-current"
         color={i < Math.round(rating) ? 'currentColor' : 'gray'} // Use gray for unfilled
       />
@@ -103,11 +103,12 @@ export const StarRating = ({ rating }) => (
 
 // --- ADDING PRODUCT CARD (from compiler hint) ---
 export const ProductCard = ({ product }) => {
+  const router = useRouter();
   const { dispatch } = useAppContext();
 
   const handleProductClick = () => {
     dispatch({ type: 'SET_SELECTED_PRODUCT', payload: product });
-    dispatch({ type: 'SET_PAGE', payload: 'ProductDetail' });
+    router.push(`/products/${product.id}`);
   };
 
   return (

@@ -3,28 +3,21 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 const initialState = {
-    page: 'Home', // Current page view
     userRole: 'guest', // guest | customer | vendor | admin
     vendorRegStep: 1, // For multi-step registration
     isLoggedIn: false,
     user: null, // Authenticated user profile data
-    returnPath: null, // For redirecting after login (e.g., Profile, OrderHistory)
     selectedVendor: null, // Selected vendor for detail view
     selectedProduct: null, // Selected product for detail view
     vendors: [], // List of vendors
     // Shopping cart state
-    cartItems: [], // { id, name, price, qty }
+    cartItems: [], // Cart items from backend - populated after login
     isCartOpen: false,
+    cartLoading: false, // Loading state for cart operations
 };
 
 const stateReducer = (state, action) => {
     switch (action.type) {
-        case 'SET_PAGE':
-            // Prevent navigating to auth pages if already logged in
-            if (state.isLoggedIn && ['Login', 'Register', 'VendorRegister', 'OTPVerification'].includes(action.payload)) {
-                return state; // ignore
-            }
-            return { ...state, page: action.payload };
         case 'SET_USER_ROLE':
             return { ...state, userRole: action.payload, isLoggedIn: action.payload !== 'guest' };
         case 'LOGIN': {
@@ -32,22 +25,16 @@ const stateReducer = (state, action) => {
             const user = action.payload || {};
             const roles = Array.isArray(user.roles) ? user.roles : [];
             const primaryRole = roles.includes('admin') ? 'admin' : roles.includes('vendor') ? 'vendor' : (roles.includes('customer') ? 'customer' : 'guest');
-            const desiredPage = state.returnPath || (primaryRole === 'admin' ? 'AdminDashboard' : primaryRole === 'vendor' ? 'VendorDashboard' : 'Shop');
-            const preservePage = action.meta && action.meta.preservePage;
 
             return {
                 ...state,
                 isLoggedIn: true,
                 userRole: primaryRole,
-                page: preservePage ? state.page : desiredPage,
-                returnPath: null,
                 user,
             };
         }
         case 'LOGOUT':
-            return { ...initialState, page: 'Home' };
-        case 'SET_RETURN_PATH':
-            return { ...state, returnPath: action.payload };
+            return { ...initialState };
         case 'UPDATE_USER': {
             // Merge current user with updates; create user object if it doesn't exist
             const updates = action.payload || {};
@@ -74,32 +61,27 @@ const stateReducer = (state, action) => {
             return { ...state, selectedProduct: null };
         case 'SET_VENDORS':
             return { ...state, vendors: action.payload };
-        // Shopping cart actions
-        case 'ADD_TO_CART': {
-            // Block adding to cart if user not logged in; redirect to Login preserving current page
-            if (!state.isLoggedIn) {
-                return { ...state, page: 'Login', returnPath: state.page };
+        // Shopping cart actions - synced with backend
+        case 'SET_CART': {
+            // Set cart items from backend response
+            const cart = action.payload;
+            if (!cart || !cart.items) {
+                return { ...state, cartItems: [], cartLoading: false };
             }
-            const item = action.payload;
-            const existing = state.cartItems.find(ci => ci.id === item.id);
-            let updated;
-            if (existing) {
-                updated = state.cartItems.map(ci => ci.id === item.id ? { ...ci, qty: (ci.qty || 1) + (item.qty || 1) } : ci);
-            } else {
-                updated = [...state.cartItems, { ...item, qty: item.qty || 1 }];
-            }
-            return { ...state, cartItems: updated };
+            // Transform backend cart items to frontend format
+            const items = cart.items.map(item => ({
+                id: item.product._id || item.product,
+                productId: item.product._id || item.product,
+                name: item.product.name,
+                price: item.product.price,
+                qty: item.quantity,
+                image: item.product.images?.[0]?.url,
+                stock: item.product.stock
+            }));
+            return { ...state, cartItems: items, cartLoading: false };
         }
-        case 'REMOVE_FROM_CART': {
-            const id = action.payload;
-            const updated = state.cartItems.filter(ci => ci.id !== id);
-            return { ...state, cartItems: updated };
-        }
-        case 'UPDATE_CART_ITEM': {
-            const { id, qty } = action.payload;
-            const updated = state.cartItems.map(ci => ci.id === id ? { ...ci, qty } : ci);
-            return { ...state, cartItems: updated };
-        }
+        case 'SET_CART_LOADING':
+            return { ...state, cartLoading: action.payload };
         case 'CLEAR_CART':
             return { ...state, cartItems: [] };
         case 'SET_CART_OPEN':
@@ -117,54 +99,38 @@ export const AppContextProvider = ({ children }) => {
     const [state, dispatch] = useReducer(stateReducer, initialState);
     const [isInitialized, setIsInitialized] = React.useState(false);
 
-    // Restore auth and sync page from URL on mount
+    // Restore authentication on mount
     useEffect(() => {
-        // Map URL path to page name
-        const path = window.location.pathname;
-        const pageMap = {
-            '/': 'Home',
-            '/shop': 'Shop',
-            '/vendors': 'Vendors',
-            '/vendorlist': 'VendorList',
-            '/about': 'About',
-            '/contact': 'Contact',
-            '/faqs': 'FAQs',
-            '/login': 'Login',
-            '/register': 'Register',
-            '/vendorregister': 'VendorRegister',
-            '/forgotpassword': 'ForgotPassword',
-            '/resetpassword': 'ResetPassword',
-            '/profile': 'Profile',
-            '/cart': 'Cart',
-            '/checkout': 'Checkout',
-            '/orders': 'Orders',
-            '/orderhistory': 'OrderHistory',
-            '/vendordashboard': 'VendorDashboard',
-            '/vendorproducts': 'VendorProducts',
-            '/vendororders': 'VendorOrders',
-            '/vendoranalytics': 'VendorAnalytics',
-            '/admindashboard': 'AdminDashboard',
-            '/adminproductscategories': 'AdminProductsCategories',
-            '/adminuservendors': 'AdminUsersVendors',
-            '/adminorders': 'AdminOrders',
-            '/adminanalytics': 'AdminAnalytics',
-            '/adminsubscriptionscontrol': 'AdminSubscriptionsControl',
-            '/dashboardpage': 'DashboardPage',
-            '/customerspage': 'CustomersPage',
-            '/orderspage': 'OrdersPage',
-            '/productspage': 'ProductsPage',
-            '/categoriespage': 'CategoriesPage',
-            '/vendorspage': 'VendorsPage',
-            '/analyticspage': 'AnalyticsPage',
-            '/faqspage': 'FAQsPage',
-            '/deletionrequests': 'DeletionRequests',
+        let token = localStorage.getItem('authToken');
+        let storedUser = localStorage.getItem('user');
+
+        // Helper to get cookie value
+        const getCookie = (name) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
         };
 
-        const pageName = pageMap[path.toLowerCase()] || 'Home';
+        // If localStorage is empty, try to restore from cookies
+        if (!token) {
+            token = getCookie('authToken');
+            if (token) {
+                localStorage.setItem('authToken', token);
+            }
+        }
 
-        // Restore authentication
-        let token = localStorage.getItem('authToken');
-        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+            const cookieUser = getCookie('user');
+            if (cookieUser) {
+                try {
+                    storedUser = decodeURIComponent(cookieUser);
+                    localStorage.setItem('user', storedUser);
+                } catch (e) {
+                    console.error('Failed to decode user cookie:', e);
+                }
+            }
+        }
 
         // Try to restore auth if we have either token or storedUser
         if (storedUser) {
@@ -178,26 +144,19 @@ export const AppContextProvider = ({ children }) => {
                 }
 
                 if (token) {
-                    dispatch({ type: 'LOGIN', payload: user, meta: { preservePage: true } });
-                    // Set the page from URL after login
-                    dispatch({ type: 'SET_PAGE', payload: pageName });
+                    dispatch({ type: 'LOGIN', payload: user });
                 } else {
                     localStorage.removeItem('user');
-                    dispatch({ type: 'SET_PAGE', payload: pageName });
                 }
             } catch (e) {
                 console.error('Failed to parse stored user:', e);
-                // If auth fails, go to the page anyway (might redirect to login if protected)
-                dispatch({ type: 'SET_PAGE', payload: pageName });
             }
         } else if (token) {
             // Have token but no user - invalid state, clear it
             localStorage.removeItem('authToken');
-            dispatch({ type: 'SET_PAGE', payload: pageName });
-        } else {
-            // No auth, just set the page from URL
-            dispatch({ type: 'SET_PAGE', payload: pageName });
-        }        // Mark as initialized after first load
+        }
+
+        // Mark as initialized after first load
         setIsInitialized(true);
     }, []);
 
@@ -229,64 +188,27 @@ export const AppContextProvider = ({ children }) => {
         }
     }, [state.user, state.isLoggedIn, isInitialized]);
 
-    // Sync URL with current page
+    // Fetch cart from backend when user logs in
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const path = state.page === 'Home' ? '/' : `/${state.page.toLowerCase()}`;
-            window.history.pushState({}, '', path);
-        }
-    }, [state.page]);
-
-    // Handle browser back/forward navigation
-    useEffect(() => {
-        const handlePopState = () => {
-            const path = window.location.pathname;
-            const pageMap = {
-                '/': 'Home',
-                '/shop': 'Shop',
-                '/vendors': 'Vendors',
-                '/vendorlist': 'VendorList',
-                '/about': 'About',
-                '/contact': 'Contact',
-                '/faqs': 'FAQs',
-                '/login': 'Login',
-                '/register': 'Register',
-                '/vendorregister': 'VendorRegister',
-                '/forgotpassword': 'ForgotPassword',
-                '/resetpassword': 'ResetPassword',
-                '/profile': 'Profile',
-                '/cart': 'Cart',
-                '/checkout': 'Checkout',
-                '/orders': 'Orders',
-                '/orderhistory': 'OrderHistory',
-                '/vendordashboard': 'VendorDashboard',
-                '/vendorproducts': 'VendorProducts',
-                '/vendororders': 'VendorOrders',
-                '/vendoranalytics': 'VendorAnalytics',
-                '/admindashboard': 'AdminDashboard',
-                '/adminproductscategories': 'AdminProductsCategories',
-                '/adminuservendors': 'AdminUsersVendors',
-                '/adminorders': 'AdminOrders',
-                '/adminanalytics': 'AdminAnalytics',
-                '/adminsubscriptionscontrol': 'AdminSubscriptionsControl',
-                '/dashboardpage': 'DashboardPage',
-                '/customerspage': 'CustomersPage',
-                '/orderspage': 'OrdersPage',
-                '/productspage': 'ProductsPage',
-                '/categoriespage': 'CategoriesPage',
-                '/vendorspage': 'VendorsPage',
-                '/analyticspage': 'AnalyticsPage',
-                '/faqspage': 'FAQsPage',
-                '/deletionrequests': 'DeletionRequests',
-            };
-
-            const pageName = pageMap[path.toLowerCase()] || 'Home';
-            dispatch({ type: 'SET_PAGE', payload: pageName });
+        const fetchCart = async () => {
+            if (state.isLoggedIn && isInitialized) {
+                try {
+                    dispatch({ type: 'SET_CART_LOADING', payload: true });
+                    const { getCart } = await import('@/utils/cartApi');
+                    const cart = await getCart();
+                    dispatch({ type: 'SET_CART', payload: cart });
+                } catch (error) {
+                    console.error('Failed to fetch cart:', error);
+                    dispatch({ type: 'SET_CART_LOADING', payload: false });
+                }
+            } else if (!state.isLoggedIn) {
+                // Clear cart when logged out
+                dispatch({ type: 'CLEAR_CART' });
+            }
         };
 
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, []);
+        fetchCart();
+    }, [state.isLoggedIn, isInitialized]);
 
     // Listen for unauthorized events from API interceptor (refresh token failure)
     useEffect(() => {
@@ -325,4 +247,94 @@ export const useAppContext = () => {
         throw new Error('useAppContext must be used within AppContextProvider');
     }
     return context;
+};
+
+/**
+ * Custom hook for cart operations
+ * Provides functions to add, update, and remove items from cart
+ * All operations sync with backend
+ */
+export const useCart = () => {
+    const { state, dispatch } = useAppContext();
+
+    const addItemToCart = async (productId, quantity = 1) => {
+        if (!state.isLoggedIn) {
+            throw new Error('Please log in to add items to cart');
+        }
+
+        try {
+            dispatch({ type: 'SET_CART_LOADING', payload: true });
+            const { addToCart } = await import('@/utils/cartApi');
+            const updatedCart = await addToCart(productId, quantity);
+            dispatch({ type: 'SET_CART', payload: updatedCart });
+            return updatedCart;
+        } catch (error) {
+            dispatch({ type: 'SET_CART_LOADING', payload: false });
+            throw error;
+        }
+    };
+
+    const updateCartItem = async (productId, quantity) => {
+        if (!state.isLoggedIn) {
+            throw new Error('Please log in to update cart');
+        }
+
+        try {
+            dispatch({ type: 'SET_CART_LOADING', payload: true });
+            const { addToCart } = await import('@/utils/cartApi');
+            const updatedCart = await addToCart(productId, quantity);
+            dispatch({ type: 'SET_CART', payload: updatedCart });
+            return updatedCart;
+        } catch (error) {
+            dispatch({ type: 'SET_CART_LOADING', payload: false });
+            throw error;
+        }
+    };
+
+    const removeItemFromCart = async (productId) => {
+        if (!state.isLoggedIn) {
+            throw new Error('Please log in to remove items from cart');
+        }
+
+        try {
+            dispatch({ type: 'SET_CART_LOADING', payload: true });
+            const { removeFromCart } = await import('@/utils/cartApi');
+            const updatedCart = await removeFromCart(productId);
+            dispatch({ type: 'SET_CART', payload: updatedCart });
+            return updatedCart;
+        } catch (error) {
+            dispatch({ type: 'SET_CART_LOADING', payload: false });
+            throw error;
+        }
+    };
+
+    const refreshCart = async () => {
+        if (!state.isLoggedIn) {
+            return;
+        }
+
+        try {
+            dispatch({ type: 'SET_CART_LOADING', payload: true });
+            const { getCart } = await import('@/utils/cartApi');
+            const cart = await getCart();
+            dispatch({ type: 'SET_CART', payload: cart });
+            return cart;
+        } catch (error) {
+            dispatch({ type: 'SET_CART_LOADING', payload: false });
+            throw error;
+        }
+    };
+
+    return {
+        cartItems: state.cartItems,
+        cartLoading: state.cartLoading,
+        isCartOpen: state.isCartOpen,
+        addItemToCart,
+        updateCartItem,
+        removeItemFromCart,
+        refreshCart,
+        openCart: () => dispatch({ type: 'SET_CART_OPEN', payload: true }),
+        closeCart: () => dispatch({ type: 'SET_CART_OPEN', payload: false }),
+        toggleCart: () => dispatch({ type: 'TOGGLE_CART' }),
+    };
 };

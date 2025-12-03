@@ -1,10 +1,13 @@
 'use client'
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import { Button, Icon, Logo } from '@/components/common/UIComponents';
+import { clearAuthCookies } from '@/utils/cookies';
 
 export const DashboardHeader = ({ title, userRole }) => {
+  const router = useRouter();
   const { dispatch } = useAppContext();
   const [open, setOpen] = React.useState(false);
   const portalLabel = userRole.charAt(0).toUpperCase() + userRole.slice(1) + ' Portal';
@@ -30,7 +33,7 @@ export const DashboardHeader = ({ title, userRole }) => {
                 {userRole === 'vendor' && (
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                    onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'VendorDashboard' }); setOpen(false); }}
+                    onClick={() => { router.push('/vendor'); setOpen(false); }}
                   >
                     Vendor Dashboard
                   </button>
@@ -38,7 +41,7 @@ export const DashboardHeader = ({ title, userRole }) => {
                 {userRole === 'admin' && (
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                    onClick={() => { dispatch({ type: 'SET_PAGE', payload: 'AdminDashboard' }); setOpen(false); }}
+                    onClick={() => { router.push('/admin'); setOpen(false); }}
                   >
                     Admin Dashboard
                   </button>
@@ -48,10 +51,28 @@ export const DashboardHeader = ({ title, userRole }) => {
           </div>
           <Button
             onClick={async () => {
-              try { await (await import('../../utils/api')).default.post('/users/logout'); } catch { }
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('user');
+              try {
+                await (await import('../../utils/api')).default.post('/users/logout');
+              } catch (e) {
+                console.error('Logout API error:', e);
+              }
+
+              // Clear all storage
+              localStorage.clear();
+              sessionStorage.clear();
+
+              // Clear all authentication cookies
+              clearAuthCookies();
+
+              // Verify cookies are cleared
+              console.log('Cookies after clear:', document.cookie);
+
               dispatch({ type: 'LOGOUT' });
+
+              // Use setTimeout to ensure cookies are cleared before redirect
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 100);
             }}
             primary={false}
             className="py-1 px-2 sm:px-3 text-xs sm:text-sm"

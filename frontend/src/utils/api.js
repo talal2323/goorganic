@@ -5,6 +5,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 300000, // 5 minutes timeout for large file uploads
 });
 
 /**

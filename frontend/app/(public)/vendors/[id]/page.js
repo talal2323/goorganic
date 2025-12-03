@@ -1,0 +1,331 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { useAppContext } from '@/context/AppContext';
+import { Button, Icon, StarRating, VerificationBadge } from '@/components/common/UIComponents';
+import { getVendorByIdUser } from '@/utils/userApi';
+import { getProducts } from '@/utils/productApi';
+import { showToast } from '@/utils/toast';
+
+const VendorDetailPage = () => {
+    const router = useRouter();
+    const params = useParams();
+    const { dispatch } = useAppContext();
+
+    const [vendor, setVendor] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [productCategories, setProductCategories] = useState([]);
+
+    useEffect(() => {
+        if (params.id) {
+            fetchVendor();
+            fetchVendorProducts();
+        }
+    }, [params.id, currentPage]);
+
+    const fetchVendor = async () => {
+        try {
+            const data = await getVendorByIdUser(params.id);
+            setVendor(data);
+        } catch (error) {
+            showToast.error(error.response?.data?.message || 'Failed to fetch vendor');
+            setVendor(null);
+        }
+    };
+
+    const fetchVendorProducts = async () => {
+        try {
+            setLoading(true);
+            const data = await getProducts({ page: currentPage, vendor: params.id });
+            setProducts(data.products || []);
+            setTotalPages(data.totalPages || 1);
+
+            // Extract unique categories from all vendor's products
+            if (data.products && data.products.length > 0) {
+                const categories = [...new Set(data.products.map(p => p.category?.name).filter(Boolean))];
+                setProductCategories(categories);
+            }
+        } catch (error) {
+            showToast.error(error.response?.data?.message || 'Failed to fetch products');
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading && !vendor) {
+        return (
+            <div className="bg-gray-50">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+                    <p className="text-gray-500">Loading vendor...</p>
+                </main>
+            </div>
+        );
+    }
+
+    if (!vendor) {
+        return (
+            <div className="bg-gray-50">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+                    <h2 className="text-2xl font-semibold mb-4">Vendor not found</h2>
+                    <Button onClick={() => router.push('/')}>
+                        &larr; Back to Home
+                    </Button>
+                </main>
+            </div>
+        );
+    }
+
+
+
+    return (
+        <div className="bg-gray-50">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="mb-6">
+                    <button
+                        onClick={() => router.push('/vendors')}
+                        className="text-sm font-medium text-primary hover:text-secondary flex items-center"
+                    >
+                        <Icon path="M10 19l-7-7m0 0l7-7m-7 7h18" className="w-4 h-4 mr-2" />
+                        Back to Vendors
+                    </button>
+                </div>
+
+                {/* Vendor Profile Section */}
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                    {/* Cover Image */}
+                    <div className="relative h-64 bg-gradient-to-r from-green-600 to-green-800">
+                        <img
+                            src={vendor.shopImages?.[0]?.url || vendor.avatar?.url || 'https://placehold.co/1200x300/E9F5E9/164A26?text=Vendor+Cover'}
+                            alt="Cover"
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.src = 'https://placehold.co/1200x300/E9F5E9/164A26?text=Vendor+Cover'; }}
+                        />
+                        {/* Profile Picture */}
+                        <div className="absolute -bottom-16 left-8">
+                            <img
+                                src={vendor.avatar?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'}
+                                alt={vendor.shopName || vendor.name}
+                                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
+                                onError={(e) => { e.target.src = 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'; }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Vendor Information */}
+                    <div className="pt-20 px-8 pb-8">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-6">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <h1 className="text-3xl font-bold text-gray-900">
+                                        {vendor.shopName || vendor.name}
+                                    </h1>
+                                    {vendor.vendorStatus === 'Approved' && (
+                                        <VerificationBadge />
+                                    )}
+                                </div>
+                                <p className="text-lg text-gray-600 mb-2">{vendor.name}</p>
+                                {vendor.businessCategory && (
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                                            {vendor.businessCategory}
+                                        </span>
+                                    </p>
+                                )}
+
+                                {/* Rating and Reviews */}
+                                {vendor.averageRating > 0 && (
+                                    <div className="flex items-center mb-4">
+                                        <div className="flex items-center text-yellow-500">
+                                            <Icon path="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" className="w-5 h-5 fill-current" />
+                                            <span className="ml-2 text-lg font-semibold text-gray-900">{vendor.averageRating.toFixed(1)}</span>
+                                        </div>
+                                        <span className="ml-2 text-gray-600">({vendor.totalReviews || 0} reviews)</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Business Description */}
+                        {vendor.shopDescription && (
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">About</h3>
+                                <p className="text-gray-700 leading-relaxed">
+                                    {vendor.shopDescription}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Product Categories */}
+                        {productCategories.length > 0 && (
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Categories</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {productCategories.map((category, index) => (
+                                        <span key={index} className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
+                                            {category}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Location */}
+                        {vendor.shopAddress?.city && (
+                            <div className="mb-6">
+                                <div className="flex items-start">
+                                    <Icon path="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" className="w-5 h-5 text-gray-400 mr-3 mt-1" />
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Location</p>
+                                        <p className="text-gray-900">{vendor.shopAddress.city}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Certifications */}
+                        {vendor.certifications && vendor.certifications.length > 0 && (
+                            <div className="pt-6 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Certifications</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {vendor.certifications.map((cert, index) => {
+                                        const isPDF = cert.url?.toLowerCase().endsWith('.pdf');
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="border-2 border-gray-200 rounded-lg p-4 hover:border-secondary transition-colors cursor-pointer bg-white"
+                                                onClick={() => window.open(cert.url, '_blank')}
+                                            >
+                                                {isPDF ? (
+                                                    <div className="flex flex-col items-center justify-center h-32">
+                                                        <svg className="w-12 h-12 text-red-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <p className="text-sm text-gray-700 font-medium text-center">
+                                                            {cert.name || 'Certificate'}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <img
+                                                            src={cert.url}
+                                                            alt={cert.name || `Certification ${index + 1}`}
+                                                            className="w-full h-32 object-cover rounded-md"
+                                                        />
+                                                        {cert.name && (
+                                                            <p className="text-sm text-gray-700 mt-2 text-center font-medium">{cert.name}</p>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Products Section */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-3xl font-bold text-gray-900">Products</h2>
+                        <span className="text-gray-600">{products.length > 0 ? `${products.length} products` : ''}</span>
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500">Loading products...</p>
+                        </div>
+                    ) : products.length === 0 ? (
+                        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                            <Icon path="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-500 text-lg">No products available yet</p>
+                            <p className="text-gray-400 text-sm mt-2">This vendor hasn't listed any products.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {products.map((product) => (
+                                <div
+                                    key={product._id}
+                                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                                    onClick={() => router.push(`/products/${product._id}`)}
+                                >
+                                    <img
+                                        src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=No+Image'}
+                                        alt={product.name}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="p-4">
+                                        <h2 className="text-lg font-semibold text-gray-900">{product.name}</h2>
+                                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">{product.description}</p>
+                                        <div className="flex items-center justify-between mt-3">
+                                            <p className="text-secondary font-bold text-lg">Rs. {product.price}</p>
+                                            {product.stock > 0 ? (
+                                                <span className="text-xs text-green-600 font-medium">In Stock</span>
+                                            ) : (
+                                                <span className="text-xs text-red-600 font-medium">Out of Stock</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="mt-8 flex justify-center items-center space-x-2">
+                        <Button
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            primary={false}
+                            className="px-4 py-2"
+                        >
+                            Previous
+                        </Button>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNumber;
+                            if (totalPages <= 5) {
+                                pageNumber = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNumber = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNumber = totalPages - 4 + i;
+                            } else {
+                                pageNumber = currentPage - 2 + i;
+                            }
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setCurrentPage(pageNumber)}
+                                    className={`px-4 py-2 text-sm font-medium rounded-md border ${currentPage === pageNumber
+                                        ? 'bg-secondary text-white border-secondary'
+                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                                        }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })}
+                        <Button
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            primary={false}
+                            className="px-4 py-2"
+                        >
+                            Next
+                        </Button>
+                    </div>
+                )}
+            </main>
+        </div>
+    );
+};
+
+export default VendorDetailPage;

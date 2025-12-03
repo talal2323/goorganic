@@ -11,6 +11,8 @@ import {
     deleteShopImage,
     getAvailablePlans,
     getSubscriptionUsage,
+    requestSubscriptionUpgrade,
+    cancelSubscription,
     getMyVendorOrders,
     updateOrderStatus
 } from '../controllers/vendorController.js';
@@ -24,6 +26,8 @@ router.get('/dashboard/sales-overview', isApprovedVendor, premiumVendor, getSale
 router.get('/dashboard/activity', isApprovedVendor, premiumVendor, getRecentActivity);
 router.get('/subscriptions/plans', isApprovedVendor, getAvailablePlans);
 router.get('/profile/subscription-usage', isApprovedVendor, getSubscriptionUsage);
+router.post('/subscriptions/request-upgrade', isApprovedVendor, requestSubscriptionUpgrade);
+router.post('/subscriptions/cancel', isApprovedVendor, cancelSubscription);
 router.get('/orders', isApprovedVendor, getMyVendorOrders);
 router.put('/orders/:id/status', isApprovedVendor, updateOrderStatus);
 

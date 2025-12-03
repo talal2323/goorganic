@@ -1,33 +1,29 @@
 'use client'
 
 import React from 'react';
+import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
 import { Logo, Icon } from '@/components/common/UIComponents'; // Import the Logo component & Icon for social logos
 
 const Footer = () => {
   const { dispatch } = useAppContext();
 
-  // Helper function for navigation to keep code clean
-  const handleNav = (page) => {
-    dispatch({ type: 'SET_PAGE', payload: page });
-  };
-
   // Link data based on the screenshot
   const shopLinks = [
-    { name: 'All Products', page: 'Shop' },
-    { name: 'Food & Beverages', page: 'Shop' },
-    { name: 'Personal Care & Wellness', page: 'Shop' },
-    { name: 'Supplements & Functional Nutrition', page: 'Shop' }
+    { name: 'All Products', href: '/shop' },
+    { name: 'Food & Beverages', href: '/shop' },
+    { name: 'Personal Care & Wellness', href: '/shop' },
+    { name: 'Supplements & Functional Nutrition', href: '/shop' }
   ];
 
   const supportLinks = [
-    { name: 'Contact Us', page: 'Contact' },
-    { name: 'FAQ', page: 'Contact' } // FAQ is on the Contact page
+    { name: 'Contact Us', href: '/contact' },
+    { name: 'FAQ', href: '/contact' } // FAQ is on the Contact page
   ];
 
   const companyLinks = [
-    { name: 'About Us', page: 'About' },
-    { name: 'Blog', page: 'Blog' }
+    { name: 'About Us', href: '/about' },
+    { name: 'Blog', href: '/blog' }
   ];
 
   const socialLinks = [
@@ -51,7 +47,9 @@ const Footer = () => {
 
           {/* Column 1: Logo, Tagline, Social */}
           <div className="lg:col-span-1">
-            <Logo src="/images/logo.png" alt="GOorganic" className="h-10" onClick={() => handleNav('Home')} />
+            <Link href="/">
+              <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer" />
+            </Link>
             <p className="text-sm mt-4 text-gray-400">
               Connecting you with the best organic products from verified vendors.
             </p>
@@ -77,12 +75,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {shopLinks.map((item) => (
                 <li key={item.name}>
-                  <button
-                    onClick={() => handleNav(item.page)}
+                  <Link
+                    href={item.href}
                     className="text-sm hover:text-white"
                   >
                     {item.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -94,12 +92,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {supportLinks.map((item) => (
                 <li key={item.name}>
-                  <button
-                    onClick={() => handleNav(item.page)}
+                  <Link
+                    href={item.href}
                     className="text-sm hover:text-white"
                   >
                     {item.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -111,12 +109,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {companyLinks.map((item) => (
                 <li key={item.name}>
-                  <button
-                    onClick={() => handleNav(item.page)}
+                  <Link
+                    href={item.href}
                     className="text-sm hover:text-white"
                   >
                     {item.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
