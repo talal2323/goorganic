@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
     passwordResetExpires: Date,
     shopName: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
     shopDescription: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
-    businessCategory: { type: String, enum: ['Farmer', 'Retailer', 'Distributor'], required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
+    businessCategory: { type: String, enum: ['Farmer', 'Retailer', 'Distributor', 'Manufacturer', 'Artisan'], required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
     productCategories: [{ type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } }],
     shopAddress: {
         city: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
