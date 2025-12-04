@@ -1,27 +1,39 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Icon } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
+import { getAllFAQs } from '@/utils/faqApi';
 
 const ContactPage = () => {
-    const [formData, setFormData] = React.useState({ name: '', email: '', subject: '', message: '' });
-    const [submitted, setSubmitted] = React.useState(false);
+    const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+    const [submitted, setSubmitted] = useState(false);
+    const [faqs, setFaqs] = useState([]);
+    const [loadingFaqs, setLoadingFaqs] = useState(true);
+
+    useEffect(() => {
+        fetchFAQs();
+    }, []);
+
+    const fetchFAQs = async () => {
+        try {
+            setLoadingFaqs(true);
+            const data = await getAllFAQs();
+            setFaqs(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to fetch FAQs:', error);
+        } finally {
+            setLoadingFaqs(false);
+        }
+    };
 
     const handleInputChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
     const handleSubmit = (e) => { e.preventDefault(); console.log('Message submitted:', formData); setSubmitted(true); };
 
     const contactInfo = [
-        { title: 'Email Us', content: 'support@goorganic.com', description: 'For general inquiries and support', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-        { title: 'Call Us', content: '+92 300 1234567', description: 'Mon-Sat, 9:00 AM - 6:00 PM', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
+        { title: 'Email Us', content: 'goorganic.co.pk@gmail.com', description: 'For general inquiries and support', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+        { title: 'Call Us', content: (<>+92 324 2452454<br />+92 310 2260995</>), description: 'Mon-Sat, 9:00 AM - 6:00 PM', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
         { title: 'Visit Us', content: 'Karachi, Sindh', description: 'Corporate Office', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' }
-    ];
-
-    const faqs = [
-        { question: 'How do I know if a product is truly organic?', answer: 'All products on GOorganic are verified and certified organic. We work only with vendors who maintain proper organic certification and regularly audit their processes.' },
-        { question: 'What are your delivery charges?', answer: 'Delivery charges vary based on your location and order value. Orders above Rs. 1000 qualify for free delivery in selected cities.' },
-        { question: 'How can I become a vendor?', answer: "You can register as a vendor through our vendor registration page. We'll review your application and get back to you within 2-3 business days." },
-        { question: "What is your return policy?", answer: "We have a hassle-free return policy. If you're not satisfied with the product quality, you can return it within 24 hours of delivery." }
     ];
 
     return (
@@ -37,7 +49,20 @@ const ContactPage = () => {
 
                     <div>
                         <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
-                        <div className="space-y-6">{faqs.map((faq, index) => (<div key={index} className="bg-white p-6 rounded-lg shadow-md"><h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3><p className="text-gray-600">{faq.answer}</p></div>))}</div>
+                        {loadingFaqs ? (
+                            <div className="text-center py-8 text-gray-500">Loading FAQs...</div>
+                        ) : faqs.length === 0 ? (
+                            <div className="bg-white p-6 rounded-lg shadow-md text-center text-gray-500">No FAQs available at the moment.</div>
+                        ) : (
+                            <div className="space-y-6">
+                                {faqs.map((faq) => (
+                                    <div key={faq._id} className="bg-white p-6 rounded-lg shadow-md">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                                        <p className="text-gray-600">{faq.answer}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

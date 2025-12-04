@@ -294,10 +294,10 @@ const Step2Form = React.memo(function Step2Form({ vendorData, error, handleInput
                         <select name="businessCategory" value={vendorData.businessCategory} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 bg-white">
                             <option value="">Select Category</option>
                             <option>Farmer</option>
+                            <option>Retailer</option>
+                            <option>Distributor</option>
+                            <option>Manufacturer</option>
                             <option>Artisan</option>
-                            <option>Apiary (Honey)</option>
-                            <option>Dairy</option>
-                            <option>Other</option>
                         </select>
                     </div>
                 </div>
