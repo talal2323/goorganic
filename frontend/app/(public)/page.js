@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAppContext } from '@/context/AppContext';
+import { useAppContext, useCart } from '@/context/AppContext';
 import { Button, Icon, VerificationBadge } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
 import { getFeaturedProducts } from '@/utils/productApi';
 import { getFeaturedVendors } from '@/utils/userApi';
+import { showToast } from '@/utils/toast';
 
 const features = [
     { title: '100% Organic', desc: 'All products are certified organic and sustainably sourced from top-tier vendors.', iconPath: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.192-2.058-.573-3.016z' },
@@ -17,7 +18,8 @@ const features = [
 
 export default function Home() {
     const router = useRouter();
-    const { dispatch } = useAppContext();
+    const { state } = useAppContext();
+    const { addItemToCart, openCart } = useCart();
     const [isClient, setIsClient] = useState(false);
     const [showVendorButton, setShowVendorButton] = useState(false);
     const [featuredVendors, setFeaturedVendors] = useState([]);
@@ -46,9 +48,25 @@ export default function Home() {
         }
     };
 
-    const handleAddToCart = (product) => {
-        dispatch({ type: 'ADD_TO_CART', payload: { ...product, qty: 1 } });
-        dispatch({ type: 'SET_CART_OPEN', payload: true });
+    const handleAddToCart = async (e, product) => {
+        e.stopPropagation();
+
+        // Check if user is logged in
+        if (!state.isLoggedIn) {
+            showToast.error('Please log in to add items to cart');
+            router.push('/auth/login');
+            return;
+        }
+
+        try {
+            await addItemToCart(product._id, 1);
+            showToast.success(`${product.name} added to cart`);
+            openCart();
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            const message = error.response?.data?.message || error.message || 'Failed to add item to cart';
+            showToast.error(message);
+        }
     };
 
     const handleProductClick = (product) => {
@@ -213,10 +231,7 @@ export default function Home() {
                                         </div>
                                         <Button
                                             className="mt-3 w-full"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleAddToCart(product);
-                                            }}
+                                            onClick={(e) => handleAddToCart(e, product)}
                                             disabled={product.stock === 0}
                                         >
                                             {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
