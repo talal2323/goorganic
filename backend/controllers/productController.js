@@ -109,7 +109,7 @@ export const getAllProducts = async (req, res) => {
         const totalProducts = await Product.countDocuments(filter);
 
         const products = await Product.find(filter)
-            .populate('vendor', 'name')
+            .populate('vendor', 'name shopName')
             .populate('category', 'name')
             .limit(pageSize)
             .skip(pageSize * (page - 1));

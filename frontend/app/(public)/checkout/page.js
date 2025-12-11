@@ -151,7 +151,7 @@ const CheckoutPage = () => {
                             )}
                         </div>
 
-                        <div className="mt-6 bg-white p-6 rounded-lg shadow-md"><h3 className="font-medium mb-4">Need Help?</h3><div className="space-y-2 text-sm text-gray-600"><p>• Orders are usually delivered within 1-2 days</p><p>• For any queries, contact our support at goorganic.co.pk@gmail.com</p><p>• Free shipping for orders above Rs. 3000</p></div></div>
+                        <div className="mt-6 bg-white p-6 rounded-lg shadow-md"><h3 className="font-medium mb-4">Need Help?</h3><div className="space-y-2 text-sm text-gray-600"><p>• For any queries, contact our support at goorganic.co.pk@gmail.com</p><p>• Free shipping for orders above Rs. 3000</p></div></div>
                     </div>
                 </div>
             </main>

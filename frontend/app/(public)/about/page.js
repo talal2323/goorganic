@@ -48,27 +48,6 @@ const AboutPage = () => {
         }
     ];
 
-    const teamMembers = [
-        {
-            name: 'Jane Doe',
-            role: 'Founder & CEO',
-            bio: 'With 15 years of experience in organic farming and e-commerce.',
-            img: 'https://placehold.co/200x200/164A26/FFFFFF?text=JD'
-        },
-        {
-            name: 'John Smith',
-            role: 'Head of Operations',
-            bio: 'Expert in supply chain management and quality control.',
-            img: 'https://placehold.co/200x200/164A26/FFFFFF?text=JS'
-        },
-        {
-            name: 'Sarah Wilson',
-            role: 'Head of Vendor Relations',
-            bio: 'Passionate about empowering local organic farmers.',
-            img: 'https://placehold.co/200x200/164A26/FFFFFF?text=SW'
-        }
-    ];
-
     return (
         <div className="bg-gray-50">
             <main>
@@ -83,7 +62,7 @@ const AboutPage = () => {
                                     <span style={{ color: COLORS.secondary }}>Accessible to All</span>
                                 </h1>
                                 <p className="text-lg text-gray-600 mb-8">
-                                    GOorganic is India's leading marketplace for certified organic products.
+                                    GOorganic is Pakistan's leading marketplace for certified organic products.
                                     We connect conscious consumers with verified organic vendors to create
                                     a sustainable ecosystem for healthy living.
                                 </p>
@@ -97,7 +76,7 @@ const AboutPage = () => {
                                 </div>
                             </div>
                             <div className="relative">
-                                <img src="https://placehold.co/600x400/DBE9DB/164A26?text=About+Us" alt="About GOorganic" className="rounded-lg shadow-xl" />
+                                <img src="/images/about_us.png" alt="About GOorganic" className="rounded-lg shadow-xl" />
                                 <div className="absolute inset-0 bg-secondary opacity-10 rounded-lg" style={{ mixBlendMode: 'multiply' }}></div>
                             </div>
                         </div>
@@ -131,25 +110,6 @@ const AboutPage = () => {
                                     </div>
                                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{value.title}</h3>
                                     <p className="text-gray-600">{value.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900">Our Team</h2>
-                            <p className="text-gray-600 mt-4">Meet the people making organic food accessible to everyone</p>
-                        </div>
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {teamMembers.map((member, index) => (
-                                <div key={index} className="bg-white p-6 rounded-lg shadow-md text-center">
-                                    <img src={member.img} alt={member.name} className="w-32 h-32 rounded-full mx-auto mb-4" />
-                                    <h3 className="text-xl font-semibold text-gray-900">{member.name}</h3>
-                                    <p className="text-secondary font-medium mb-2">{member.role}</p>
-                                    <p className="text-gray-600">{member.bio}</p>
                                 </div>
                             ))}
                         </div>
