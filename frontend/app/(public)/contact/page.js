@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Button, Icon } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
 import { getAllFAQs } from '@/utils/faqApi';
+import { sendContactMessage } from '@/utils/contactApi';
+import { showToast } from '@/utils/toast';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [submitted, setSubmitted] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [faqs, setFaqs] = useState([]);
     const [loadingFaqs, setLoadingFaqs] = useState(true);
 
@@ -28,7 +31,22 @@ const ContactPage = () => {
     };
 
     const handleInputChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
-    const handleSubmit = (e) => { e.preventDefault(); console.log('Message submitted:', formData); setSubmitted(true); };
+    
+    const handleSubmit = async (e) => { 
+        e.preventDefault(); 
+        
+        try {
+            setSubmitting(true);
+            const response = await sendContactMessage(formData);
+            showToast.success(response.message || 'Message sent successfully!');
+            setSubmitted(true);
+            setFormData({ name: '', email: '', subject: '', message: '' });
+        } catch (error) {
+            showToast.error(error.response?.data?.message || 'Failed to send message. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const contactInfo = [
         { title: 'Email Us', content: 'goorganic.co.pk@gmail.com', description: 'For general inquiries and support', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
@@ -45,7 +63,8 @@ const ContactPage = () => {
                 <div className="grid lg:grid-cols-2 gap-12">
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h2 className="text-2xl font-semibold mb-6">Send us a Message</h2>
-                        {submitted ? (<div className="text-center py-8"><div className="inline-block p-3 rounded-full bg-green-100 mb-4"><Icon path="M5 13l4 4L19 7" className="w-6 h-6" color={COLORS.secondary} /></div><h3 className="text-xl font-semibold text-gray-900 mb-2">Thank you for your message!</h3><p className="text-gray-600">We'll get back to you within 24-48 hours.</p><Button onClick={() => setSubmitted(false)} className="mt-6">Send Another Message</Button></div>) : (<form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700">Name</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Subject</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Message</label><textarea name="message" value={formData.message} onChange={handleInputChange} required rows="4" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary"></textarea></div><Button type="submit" className="w-full">Send Message</Button></form>)}</div>
+                            {submitted ? (<div className="text-center py-8"><div className="inline-block p-3 rounded-full bg-green-100 mb-4"><Icon path="M5 13l4 4L19 7" className="w-6 h-6" color={COLORS.secondary} /></div><h3 className="text-xl font-semibold text-gray-900 mb-2">Thank you for your message!</h3><p className="text-gray-600">We'll get back to you within 24-48 hours.</p><Button onClick={() => setSubmitted(false)} className="mt-6">Send Another Message</Button></div>) : (<form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700">Name</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Subject</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">Message</label><textarea name="message" value={formData.message} onChange={handleInputChange} required rows="4" className="mt-1 block w-full rounded-md border-gray-300 shadow focus:border-secondary focus:ring-secondary"></textarea></div><Button type="submit" className="w-full" disabled={submitting}>{submitting ? 'Sending...' : 'Send Message'}</Button></form>)}
+                        </div>
 
                     <div>
                         <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>

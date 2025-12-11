@@ -13,6 +13,7 @@ import cartRoutes from './routes/cartRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import faqRoutes from './routes/faqRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 import { startScheduler } from './utils/scheduler.js';
 
 // Configure dotenv
@@ -47,6 +48,7 @@ app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/faqs', faqRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/contact', contactRoutes);
 
 // Test Route
 app.get('/', (req, res) => {

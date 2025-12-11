@@ -10,6 +10,7 @@ import { showToast } from '@/utils/toast';
 
 // Product Card Component with Image Slider
 const ProductCard = ({ product, onProductClick, onAddToCart }) => {
+    const router = useRouter();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const hasMultipleImages = product.images && product.images.length > 1;
 
@@ -25,6 +26,13 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
 
         return () => clearInterval(interval);
     }, [hasMultipleImages, product.images?.length]);
+
+    const handleVendorClick = (e) => {
+        e.stopPropagation();
+        if (product.vendor?._id) {
+            router.push(`/vendors/${product.vendor._id}`);
+        }
+    };
 
     return (
         <div
@@ -102,6 +110,21 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
                     {product.name}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
+
+                {/* Vendor Information */}
+                {product.vendor && (
+                    <div className="mt-2 flex items-center text-xs text-gray-500">
+                        <Icon path="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" className="w-3 h-3 mr-1" />
+                        <span>Sold by </span>
+                        <button
+                            onClick={handleVendorClick}
+                            className="ml-1 text-secondary hover:text-secondary-dark font-medium hover:underline"
+                        >
+                            {product.vendor.shopName || product.vendor.name}
+                        </button>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between mt-3">
                     <p className="text-secondary font-bold text-lg">Rs. {product.price}</p>
                     {product.ratings > 0 && (
@@ -111,6 +134,15 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
                         </div>
                     )}
                 </div>
+
+                {/* Low Stock Warning */}
+                {product.stock > 0 && product.stock <= 3 && (
+                    <div className="mt-2 flex items-center text-xs text-orange-600 font-medium">
+                        <Icon path="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" className="w-3 h-3 mr-1" />
+                        <span>Only {product.stock} left in stock!</span>
+                    </div>
+                )}
+
                 <Button
                     onClick={(e) => onAddToCart(e, product)}
                     className="w-full mt-4"
