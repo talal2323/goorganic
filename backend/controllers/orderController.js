@@ -3,6 +3,7 @@ import { Cart } from '../models/cartModel.js';
 import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import sendEmail from '../utils/sendEmail.js';
+import { createNotification } from './notificationController.js';
 
 //   Create a new order from the user's cart
 export const createOrder = async (req, res) => {
@@ -71,6 +72,16 @@ export const createOrder = async (req, res) => {
                 if (vendor) {
                     const itemsList = items.map(item => `• ${item.name} x${item.quantity} - Rs. ${(item.price * item.quantity).toLocaleString()}`).join('\n');
 
+                    // Create in-app notification for vendor
+                    await createNotification({
+                        userId: vendorId,
+                        type: 'order',
+                        title: 'New Order Received',
+                        message: `You have a new order worth Rs. ${subTotal.toLocaleString()} from ${customer.name}`,
+                        link: '/vendor/orders',
+                        metadata: { orderId: parentOrder._id, subTotal, itemCount: items.length }
+                    });
+
                     await sendEmail({
                         email: vendor.email,
                         subject: '🎉 New Order Received - GOorganic',
@@ -133,6 +144,29 @@ export const createOrder = async (req, res) => {
                 const allItems = [];
                 for (const [vendorId, items] of vendorItems.entries()) {
                     allItems.push(...items);
+                }
+
+                // Create in-app notification for customer
+                await createNotification({
+                    userId: userId,
+                    type: 'order',
+                    title: 'Order Placed Successfully',
+                    message: `Your order of Rs. ${totalAmount.toLocaleString()} has been confirmed and is being processed`,
+                    link: '/orders',
+                    metadata: { orderId: parentOrder._id, totalAmount, itemCount: allItems.length }
+                });
+
+                // Notify all admins about new order
+                const admins = await User.find({ roles: 'admin' });
+                for (const admin of admins) {
+                    await createNotification({
+                        userId: admin._id,
+                        type: 'order',
+                        title: 'New Order Placed',
+                        message: `${customer.name} placed an order of Rs. ${totalAmount.toLocaleString()} (${allItems.length} items)`,
+                        link: '/admin/orders',
+                        metadata: { orderId: parentOrder._id, customerName: customer.name, totalAmount, itemCount: allItems.length }
+                    });
                 }
 
                 await sendEmail({

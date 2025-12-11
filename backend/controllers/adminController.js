@@ -3,6 +3,7 @@ import sendEmail from '../utils/sendEmail.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import Product from '../models/productModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
+import { createNotification } from './notificationController.js';
 
 export const approveVendor = async (req, res) => {
     const vendor = await User.findById(req.params.id);
@@ -12,6 +13,14 @@ export const approveVendor = async (req, res) => {
         vendor.rejectionReason = undefined;
         await vendor.save({ validateBeforeSave: false });
 
+        // Create in-app notification
+        await createNotification({
+            userId: vendor._id,
+            type: 'vendor',
+            title: 'Account Approved!',
+            message: 'Congratulations! Your vendor account has been approved. You can now start listing products.',
+            link: '/vendor'
+        });
 
         await sendEmail({
             email: vendor.email,
@@ -67,6 +76,14 @@ export const rejectVendor = async (req, res) => {
         vendor.rejectionReason = reason;
         await vendor.save();
 
+        // Create in-app notification
+        await createNotification({
+            userId: vendor._id,
+            type: 'vendor',
+            title: 'Application Update',
+            message: `Your vendor application was not approved. Reason: ${reason}`,
+            link: '/vendor/business-info'
+        });
 
         await sendEmail({
             email: vendor.email,
@@ -198,6 +215,16 @@ export const upgradeVendorSubscription = async (req, res) => {
         vendor.subscription.endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
         await vendor.save();
+
+        // Create in-app notification
+        await createNotification({
+            userId: vendor._id,
+            type: 'subscription',
+            title: 'Subscription Upgraded',
+            message: `Your subscription has been upgraded to ${plan.name.toUpperCase()} plan (${plan.productLimit} products)`,
+            link: '/vendor/subscriptions',
+            metadata: { planName: plan.name, productLimit: plan.productLimit, endDate: vendor.subscription.endDate }
+        });
 
         // Send email notification to vendor
         try {
