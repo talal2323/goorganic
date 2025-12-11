@@ -4,6 +4,7 @@ import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
+import { createNotification } from './notificationController.js';
 
 //     Get dashboard statistics for a logged-in vendor
 
@@ -496,6 +497,16 @@ export const updateOrderStatus = async (req, res) => {
                 const statusEmoji = status === 'Shipped' ? '🚚' : status === 'Delivered' ? '✅' : '📦';
                 const itemsList = subOrder.items.map(item => `• ${item.name} x${item.quantity}`).join('\n');
 
+                // Create in-app notification for customer
+                await createNotification({
+                    userId: customer._id,
+                    type: 'order',
+                    title: `Order ${status}`,
+                    message: `Your order from ${req.user.shopName || req.user.name} has been ${status.toLowerCase()}`,
+                    link: '/orders',
+                    metadata: { orderId: subOrder.order._id, status, subTotal: subOrder.subTotal }
+                });
+
                 await sendEmail({
                     email: customer.email,
                     subject: `${statusEmoji} Order Update: ${status} - GOorganic`,
@@ -548,6 +559,18 @@ export const requestSubscriptionUpgrade = async (req, res) => {
 
         // Get admin emails
         const admins = await User.find({ roles: 'admin' }).select('email name');
+
+        // Create in-app notifications for all admins
+        for (const admin of admins) {
+            await createNotification({
+                userId: admin._id,
+                type: 'subscription',
+                title: 'Subscription Upgrade Request',
+                message: `${vendor.shopName || vendor.name} requested ${plan.name.toUpperCase()} plan upgrade (PKR ${plan.price}/month)`,
+                link: '/admin/subscriptions',
+                metadata: { vendorName: vendor.name, shopName: vendor.shopName, requestedPlan: plan.name, planPrice: plan.price }
+            });
+        }
 
         // Send email to all admins
         const emailPromises = admins.map(admin =>

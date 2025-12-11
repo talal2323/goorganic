@@ -4,6 +4,7 @@ import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import sendEmail from './sendEmail.js';
+import { createNotification } from '../controllers/notificationController.js';
 
 const checkSubscriptions = async () => {
     console.log('Running scheduled job: Checking subscriptions...');
@@ -46,6 +47,16 @@ const checkSubscriptions = async () => {
                         await product.save();
                     }
 
+                    // Create in-app notification
+                    await createNotification({
+                        userId: vendor._id,
+                        type: 'subscription',
+                        title: 'Subscription Expired',
+                        message: `Your subscription has expired. ${excessCount} products have been unlisted. Upgrade to reactivate them.`,
+                        link: '/vendor/subscriptions',
+                        metadata: { unlistedCount: excessCount, freeProductLimit }
+                    });
+
                     await sendEmail({
                         email: vendor.email,
                         subject: 'Your GoOrganic Subscription Has Expired',
@@ -55,6 +66,15 @@ const checkSubscriptions = async () => {
                     console.log(`Downgraded and unlisted products for ${vendor.email}`);
 
                 } else {
+                    // Create in-app notification
+                    await createNotification({
+                        userId: vendor._id,
+                        type: 'subscription',
+                        title: 'Subscription Expired',
+                        message: 'Your subscription has expired and your account has been moved to the free plan.',
+                        link: '/vendor/subscriptions'
+                    });
+
                     await sendEmail({
                         email: vendor.email,
                         subject: 'Your GoOrganic Subscription Has Expired',
@@ -71,6 +91,15 @@ const checkSubscriptions = async () => {
 
         } else if (daysUntilExpiry > 6 && daysUntilExpiry <= 7) {
             try {
+                // Create in-app notification
+                await createNotification({
+                    userId: vendor._id,
+                    type: 'subscription',
+                    title: 'Subscription Expiring Soon',
+                    message: 'Your subscription expires in 7 days. Renew now to continue enjoying premium features.',
+                    link: '/vendor/subscriptions'
+                });
+
                 await sendEmail({
                     email: vendor.email,
                     subject: 'Your GoOrganic Subscription is Expiring Soon',

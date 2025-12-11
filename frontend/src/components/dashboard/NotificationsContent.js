@@ -1,21 +1,35 @@
 'use client'
 
 // src/components/dashboard/NotificationsContent.js
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardCard from '@/components/ui/DashboardCard';
 import { Icon, COLORS } from '@/config/utils';
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  deleteAllNotifications
+} from '@/utils/notificationApi';
 
-// Mock notifications data - replace with API fetch in real app
-const INITIAL_NOTIFICATIONS = [
-  { id: 'n1', title: 'New order received', message: 'Order #8341 requires packing.', time: '2h ago', read: false, type: 'order' },
-  { id: 'n2', title: 'Payout processed', message: 'Your payout for Sep 2025 has been processed.', time: '1d ago', read: true, type: 'finance' },
-  { id: 'n3', title: 'New review', message: 'You received a 5-star review.', time: '3d ago', read: false, type: 'review' },
-  { id: 'n4', title: 'Profile approved', message: 'Your vendor profile is now verified.', time: '7d ago', read: true, type: 'system' }
-];
+const NotificationRow = ({ item, onToggleRead, onDelete }) => {
+  const router = useRouter();
 
-const NotificationRow = ({ item, onToggleRead }) => {
+  const handleClick = async () => {
+    if (!item.isRead) {
+      await onToggleRead(item._id);
+    }
+    if (item.link) {
+      router.push(item.link);
+    }
+  };
+
   return (
-    <div className={`flex items-start gap-4 p-3 rounded hover:bg-gray-50 ${item.read ? '' : 'bg-green-50'}`}>
+    <div
+      onClick={handleClick}
+      className={`flex items-start gap-4 p-3 rounded hover:bg-gray-50 cursor-pointer ${item.isRead ? '' : 'bg-green-50'}`}
+    >
       <div className="flex-shrink-0">
         <div className="w-10 h-10 rounded-md flex items-center justify-center text-white" style={{ backgroundColor: COLORS.primary }}>
           <Icon name={item.type === 'order' ? 'orders' : 'bell'} className="h-5 w-5" stroke="#fff" />
@@ -26,16 +40,30 @@ const NotificationRow = ({ item, onToggleRead }) => {
           <div>
             <div className="font-medium text-sm" style={{ color: COLORS.text }}>{item.title}</div>
             <div className="text-xs text-gray-500 mt-1">{item.message}</div>
+            <div className="text-xs text-gray-400 mt-1">{new Date(item.createdAt).toLocaleString()}</div>
           </div>
-          <div className="text-xs text-gray-400">{item.time}</div>
         </div>
       </div>
-      <div className="flex-shrink-0 pl-3">
+      <div className="flex-shrink-0 pl-3 flex gap-2">
+        {!item.isRead && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleRead(item._id);
+            }}
+            className="text-sm px-2 py-1 rounded bg-[#175017] text-white"
+          >
+            Mark read
+          </button>
+        )}
         <button
-          onClick={() => onToggleRead(item.id)}
-          className={`text-sm px-2 py-1 rounded ${item.read ? 'bg-gray-100' : 'bg-[#175017] text-white'}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item._id);
+          }}
+          className="text-sm px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200"
         >
-          {item.read ? 'Mark unread' : 'Mark read'}
+          Delete
         </button>
       </div>
     </div>
@@ -43,26 +71,77 @@ const NotificationRow = ({ item, onToggleRead }) => {
 };
 
 const NotificationsContent = () => {
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
 
-  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await getNotifications();
+      setNotifications(data.notifications || []);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
   const visible = useMemo(() => {
     return notifications.filter(n => {
-      if (filter === 'unread' && n.read) return false;
+      if (filter === 'unread' && n.isRead) return false;
       if (query && !(n.title.toLowerCase().includes(query.toLowerCase()) || n.message.toLowerCase().includes(query.toLowerCase()))) return false;
       return true;
     });
   }, [notifications, filter, query]);
 
-  const toggleRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n));
+  const toggleRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
   };
 
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const clearRead = () => setNotifications(prev => prev.filter(n => !n.read));
+  const handleDelete = async (id) => {
+    try {
+      await deleteNotification(id);
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
+  };
+
+  const clearRead = async () => {
+    if (!confirm('Delete all read notifications?')) return;
+
+    try {
+      const readNotifications = notifications.filter(n => n.isRead);
+      for (const notification of readNotifications) {
+        await deleteNotification(notification._id);
+      }
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Failed to clear read notifications:', error);
+    }
+  };
 
   return (
     <DashboardCard
@@ -86,13 +165,17 @@ const NotificationsContent = () => {
         />
       </div>
 
-      <div className="space-y-2">
-        {visible.length === 0 ? (
-          <div className="text-center text-sm text-gray-500 py-8">No notifications</div>
-        ) : visible.map(item => (
-          <NotificationRow key={item.id} item={item} onToggleRead={toggleRead} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center text-sm text-gray-500 py-8">Loading notifications...</div>
+      ) : (
+        <div className="space-y-2">
+          {visible.length === 0 ? (
+            <div className="text-center text-sm text-gray-500 py-8">No notifications</div>
+          ) : visible.map(item => (
+            <NotificationRow key={item._id} item={item} onToggleRead={toggleRead} onDelete={handleDelete} />
+          ))}
+        </div>
+      )}
     </DashboardCard>
   );
 };

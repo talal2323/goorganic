@@ -9,6 +9,7 @@ import ShoppingCartSidebar from '@/components/ui/ShoppingCartSidebar';
 import NotificationsPopover from '@/components/ui/NotificationsPopover';
 import api from '@/utils/api';
 import { clearAuthCookies } from '@/utils/cookies';
+import { getNotifications } from '@/utils/notificationApi';
 
 // Account menu dropdown component (kept local to Header)
 const AccountMenuButton = ({ state }) => {
@@ -105,7 +106,35 @@ export const Header = () => {
   const { dispatch, state } = useAppContext();
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (state.isLoggedIn) {
+      fetchUnreadCount();
+      // Refresh count every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [state.isLoggedIn]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await getNotifications();
+      setUnreadCount(data.unreadCount || 0);
+    } catch (error) {
+      console.error('Failed to fetch notification count:', error);
+    }
+  };
+
+  const handleNotificationClick = () => {
+    setNotifOpen(o => !o);
+    if (!notifOpen) {
+      fetchUnreadCount(); // Refresh count when opening
+    }
+  };
+
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Shop', href: '/shop' },
@@ -185,16 +214,21 @@ export const Header = () => {
               {/* Notifications bell - navigates to Notifications page state */}
               <div className="relative z-[60]" ref={notifRef}>
                 <button
-                  onClick={() => setNotifOpen(o => !o)}
-                  className="p-1 rounded hover:bg-gray-100"
+                  onClick={handleNotificationClick}
+                  className="p-1 rounded hover:bg-gray-100 relative"
                   title="Notifications"
                   aria-haspopup="dialog"
                   aria-expanded={notifOpen}
                 >
                   <Icon path="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" className="w-5 h-5 text-gray-700" />
+                  {state.isLoggedIn && unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
                 {notifOpen && (
-                  <NotificationsPopover onClose={() => setNotifOpen(false)} />
+                  <NotificationsPopover onClose={() => setNotifOpen(false)} onRefresh={fetchUnreadCount} />
                 )}
               </div>
 

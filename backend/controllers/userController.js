@@ -7,6 +7,7 @@ import Token from '../models/tokenModel.js';
 import jwt from 'jsonwebtoken';
 import Product from '../models/productModel.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/generateToken.js';
+import { createNotification } from './notificationController.js';
 
 //      Register a new customer
 
@@ -293,6 +294,20 @@ export const requestAccountDeletion = async (req, res) => {
         // Send email notification to admins
         try {
             const admins = await User.find({ roles: 'admin' });
+
+            // Create in-app notifications for all admins
+            for (const admin of admins) {
+                await createNotification({
+                    userId: admin._id,
+                    type: 'system',
+                    title: 'New Deletion Request',
+                    message: `${user.name} (${user.roles.join(', ')}) requested account deletion`,
+                    link: '/admin/deletion-requests',
+                    metadata: { requestedBy: user.name, userEmail: user.email, userRole: user.roles.join(', ') }
+                });
+            }
+
+            // Send emails
             for (const admin of admins) {
                 await sendEmail({
                     email: admin.email,
