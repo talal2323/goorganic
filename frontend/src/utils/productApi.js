@@ -7,6 +7,8 @@ import api from './api';
  * @param {string} params.keyword - Search keyword
  * @param {string} params.category - Category ID
  * @param {string} params.vendor - Vendor ID to filter by
+ * @param {number} params.price_min - Minimum price
+ * @param {number} params.price_max - Maximum price
  * @returns {Promise} Products data with pagination
  */
 export const getProducts = async (params = {}) => {
@@ -16,6 +18,8 @@ export const getProducts = async (params = {}) => {
         if (params.keyword) queryParams.append('keyword', params.keyword);
         if (params.category) queryParams.append('category', params.category);
         if (params.vendor) queryParams.append('vendor', params.vendor);
+        if (params.price_min) queryParams.append('price_min', params.price_min);
+        if (params.price_max) queryParams.append('price_max', params.price_max);
 
         const response = await api.get(`/products?${queryParams.toString()}`);
         return response.data;

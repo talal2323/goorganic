@@ -14,7 +14,9 @@ import {
     requestSubscriptionUpgrade,
     cancelSubscription,
     getMyVendorOrders,
-    updateOrderStatus
+    updateOrderStatus,
+    acceptOrder,
+    cancelOrder
 } from '../controllers/vendorController.js';
 import { protect, vendor, premiumVendor, isApprovedVendor } from '../middleware/authMiddleware.js';
 
@@ -30,6 +32,8 @@ router.post('/subscriptions/request-upgrade', isApprovedVendor, requestSubscript
 router.post('/subscriptions/cancel', isApprovedVendor, cancelSubscription);
 router.get('/orders', isApprovedVendor, getMyVendorOrders);
 router.put('/orders/:id/status', isApprovedVendor, updateOrderStatus);
+router.put('/orders/:id/accept', isApprovedVendor, acceptOrder);
+router.put('/orders/:id/cancel', isApprovedVendor, cancelOrder);
 
 router.route('/profile/shop-images')
     .post(isApprovedVendor, addShopImage);

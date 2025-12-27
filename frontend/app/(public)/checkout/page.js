@@ -6,7 +6,7 @@ import { useCart } from '@/context/AppContext';
 import { Button } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
 import { createOrder } from '@/utils/orderApi';
-import { getProfile } from '@/utils/userApi';
+import { getProfile, getAddresses } from '@/utils/userApi';
 import { showToast } from '@/utils/toast';
 
 const CheckoutPage = () => {
@@ -18,11 +18,14 @@ const CheckoutPage = () => {
         phone: '',
         address: '',
         city: '',
-        state: '',
-        pincode: '',
+        postalCode: '',
         paymentMethod: 'cod'
     });
     const [loading, setLoading] = React.useState(false);
+    const [savedAddresses, setSavedAddresses] = React.useState([]);
+    const [selectedAddressId, setSelectedAddressId] = React.useState('');
+    const [saveAddress, setSaveAddress] = React.useState(false);
+    const [addressLabel, setAddressLabel] = React.useState('');
 
     // Refresh cart and load user profile on mount
     React.useEffect(() => {
@@ -45,12 +48,65 @@ const CheckoutPage = () => {
             }
         };
 
+        // Load saved addresses
+        const loadSavedAddresses = async () => {
+            try {
+                const addresses = await getAddresses();
+                setSavedAddresses(addresses || []);
+
+                // Auto-select default address if exists
+                const defaultAddr = addresses?.find(addr => addr.isDefault);
+                if (defaultAddr) {
+                    setSelectedAddressId(defaultAddr._id);
+                    setFormData(prev => ({
+                        ...prev,
+                        address: defaultAddr.address,
+                        city: defaultAddr.city,
+                        postalCode: defaultAddr.postalCode
+                    }));
+                }
+            } catch (error) {
+                console.error('Error loading addresses:', error);
+            }
+        };
+
         loadUserProfile();
+        loadSavedAddresses();
     }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddressSelect = (e) => {
+        const addressId = e.target.value;
+        setSelectedAddressId(addressId);
+
+        if (addressId === 'new') {
+            // Clear form for new address entry
+            setFormData(prev => ({
+                ...prev,
+                address: '',
+                city: '',
+                postalCode: ''
+            }));
+            setSaveAddress(false);
+            setAddressLabel('');
+        } else if (addressId) {
+            // Auto-fill with selected address
+            const selectedAddr = savedAddresses.find(addr => addr._id === addressId);
+            if (selectedAddr) {
+                setFormData(prev => ({
+                    ...prev,
+                    address: selectedAddr.address,
+                    city: selectedAddr.city,
+                    postalCode: selectedAddr.postalCode
+                }));
+                setSaveAddress(false);
+                setAddressLabel('');
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -61,16 +117,24 @@ const CheckoutPage = () => {
             return;
         }
 
+        // Validate address label if saving
+        if (saveAddress && !addressLabel.trim()) {
+            showToast.error('Please enter a label for this address');
+            return;
+        }
+
         setLoading(true);
         try {
             const orderData = {
                 shippingAddress: {
-                    street: formData.address,
+                    address: formData.address,
                     city: formData.city,
-                    postalCode: formData.pincode,
+                    postalCode: formData.postalCode,
                     country: 'Pakistan'
                 },
-                phoneNumber: formData.phone
+                phoneNumber: formData.phone,
+                saveAddress: saveAddress,
+                addressLabel: saveAddress ? addressLabel : undefined
             };
 
             const order = await createOrder(orderData);
@@ -98,7 +162,7 @@ const CheckoutPage = () => {
     };
 
     const subtotal = cartItems.reduce((sum, it) => sum + (toNumber(it.price) * (it.qty || 1)), 0);
-    const shipping = subtotal >= 3000 ? 0 : 50;
+    const shipping = subtotal >= 3000 ? 0 : 200;
     const total = subtotal + shipping;
 
     return (
@@ -108,12 +172,59 @@ const CheckoutPage = () => {
                     <div className="bg-gray-50">
                         <h2 className="text-2xl font-semibold mb-6">Shipping Information</h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div><label className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div>
-                            <div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div>
-                            <div><label className="block text-sm font-medium text-gray-700">Phone</label><input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div>
-                            <div><label className="block text-sm font-medium text-gray-700">Address</label><textarea name="address" value={formData.address} onChange={handleInputChange} required rows="3" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div>
-                            <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700">City</label><input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div><div><label className="block text-sm font-medium text-gray-700">State</label><input type="text" name="state" value={formData.state} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div></div>
-                            <div><label className="block text-sm font-medium text-gray-700">PIN Code</label><input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary" /></div>
+                            <div><label className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
+                            <div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
+                            <div><label className="block text-sm font-medium text-gray-700">Phone</label><input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
+
+                            {/* Saved Addresses Selector */}
+                            {savedAddresses.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Select Address</label>
+                                    <select
+                                        value={selectedAddressId}
+                                        onChange={handleAddressSelect}
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"
+                                    >
+                                        <option value="new">+ Enter New Address</option>
+                                        {savedAddresses.map(addr => (
+                                            <option key={addr._id} value={addr._id}>
+                                                {addr.label} - {addr.address}, {addr.city}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div><label className="block text-sm font-medium text-gray-700">Address</label><textarea name="address" value={formData.address} onChange={handleInputChange} required rows="3" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
+                            <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700">City</label><input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Postal Code</label><input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div></div>
+
+                            {/* Save Address Checkbox - show when entering new address OR when no saved addresses exist */}
+                            {(selectedAddressId === 'new' || savedAddresses.length === 0) && (
+                                <div className="space-y-2">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={saveAddress}
+                                            onChange={(e) => setSaveAddress(e.target.checked)}
+                                            className="h-4 w-4 text-secondary border-gray-300 rounded focus:ring-secondary"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Save this address for future orders</span>
+                                    </label>
+                                    {saveAddress && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Address Label</label>
+                                            <input
+                                                type="text"
+                                                value={addressLabel}
+                                                onChange={(e) => setAddressLabel(e.target.value)}
+                                                placeholder="e.g., Home, Office"
+                                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div><label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label><div className="space-y-2"><label className="flex items-center"><input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={handleInputChange} className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300" /><span className="ml-2">Cash on Delivery</span></label><label className="flex items-center opacity-50 cursor-not-allowed"><input type="radio" disabled className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300" /><span className="ml-2">Online Payment (Coming Soon)</span></label></div></div>
                             <Button type="submit" className="w-full" disabled={loading || cartLoading || cartItems.length === 0}>
                                 {loading ? 'Placing Order...' : 'Place Order'}

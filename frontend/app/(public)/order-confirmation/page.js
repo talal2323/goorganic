@@ -41,6 +41,7 @@ const OrderConfirmationPage = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'Pending': return 'text-orange-600 bg-orange-100';
             case 'Processing': return 'text-blue-600 bg-blue-100';
             case 'Shipped': return 'text-purple-600 bg-purple-100';
             case 'Delivered': return 'text-green-600 bg-green-100';
@@ -50,13 +51,15 @@ const OrderConfirmationPage = () => {
     };
 
     const getOverallStatus = () => {
-        if (!subOrders.length) return 'Processing';
+        if (!subOrders.length) return 'Pending';
 
         const statuses = subOrders.map(so => so.orderStatus);
         if (statuses.every(s => s === 'Delivered')) return 'Delivered';
         if (statuses.some(s => s === 'Shipped')) return 'Shipped';
-        if (statuses.some(s => s === 'Cancelled')) return 'Processing';
-        return 'Processing';
+        if (statuses.some(s => s === 'Cancelled')) return statuses.every(s => s === 'Cancelled') ? 'Cancelled' : 'Processing';
+        if (statuses.some(s => s === 'Processing')) return 'Processing';
+        if (statuses.every(s => s === 'Pending')) return 'Pending';
+        return 'Pending';
     };
 
     if (loading) {
@@ -98,53 +101,81 @@ const OrderConfirmationPage = () => {
                     <p className="text-gray-600 mb-4">Thank you for your purchase</p>
                     <div className="inline-block bg-gray-100 px-6 py-2 rounded-full">
                         <span className="text-sm text-gray-600">Order Number: </span>
-                        <span className="font-bold text-gray-900">#{order._id.slice(-8).toUpperCase()}</span>
+                        <span className="font-bold text-gray-900">{order.orderNumber || `#${order._id.slice(-8).toUpperCase()}`}</span>
                     </div>
                 </div>
 
                 {/* Order Status Tracker */}
                 <div className="bg-white rounded-lg shadow-md p-8 mb-6">
                     <h2 className="text-xl font-semibold mb-6">Order Status</h2>
-                    <div className="flex justify-between items-center mb-4">
-                        {['Processing', 'Shipped', 'Delivered'].map((status, index) => {
-                            const isActive =
-                                (overallStatus === 'Processing' && index === 0) ||
-                                (overallStatus === 'Shipped' && index <= 1) ||
-                                (overallStatus === 'Delivered' && index <= 2);
 
-                            return (
-                                <div key={status} className="flex flex-col items-center flex-1">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
-                                        }`}>
-                                        {status === 'Processing' && (
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        )}
-                                        {status === 'Shipped' && (
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                            </svg>
-                                        )}
-                                        {status === 'Delivered' && (
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
+                    {overallStatus === 'Cancelled' ? (
+                        // Show cancelled status with a different layout
+                        <div className="text-center">
+                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-4">
+                                <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <h3 className="text-2xl font-bold text-red-600 mb-2">Order Cancelled</h3>
+                            <p className="text-gray-600">This order has been cancelled.</p>
+                            {subOrders.some(so => so.cancellationReason) && (
+                                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 inline-block">
+                                    <p className="text-sm font-medium text-red-800 mb-1">Cancellation Reason:</p>
+                                    <p className="text-sm text-red-700">{subOrders.find(so => so.cancellationReason)?.cancellationReason}</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        // Show normal status flow
+                        <div className="flex justify-between items-center mb-4">
+                            {['Pending', 'Processing', 'Shipped', 'Delivered'].map((status, index) => {
+                                const isActive =
+                                    (overallStatus === 'Pending' && index === 0) ||
+                                    (overallStatus === 'Processing' && index <= 1) ||
+                                    (overallStatus === 'Shipped' && index <= 2) ||
+                                    (overallStatus === 'Delivered' && index <= 3);
+
+                                return (
+                                    <div key={status} className="flex flex-col items-center flex-1">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isActive ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                                            }`}>
+                                            {status === 'Pending' && (
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            )}
+                                            {status === 'Processing' && (
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                </svg>
+                                            )}
+                                            {status === 'Shipped' && (
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                                </svg>
+                                            )}
+                                            {status === 'Delivered' && (
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                        <span className={`text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            {status}
+                                        </span>
+                                        {index < 3 && (
+                                            <div className={`hidden md:block absolute w-full h-1 top-6 left-1/2 ${(index === 0 && ['Processing', 'Shipped', 'Delivered'].includes(overallStatus)) ? 'bg-green-500' :
+                                                (index === 1 && ['Shipped', 'Delivered'].includes(overallStatus)) ? 'bg-green-500' :
+                                                    (index === 2 && overallStatus === 'Delivered') ? 'bg-green-500' :
+                                                        'bg-gray-200'
+                                                }`} style={{ width: 'calc(100% - 3rem)', marginLeft: '1.5rem' }} />
                                         )}
                                     </div>
-                                    <span className={`text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>
-                                        {status}
-                                    </span>
-                                    {index < 2 && (
-                                        <div className={`hidden md:block absolute w-full h-1 top-6 left-1/2 ${isActive && index === 0 && overallStatus !== 'Processing' ? 'bg-green-500' :
-                                            isActive && index === 1 && overallStatus === 'Delivered' ? 'bg-green-500' :
-                                                'bg-gray-200'
-                                            }`} style={{ width: 'calc(100% - 3rem)', marginLeft: '1.5rem' }} />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Order Details */}
@@ -153,7 +184,7 @@ const OrderConfirmationPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-2">Shipping Address</h3>
-                            <p className="text-gray-900">{order.shippingAddress.street}</p>
+                            <p className="text-gray-900">{order.shippingAddress.address}</p>
                             <p className="text-gray-900">{order.shippingAddress.city}, {order.shippingAddress.postalCode}</p>
                             <p className="text-gray-900">{order.shippingAddress.country}</p>
                         </div>

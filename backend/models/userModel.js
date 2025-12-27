@@ -41,12 +41,14 @@ const userSchema = new mongoose.Schema({
     },
     avatar: { public_id: String, url: String },
     phoneNumber: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },
-    shippingAddress: {
-        street: String,
-        city: String,
-        postalCode: String,
-        country: String,
-    },
+    savedAddresses: [{
+        label: { type: String, default: 'Home' },
+        address: { type: String, required: true },
+        city: { type: String, required: true },
+        postalCode: { type: String, required: true },
+        country: { type: String, default: 'Pakistan' },
+        isDefault: { type: Boolean, default: false }
+    }],
     passwordResetToken: String,
     passwordResetExpires: Date,
     shopName: { type: String, required: function () { return Array.isArray(this.roles) && this.roles.includes('vendor'); } },

@@ -4,7 +4,7 @@ import React from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard } from '@/components/common/UIComponents';
 import { getVendorOrders } from '@/utils/orderApi';
-import { updateOrderStatus } from '@/utils/vendorApi';
+import { updateOrderStatus, acceptOrder, cancelOrder } from '@/utils/vendorApi';
 import { showToast } from '@/utils/toast';
 
 const VendorOrders = () => {
@@ -13,6 +13,9 @@ const VendorOrders = () => {
     const [updatingOrderId, setUpdatingOrderId] = React.useState(null);
     const [selectedOrder, setSelectedOrder] = React.useState(null);
     const [showModal, setShowModal] = React.useState(false);
+    const [showCancelModal, setShowCancelModal] = React.useState(false);
+    const [cancellingOrderId, setCancellingOrderId] = React.useState(null);
+    const [cancellationReason, setCancellationReason] = React.useState('');
 
     React.useEffect(() => {
         fetchOrders();
@@ -45,6 +48,48 @@ const VendorOrders = () => {
         }
     };
 
+    const handleAcceptOrder = async (orderId) => {
+        if (!confirm('Are you sure you want to accept this order?')) return;
+
+        try {
+            setUpdatingOrderId(orderId);
+            await acceptOrder(orderId);
+            showToast.success('Order accepted successfully');
+            fetchOrders();
+        } catch (error) {
+            console.error('Error accepting order:', error);
+            showToast.error(error.response?.data?.message || 'Failed to accept order');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
+
+    const handleCancelOrder = async () => {
+        if (!cancellationReason.trim()) {
+            showToast.error('Please provide a cancellation reason');
+            return;
+        }
+
+        try {
+            setUpdatingOrderId(cancellingOrderId);
+            await cancelOrder(cancellingOrderId, cancellationReason);
+            showToast.success('Order cancelled successfully');
+            setShowCancelModal(false);
+            setCancellationReason('');
+            fetchOrders();
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            showToast.error(error.response?.data?.message || 'Failed to cancel order');
+        } finally {
+            setUpdatingOrderId(null);
+        }
+    };
+
+    const openCancelModal = (orderId) => {
+        setCancellingOrderId(orderId);
+        setShowCancelModal(true);
+    };
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -54,6 +99,7 @@ const VendorOrders = () => {
     };
 
     const statusColors = {
+        Pending: 'bg-orange-100 text-orange-800 border-orange-300',
         Processing: 'bg-yellow-100 text-yellow-800 border-yellow-300',
         Shipped: 'bg-blue-100 text-blue-800 border-blue-300',
         Delivered: 'bg-green-100 text-green-800 border-green-300',
@@ -89,7 +135,7 @@ const VendorOrders = () => {
                                             Order Details
                                         </h3>
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Order ID: #{selectedOrder._id.slice(-8).toUpperCase()}
+                                            Order ID: {selectedOrder.order?.orderNumber || `ORD-${selectedOrder._id.slice(-8).toUpperCase()}`}
                                         </p>
                                     </div>
                                     <button
@@ -136,7 +182,7 @@ const VendorOrders = () => {
                                         <div className="mt-4">
                                             <p className="text-gray-500 mb-1">Shipping Address</p>
                                             <p className="text-gray-900">
-                                                {selectedOrder.order?.shippingAddress?.street}<br />
+                                                {selectedOrder.order?.shippingAddress?.address}<br />
                                                 {selectedOrder.order?.shippingAddress?.city}, {selectedOrder.order?.shippingAddress?.postalCode}<br />
                                                 {selectedOrder.order?.shippingAddress?.country}
                                             </p>
@@ -198,6 +244,32 @@ const VendorOrders = () => {
 
                             {/* Modal Footer */}
                             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                                {selectedOrder.orderStatus === 'Pending' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                            onClick={() => {
+                                                handleAcceptOrder(selectedOrder._id);
+                                                closeModal();
+                                            }}
+                                            disabled={updatingOrderId === selectedOrder._id}
+                                        >
+                                            Accept Order
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                            onClick={() => {
+                                                closeModal();
+                                                openCancelModal(selectedOrder._id);
+                                            }}
+                                            disabled={updatingOrderId === selectedOrder._id}
+                                        >
+                                            Cancel Order
+                                        </button>
+                                    </>
+                                )}
                                 {selectedOrder.orderStatus === 'Processing' && (
                                     <button
                                         type="button"
@@ -258,7 +330,7 @@ const VendorOrders = () => {
                                         {orders.map(order => (
                                             <tr key={order._id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary font-mono">
-                                                    #{order._id.slice(-8).toUpperCase()}
+                                                    {order.order?.orderNumber || `ORD-${order._id.slice(-8).toUpperCase()}`}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm">
                                                     <div className="font-medium text-gray-900">{order.order?.customer?.name || 'N/A'}</div>
@@ -286,6 +358,26 @@ const VendorOrders = () => {
                                                     >
                                                         View Details
                                                     </button>
+                                                    {order.orderStatus === 'Pending' && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                className="text-green-600 hover:text-green-800 mr-2 disabled:opacity-50 font-medium"
+                                                                onClick={() => handleAcceptOrder(order._id)}
+                                                                disabled={updatingOrderId === order._id}
+                                                            >
+                                                                Accept
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="text-red-600 hover:text-red-800 disabled:opacity-50 font-medium"
+                                                                onClick={() => openCancelModal(order._id)}
+                                                                disabled={updatingOrderId === order._id}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    )}
                                                     {order.orderStatus === 'Processing' && (
                                                         <button
                                                             type="button"
@@ -316,6 +408,67 @@ const VendorOrders = () => {
                     </DashboardCard>
                 </DashboardLayout>
             </div>
+
+            {/* Cancel Order Modal */}
+            {showCancelModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="cancel-modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                        {/* Background overlay */}
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowCancelModal(false)}></div>
+
+                        {/* Modal panel */}
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="cancel-modal-title">
+                                            Cancel Order
+                                        </h3>
+                                        <div className="mt-2">
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                Please provide a reason for cancelling this order. The customer will be notified via email.
+                                            </p>
+                                            <textarea
+                                                value={cancellationReason}
+                                                onChange={(e) => setCancellationReason(e.target.value)}
+                                                placeholder="Enter cancellation reason..."
+                                                rows={4}
+                                                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                                    onClick={handleCancelOrder}
+                                    disabled={updatingOrderId === cancellingOrderId || !cancellationReason.trim()}
+                                >
+                                    {updatingOrderId === cancellingOrderId ? 'Cancelling...' : 'Cancel Order'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
+                                    onClick={() => {
+                                        setShowCancelModal(false);
+                                        setCancellationReason('');
+                                    }}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

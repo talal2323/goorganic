@@ -445,7 +445,7 @@ export const getMyVendorOrders = async (req, res) => {
         const orders = await SubOrder.find({ vendor: req.user._id })
             .populate({
                 path: 'order',
-                select: 'shippingAddress customer',
+                select: 'orderNumber shippingAddress customer phoneNumber',
                 populate: { path: 'customer', select: 'name email' }
             })
             .populate('items.product', 'images')
@@ -470,6 +470,19 @@ export const updateOrderStatus = async (req, res) => {
 
         if (subOrder.vendor.toString() !== req.user._id.toString()) {
             return res.status(401).json({ message: 'Not authorized to update this order' });
+        }
+
+        // Validate status transitions
+        const validTransitions = {
+            'Pending': ['Processing', 'Cancelled'],
+            'Processing': ['Shipped', 'Cancelled'],
+            'Shipped': ['Delivered'],
+            'Delivered': [],
+            'Cancelled': []
+        };
+
+        if (!validTransitions[subOrder.orderStatus].includes(status)) {
+            return res.status(400).json({ message: `Cannot change status from ${subOrder.orderStatus} to ${status}` });
         }
 
         subOrder.orderStatus = status;
@@ -541,6 +554,182 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         res.status(200).json(subOrder);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Accept order
+export const acceptOrder = async (req, res) => {
+    try {
+        const subOrder = await SubOrder.findById(req.params.id).populate({
+            path: 'order',
+            populate: { path: 'customer', select: 'name email' }
+        });
+
+        if (!subOrder) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (subOrder.vendor.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to accept this order' });
+        }
+
+        if (subOrder.orderStatus !== 'Pending') {
+            return res.status(400).json({ message: 'Only pending orders can be accepted' });
+        }
+
+        subOrder.orderStatus = 'Processing';
+        await subOrder.save();
+
+        // Send email to customer
+        try {
+            const customer = subOrder.order.customer;
+            if (customer) {
+                const itemsList = subOrder.items.map(item => `• ${item.name} x${item.quantity}`).join('\n');
+
+                // Create in-app notification
+                await createNotification({
+                    userId: customer._id,
+                    type: 'order',
+                    title: 'Order Accepted',
+                    message: `Your order from ${req.user.shopName || req.user.name} has been accepted and is now being processed`,
+                    link: '/orders',
+                    metadata: { orderId: subOrder.order._id, subTotal: subOrder.subTotal }
+                });
+
+                await sendEmail({
+                    email: customer.email,
+                    subject: '✅ Order Accepted - GOorganic',
+                    message: `Hi ${customer.name},\n\nGreat news! Your order has been accepted by ${req.user.businessName || req.user.name} and is now being processed.\n\nItems:\n${itemsList}\n\nOrder Total: Rs. ${subOrder.subTotal.toLocaleString()}\n\nYou can track your order status in your dashboard.\n\nThank you for shopping with GOorganic!`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #2d6a4f; margin-top: 0;">✅ Order Accepted!</h2>
+                                <p style="font-size: 16px; color: #374151;">Hi ${customer.name},</p>
+                                <p style="font-size: 16px; color: #374151;">Great news! Your order has been <strong>accepted</strong> by ${req.user.businessName || req.user.name} and is now being processed.</p>
+                                <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d6a4f;">
+                                    <h3 style="color: #2d6a4f; margin-top: 0;">Order Summary</h3>
+                                    <p style="margin: 5px 0; color: #374151; font-size: 18px;"><strong>Total: Rs. ${subOrder.subTotal.toLocaleString()}</strong></p>
+                                </div>
+                                <div style="margin: 20px 0;">
+                                    <h4 style="color: #374151;">Items in your order:</h4>
+                                    <ul style="list-style: none; padding: 0; background-color: #f9fafb; border-radius: 8px; padding: 15px;">
+                                        ${subOrder.items.map(item => `
+                                            <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between;">
+                                                <span style="color: #374151;">• ${item.name} <strong>x${item.quantity}</strong></span>
+                                                <span style="color: #2d6a4f; font-weight: bold;">Rs. ${(item.price * item.quantity).toLocaleString()}</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">You can track your order status in your dashboard.<br/>Thank you for shopping with GOorganic!</p>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+        } catch (emailError) {
+            console.error('Failed to send acceptance email to customer:', emailError);
+        }
+
+        res.status(200).json({ message: 'Order accepted successfully', subOrder });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Cancel order
+export const cancelOrder = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const subOrder = await SubOrder.findById(req.params.id).populate({
+            path: 'order',
+            populate: { path: 'customer', select: 'name email' }
+        });
+
+        if (!subOrder) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (subOrder.vendor.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized to cancel this order' });
+        }
+
+        if (subOrder.orderStatus === 'Delivered') {
+            return res.status(400).json({ message: 'Cannot cancel a delivered order' });
+        }
+
+        if (subOrder.orderStatus === 'Cancelled') {
+            return res.status(400).json({ message: 'Order is already cancelled' });
+        }
+
+        subOrder.orderStatus = 'Cancelled';
+        subOrder.cancellationReason = reason || 'No reason provided';
+        await subOrder.save();
+
+        // Restore stock for cancelled items
+        try {
+            for (const item of subOrder.items) {
+                await Product.findByIdAndUpdate(item.product, {
+                    $inc: { stock: item.quantity }
+                });
+            }
+        } catch (stockError) {
+            console.error('Failed to restore stock for cancelled order:', stockError);
+        }
+
+        // Send email to customer
+        try {
+            const customer = subOrder.order.customer;
+            if (customer) {
+                const itemsList = subOrder.items.map(item => `• ${item.name} x${item.quantity}`).join('\n');
+
+                // Create in-app notification
+                await createNotification({
+                    userId: customer._id,
+                    type: 'order',
+                    title: 'Order Cancelled',
+                    message: `Your order from ${req.user.shopName || req.user.name} has been cancelled`,
+                    link: '/orders',
+                    metadata: { orderId: subOrder.order._id, subTotal: subOrder.subTotal }
+                });
+
+                await sendEmail({
+                    email: customer.email,
+                    subject: '❌ Order Cancelled - GOorganic',
+                    message: `Hi ${customer.name},\n\nWe regret to inform you that your order from ${req.user.businessName || req.user.name} has been cancelled.\n\nReason: ${reason || 'No reason provided'}\n\nItems:\n${itemsList}\n\nOrder Total: Rs. ${subOrder.subTotal.toLocaleString()}\n\nIf you have any questions, please contact us at goorganic.co.pk@gmail.com\n\nWe apologize for any inconvenience.`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h2 style="color: #dc2626; margin-top: 0;">❌ Order Cancelled</h2>
+                                <p style="font-size: 16px; color: #374151;">Hi ${customer.name},</p>
+                                <p style="font-size: 16px; color: #374151;">We regret to inform you that your order from <strong>${req.user.businessName || req.user.name}</strong> has been cancelled.</p>
+                                <div style="background-color: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+                                    <h4 style="color: #991b1b; margin-top: 0;">Cancellation Reason:</h4>
+                                    <p style="margin: 0; color: #374151;">${reason || 'No reason provided'}</p>
+                                </div>
+                                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                    <p style="margin: 5px 0; color: #6b7280;"><strong>Vendor:</strong> ${req.user.businessName || req.user.name}</p>
+                                    <p style="margin: 5px 0; color: #6b7280;"><strong>Order Total:</strong> Rs. ${subOrder.subTotal.toLocaleString()}</p>
+                                </div>
+                                <div style="margin: 20px 0;">
+                                    <h4 style="color: #374151;">Cancelled items:</h4>
+                                    <ul style="list-style: none; padding: 0; background-color: #f9fafb; border-radius: 8px; padding: 15px;">
+                                        ${subOrder.items.map(item => `<li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">• ${item.name} <strong>x${item.quantity}</strong> - Rs. ${(item.price * item.quantity).toLocaleString()}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">If you have any questions, please contact us at goorganic.co.pk@gmail.com<br/>We apologize for any inconvenience.</p>
+                            </div>
+                        </div>
+                    `
+                });
+            }
+        } catch (emailError) {
+            console.error('Failed to send cancellation email to customer:', emailError);
+        }
+
+        res.status(200).json({ message: 'Order cancelled successfully', subOrder });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
     }

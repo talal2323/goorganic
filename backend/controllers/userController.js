@@ -210,9 +210,8 @@ export const updateUserProfile = async (req, res) => {
             user.email = req.body.email || user.email;
             user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
 
-            if (req.body.shippingAddress) {
-                user.shippingAddress = { ...user.shippingAddress, ...req.body.shippingAddress };
-            }
+            // Note: Addresses are now managed via /users/profile/addresses endpoints
+            // See addressController.js for address CRUD operations
 
             if (user.roles && user.roles.includes('vendor')) {
                 user.shopName = req.body.shopName || user.shopName;
@@ -350,20 +349,6 @@ export const requestAccountDeletion = async (req, res) => {
     }
 };
 
-// COMMENTED OUT: Permanent deletion (replaced with soft delete)
-// export const deleteUserProfile = async (req, res) => {
-//     try {
-//         const user = await User.findById(req.user._id);
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found.' });
-//         }
-//         // ... cloudinary cleanup and permanent deletion logic
-//         await user.deleteOne();
-//         res.status(200).json({ message: 'Your account has been permanently deleted.' });
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-// };
 
 //     Change user password
 
@@ -373,7 +358,7 @@ export const changeUserPassword = async (req, res) => {
         const user = await User.findById(req.user._id).select('+password');
 
         if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
-            return res.status(401).json({ message: 'Incorrect current password' });
+            return res.status(400).json({ message: 'Incorrect current password' });
         }
 
         user.password = newPassword;
@@ -385,17 +370,6 @@ export const changeUserPassword = async (req, res) => {
     }
 };
 
-//      Get logged-in user's past orders
-// @route   GET /api/v1/users/profile/orders
-// @access  Private
-/* export const  getUserOrders = async (req, res) => {
-    try {
-        const orders = await Order.find({ customer: req.user._id }).sort({ createdAt: -1 });
-        res.status(200).json(orders);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error fetching orders' });
-    }
-}; */
 
 //     Forgot password -  Send reset token
 

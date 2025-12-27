@@ -18,6 +18,14 @@ import {
     requestAccountDeletion
 } from '../controllers/userController.js';
 
+import {
+    addAddress,
+    getAddresses,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress
+} from '../controllers/addressController.js';
+
 import { protect } from '../middleware/authMiddleware.js';
 
 router.get('/featured-vendors', getFeaturedVendors);
@@ -36,6 +44,17 @@ router.route('/profile')
     .put(protect, updateUserProfile);
 
 router.put('/profile/change-password', protect, changeUserPassword);
+
+// Address management routes
+router.route('/profile/addresses')
+    .get(protect, getAddresses)
+    .post(protect, addAddress);
+
+router.route('/profile/addresses/:addressId')
+    .put(protect, updateAddress)
+    .delete(protect, deleteAddress);
+
+router.put('/profile/addresses/:addressId/set-default', protect, setDefaultAddress);
 
 // Account deletion (soft delete with admin approval)
 router.post('/request-deletion', protect, requestAccountDeletion);
