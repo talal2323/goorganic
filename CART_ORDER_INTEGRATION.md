@@ -211,7 +211,7 @@ Frontend transforms to:
 ```javascript
 {
   shippingAddress: {
-    street: "123 Main St",
+    address: "123 Main St, Block A",
     city: "Karachi",
     postalCode: "75500",
     country: "Pakistan"

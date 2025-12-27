@@ -167,6 +167,23 @@ const ShopPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
+    const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(10000);
+
+    const handlePriceChange = (type, value) => {
+        const numValue = parseInt(value) || 0;
+        if (type === 'min') {
+            setMinPrice(Math.min(numValue, maxPrice - 100));
+        } else {
+            setMaxPrice(Math.max(numValue, minPrice + 100));
+        }
+    };
+
+    const applyPriceFilter = () => {
+        setPriceRange({ min: minPrice, max: maxPrice });
+        setCurrentPage(1);
+    };
 
     useEffect(() => {
         fetchCategories();
@@ -174,7 +191,7 @@ const ShopPage = () => {
 
     useEffect(() => {
         fetchProducts();
-    }, [currentPage, selectedCategory, searchQuery]);
+    }, [currentPage, selectedCategory, searchQuery, priceRange]);
 
     const fetchCategories = async () => {
         try {
@@ -203,6 +220,8 @@ const ShopPage = () => {
                 const category = categoryList.find(cat => cat.name === selectedCategory);
                 if (category) params.category = category._id;
             }
+            if (priceRange.min > 0) params.price_min = priceRange.min;
+            if (priceRange.max < 10000) params.price_max = priceRange.max;
 
             const data = await getProducts(params);
             setProducts(data.products || []);
@@ -249,7 +268,8 @@ const ShopPage = () => {
                     <h1 className="text-3xl font-bold text-gray-900">Shop Organic Products</h1>
                 </div>
 
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+                    {/* Search Bar */}
                     <div className="relative w-full md:w-72">
                         <input
                             type="text"
@@ -267,22 +287,99 @@ const ShopPage = () => {
                         />
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-2">
-                        {categories.map(category => (
-                            <button
-                                key={category}
-                                onClick={() => {
-                                    setSelectedCategory(category);
-                                    setCurrentPage(1);
-                                }}
-                                className={`px-4 py-2 text-sm rounded-full transition-colors ${selectedCategory === category
-                                    ? 'bg-secondary text-white font-bold'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                                    }`}
-                            >
-                                {category}
-                            </button>
-                        ))}
+                    {/* Filters Container */}
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full lg:w-auto">
+                        {/* Category Filters */}
+                        <div className="flex flex-wrap justify-center gap-2">
+                            {categories.map(category => (
+                                <button
+                                    key={category}
+                                    onClick={() => {
+                                        setSelectedCategory(category);
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`px-4 py-2 text-sm rounded-full transition-colors ${selectedCategory === category
+                                        ? 'bg-secondary text-white font-bold'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Price Range Slider */}
+                        <div className="bg-white rounded-lg shadow-sm px-4 py-2 w-full md:w-auto md:min-w-[300px]">
+                            <h3 className="text-center text-gray-600 font-medium mb-1.5 text-xs">Price Range</h3>
+
+                            {/* Slider Container */}
+                            <div className="relative">
+                                {/* Price Labels Above Sliders */}
+                                <div className="flex justify-between mb-1.5">
+                                    <div className="bg-gray-50 text-black px-1.5 py-0.5 rounded text-xs font-medium">
+                                        Rs.{minPrice.toLocaleString()}
+                                    </div>
+                                    <div className="bg-gray-50 text-black px-1.5 py-0.5 rounded text-xs font-medium">
+                                        Rs.{maxPrice.toLocaleString()}
+                                    </div>
+                                </div>
+
+                                {/* Slider Track */}
+                                <div className="relative h-1 bg-gray-200 rounded-full mb-1">
+                                    {/* Green Active Range */}
+                                    <div
+                                        className="absolute h-1 bg-secondary rounded-full"
+                                        style={{
+                                            left: `${(minPrice / 10000) * 100}%`,
+                                            right: `${100 - (maxPrice / 10000) * 100}%`
+                                        }}
+                                    />
+
+                                    {/* Min Range Input */}
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="10000"
+                                        step="100"
+                                        value={minPrice}
+                                        onChange={(e) => handlePriceChange('min', e.target.value)}
+                                        onMouseUp={applyPriceFilter}
+                                        onTouchEnd={applyPriceFilter}
+                                        className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
+                                        style={{ zIndex: minPrice > maxPrice - 1000 ? 5 : 3 }}
+                                    />
+
+                                    {/* Max Range Input */}
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="10000"
+                                        step="100"
+                                        value={maxPrice}
+                                        onChange={(e) => handlePriceChange('max', e.target.value)}
+                                        onMouseUp={applyPriceFilter}
+                                        onTouchEnd={applyPriceFilter}
+                                        className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
+                                        style={{ zIndex: 4 }}
+                                    />
+                                </div>
+
+                                {/* Clear Filter Button */}
+                                {(minPrice > 0 || maxPrice < 10000) && (
+                                    <button
+                                        onClick={() => {
+                                            setMinPrice(0);
+                                            setMaxPrice(10000);
+                                            setPriceRange({ min: 0, max: 10000 });
+                                            setCurrentPage(1);
+                                        }}
+                                        className="w-full mt-2 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                    >
+                                        Clear Filter
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

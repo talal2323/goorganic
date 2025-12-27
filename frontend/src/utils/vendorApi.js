@@ -222,3 +222,34 @@ export const updateOrderStatus = async (orderId, status) => {
         throw error;
     }
 };
+
+/**
+ * Accept order (Vendor only)
+ * @param {string} orderId - The order ID
+ * @returns {Promise} Accept result
+ */
+export const acceptOrder = async (orderId) => {
+    try {
+        const response = await api.put(`/vendors/orders/${orderId}/accept`);
+        return response.data;
+    } catch (error) {
+        console.error('Error accepting order:', error);
+        throw error;
+    }
+};
+
+/**
+ * Cancel order (Vendor only)
+ * @param {string} orderId - The order ID
+ * @param {string} reason - Cancellation reason
+ * @returns {Promise} Cancel result
+ */
+export const cancelOrder = async (orderId, reason) => {
+    try {
+        const response = await api.put(`/vendors/orders/${orderId}/cancel`, { reason });
+        return response.data;
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        throw error;
+    }
+};

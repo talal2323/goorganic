@@ -56,7 +56,7 @@ const OrderHistoryPage = () => {
                             <div key={order._id} className="bg-white p-6 rounded shadow-sm">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <div className="font-semibold text-lg">Order #{order._id.slice(-8).toUpperCase()}</div>
+                                        <div className="font-semibold text-lg">{order.orderNumber || `Order #${order._id.slice(-8).toUpperCase()}`}</div>
                                         <div className="text-sm text-gray-600 mt-1">
                                             Placed on {formatDate(order.createdAt)}
                                         </div>
@@ -73,7 +73,7 @@ const OrderHistoryPage = () => {
                                         <div className="text-sm text-gray-600">
                                             <p><span className="font-medium">Shipping Address:</span></p>
                                             <p className="mt-1">
-                                                {order.shippingAddress?.street}, {order.shippingAddress?.city}
+                                                {order.shippingAddress?.address}, {order.shippingAddress?.city}
                                                 <br />
                                                 {order.shippingAddress?.postalCode}, {order.shippingAddress?.country}
                                             </p>

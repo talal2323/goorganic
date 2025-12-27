@@ -252,3 +252,78 @@ export const requestAccountDeletion = async (reason) => {
         throw error;
     }
 };
+
+/**
+ * Get all saved addresses
+ * @returns {Promise} Array of saved addresses
+ */
+export const getAddresses = async () => {
+    try {
+        const response = await api.get('/users/profile/addresses');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching addresses:', error);
+        throw error;
+    }
+};
+
+/**
+ * Add a new saved address
+ * @param {Object} addressData - Address details
+ * @returns {Promise} Address creation result
+ */
+export const addAddress = async (addressData) => {
+    try {
+        const response = await api.post('/users/profile/addresses', addressData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding address:', error);
+        throw error;
+    }
+};
+
+/**
+ * Update a saved address
+ * @param {string} addressId - Address ID
+ * @param {Object} addressData - Updated address details
+ * @returns {Promise} Address update result
+ */
+export const updateAddress = async (addressId, addressData) => {
+    try {
+        const response = await api.put(`/users/profile/addresses/${addressId}`, addressData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating address:', error);
+        throw error;
+    }
+};
+
+/**
+ * Delete a saved address
+ * @param {string} addressId - Address ID
+ * @returns {Promise} Address deletion result
+ */
+export const deleteAddress = async (addressId) => {
+    try {
+        const response = await api.delete(`/users/profile/addresses/${addressId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting address:', error);
+        throw error;
+    }
+};
+
+/**
+ * Set an address as default
+ * @param {string} addressId - Address ID
+ * @returns {Promise} Set default result
+ */
+export const setDefaultAddress = async (addressId) => {
+    try {
+        const response = await api.put(`/users/profile/addresses/${addressId}/set-default`);
+        return response.data;
+    } catch (error) {
+        console.error('Error setting default address:', error);
+        throw error;
+    }
+};

@@ -87,7 +87,7 @@ const AdminOrders = () => {
                                             Order Details
                                         </h3>
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Order ID: #{selectedOrder._id.slice(-8).toUpperCase()}
+                                            Order ID: {selectedOrder.orderNumber || `#${selectedOrder._id.slice(-8).toUpperCase()}`}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             Placed on: {formatDate(selectedOrder.createdAt)}
@@ -130,7 +130,7 @@ const AdminOrders = () => {
                                         <div className="mt-4">
                                             <p className="text-gray-500 mb-1">Shipping Address</p>
                                             <p className="text-gray-900">
-                                                {selectedOrder.shippingAddress?.street}<br />
+                                                {selectedOrder.shippingAddress?.address}<br />
                                                 {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.postalCode}<br />
                                                 {selectedOrder.shippingAddress?.country}
                                             </p>
@@ -258,7 +258,7 @@ const AdminOrders = () => {
                                         {orders.map(order => (
                                             <tr key={order._id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 text-sm text-gray-900 font-mono">
-                                                    #{order._id.slice(-8).toUpperCase()}
+                                                    {order.orderNumber || `#${order._id.slice(-8).toUpperCase()}`}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm">
                                                     <div className="font-medium text-primary">{order.customer?.name || 'N/A'}</div>

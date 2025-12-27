@@ -4,7 +4,7 @@ import api from './api';
  * Create a new order from the user's cart (Checkout)
  * @param {Object} orderData - Order details
  * @param {Object} orderData.shippingAddress - Shipping address object
- * @param {string} orderData.shippingAddress.street - Street address
+ * @param {string} orderData.shippingAddress.address - Complete address
  * @param {string} orderData.shippingAddress.city - City
  * @param {string} orderData.shippingAddress.postalCode - Postal code
  * @param {string} orderData.shippingAddress.country - Country
