@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAppContext, useCart } from '@/context/AppContext';
 import { Button, Icon, VerificationBadge } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
@@ -103,12 +104,15 @@ export default function Home() {
                                         </Button>
                                     </Link>
                                 </div>
-                                <div className="w-2/2 hidden sm:flex items-center justify-center p-4">
-                                    <img
-                                        src="/images/hero.png"
-                                        alt="Organic products"
-                                        className="object-cover rounded-lg shadow-2xl"
-                                    />
+                                <div className="w-full hidden sm:flex items-center justify-center p-4">
+                                    <div className="relative w-full h-full min-h-[300px]">
+                                        <Image
+                                            src="/images/hero.png"
+                                            alt="Organic products"
+                                            fill
+                                            className="object-cover rounded-lg shadow-2xl"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -152,12 +156,15 @@ export default function Home() {
                                     className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col items-center text-center p-6 transition duration-300 hover:shadow-xl cursor-pointer w-full max-w-sm"
                                     onClick={() => handleVendorClick(vendor)}
                                 >
-                                    <img
-                                        src={vendor.avatar?.url || 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'}
-                                        alt={vendor.shopName || vendor.name}
-                                        className="w-full h-24 object-cover mb-4 rounded-md"
-                                        onError={(e) => { e.target.src = 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'; }}
-                                    />
+                                    <div className="relative w-full h-24 mb-4">
+                                        <Image
+                                            src={vendor.avatar?.url || 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'}
+                                            alt={vendor.shopName || vendor.name}
+                                            fill
+                                            className="object-cover rounded-md"
+                                            onError={(e) => { e.target.src = 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'; }}
+                                        />
+                                    </div>
                                     <h3 className="text-xl font-semibold text-gray-800 flex items-center justify-center">
                                         {vendor.shopName || vendor.name}
                                         <div className="ml-2">
@@ -206,11 +213,15 @@ export default function Home() {
                                     className="bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-xl cursor-pointer"
                                     onClick={() => handleProductClick(product)}
                                 >
-                                    <img
-                                        src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Product'}
-                                        alt={product.name}
-                                        className="w-full h-48 object-cover"
-                                    />
+                                    <div className="relative w-full h-48">
+                                        <Image
+                                            src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Product'}
+                                            alt={product.name}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            className="object-cover"
+                                        />
+                                    </div>
                                     <div className="p-4">
                                         <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
                                             {product.name}

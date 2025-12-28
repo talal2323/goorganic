@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 // Assuming COLORS is in a config file. If not, we can hardcode them.
 // import { COLORS } from '@/utils/config';
@@ -31,14 +32,16 @@ export const Logo = ({ className = 'text-2xl', color = COLORS.primary, src, alt 
 
   if (src && !imgFailed) {
     return (
-      <img
-        src={src}
-        alt={alt}
-        className={`w-auto ${className}`}
-        onClick={onClick}
-        onError={() => setImgFailed(true)}
-        style={{ cursor: onClick ? 'pointer' : undefined }}
-      />
+      <div className={`relative ${className}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : undefined }}>
+        <Image
+          src={src}
+          alt={alt}
+          width={150}
+          height={50}
+          className="w-full h-full object-contain"
+          onError={() => setImgFailed(true)}
+        />
+      </div>
     );
   }
 
@@ -116,11 +119,15 @@ export const ProductCard = ({ product }) => {
       className="bg-white rounded-xl shadow-lg overflow-hidden transition-shadow hover:shadow-xl hover:scale-[1.02] duration-300 cursor-pointer"
       onClick={handleProductClick}
     >
-      <img
-        src={product.img || 'https://placehold.co/300x200/E9F5E9/164A26?text=Product'}
-        alt={product.name}
-        className="w-full h-48 object-cover"
-      />
+      <div className="relative w-full h-48">
+        <Image
+          src={product.img || 'https://placehold.co/300x200/E9F5E9/164A26?text=Product'}
+          alt={product.name}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover"
+        />
+      </div>
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
         <p className="text-sm text-gray-500 mb-2">{product.vendor}</p>

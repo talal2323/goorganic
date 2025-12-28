@@ -89,12 +89,12 @@ export const createOrder = async (req, res) => {
                     await sendEmail({
                         email: vendor.email,
                         subject: '🎉 New Order Received - Action Required - GOorganic',
-                        message: `Hello ${vendor.businessName || vendor.name},\n\nYou have received a new order that requires your approval!\n\nOrder Details:\n${itemsList}\n\nSubtotal: Rs. ${subTotal.toLocaleString()}\n\nCustomer: ${customer.name}\nPhone: ${phoneNumber}\nShipping Address: ${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.postalCode}\n\nPlease log in to your vendor dashboard to ACCEPT or CANCEL this order.\n\nThank you for being a valued vendor!`,
+                        message: `Hello ${vendor.shopName || vendor.name},\n\nYou have received a new order that requires your approval!\n\nOrder Details:\n${itemsList}\n\nSubtotal: Rs. ${subTotal.toLocaleString()}\n\nCustomer: ${customer.name}\nPhone: ${phoneNumber}\nShipping Address: ${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.postalCode}\n\nPlease log in to your vendor dashboard to ACCEPT or CANCEL this order.\n\nThank you for being a valued vendor!`,
                         html: `
                             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
                                 <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                     <h2 style="color: #2d6a4f; margin-top: 0;">🎉 New Order Received - Action Required!</h2>
-                                    <p style="font-size: 16px; color: #374151;">Hello <strong>${vendor.businessName || vendor.name}</strong>,</p>
+                                    <p style="font-size: 16px; color: #374151;">Hello <strong>${vendor.shopName || vendor.name}</strong>,</p>
                                     <p style="font-size: 16px; color: #374151;">You have received a new order that requires your approval. Please <strong>ACCEPT</strong> or <strong>CANCEL</strong> this order from your dashboard.</p>
                                     
                                     <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d6a4f;">
@@ -239,7 +239,7 @@ export const getOrderById = async (req, res) => {
         }
 
         // Get all sub-orders for this order
-        const subOrders = await SubOrder.find({ order: id }).populate('vendor', 'name email businessName');
+        const subOrders = await SubOrder.find({ order: id }).populate('vendor', 'name email shopName');
 
         res.status(200).json({ order, subOrders });
     } catch (error) {

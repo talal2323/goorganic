@@ -47,9 +47,11 @@ const Footer = () => {
 
           {/* Column 1: Logo, Tagline, Social */}
           <div className="lg:col-span-1">
-            <Link href="/">
-              <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer" />
-            </Link>
+            <div className="inline-block">
+              <Link href="/">
+                <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer" />
+              </Link>
+            </div>
             <p className="text-sm mt-4 text-gray-400">
               Connecting you with the best organic products from verified vendors.
             </p>

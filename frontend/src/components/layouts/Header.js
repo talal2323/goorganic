@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Icon, Logo } from '@/components/common/UIComponents';
 import ShoppingCartSidebar from '@/components/ui/ShoppingCartSidebar';
@@ -66,9 +67,16 @@ const AccountMenuButton = ({ state }) => {
         aria-expanded={open}
         className="flex items-center focus:outline-none"
       >
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+        <div className="relative w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
           {state.isLoggedIn && state.user && state.user.avatar?.url ? (
-            <img src={state.user.avatar.url} alt="avatar" className="w-10 h-10 object-cover" />
+            <Image
+              src={state.user.avatar.url}
+              alt="avatar"
+              fill
+              sizes="40px"
+              className="object-cover"
+              key={state.user.avatar.url}
+            />
           ) : state.isLoggedIn && state.user ? (
             <span className="font-bold">
               {(state.user.name || state.user.email || 'U').charAt(0).toUpperCase()}
@@ -108,6 +116,22 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
+
+  // Fetch fresh user profile to ensure avatar is loaded
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (state.isLoggedIn && state.user) {
+        try {
+          const response = await api.get('/users/profile');
+          dispatch({ type: 'UPDATE_USER', payload: response.data });
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [state.isLoggedIn, dispatch]);
 
   // Fetch unread notification count
   useEffect(() => {

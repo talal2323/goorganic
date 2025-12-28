@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
 import { COLORS, posts as POSTS } from '@/config/theme';
 
@@ -13,8 +14,8 @@ const BlogCard = ({ post }) => {
             className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-105 hover:shadow-xl"
             onClick={() => router.push(`/blog/${post.id}`)}
         >
-            <div className="h-48 bg-gray-100 overflow-hidden">
-                <img src={post.cover} alt={post.title} className="w-full h-full object-cover" />
+            <div className="relative h-48 bg-gray-100 overflow-hidden">
+                <Image src={post.cover} alt={post.title} fill className="object-cover" />
             </div>
             <div className="p-5">
                 <h3 className="text-xl font-semibold mb-2" style={{ color: COLORS.text }}>{post.title}</h3>

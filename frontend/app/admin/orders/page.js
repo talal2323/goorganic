@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard } from '@/components/common/UIComponents';
 import { getAllOrders, getOrderById } from '@/utils/orderApi';
@@ -148,7 +149,7 @@ const AdminOrders = () => {
                                                     <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
                                                         <div>
                                                             <p className="font-medium text-gray-900">
-                                                                {subOrder.vendor?.businessName || subOrder.vendor?.name}
+                                                                {subOrder.vendor?.shopName || subOrder.vendor?.name}
                                                             </p>
                                                             <p className="text-xs text-gray-500">{subOrder.vendor?.email}</p>
                                                         </div>
@@ -171,11 +172,15 @@ const AdminOrders = () => {
                                                                     <tr key={itemIdx} className="border-b last:border-b-0">
                                                                         <td className="py-2">
                                                                             <div className="flex items-center">
-                                                                                <img
-                                                                                    src={item.image || '/images/placeholder.jpg'}
-                                                                                    alt={item.name}
-                                                                                    className="w-10 h-10 rounded object-cover mr-2"
-                                                                                />
+                                                                                <div className="relative w-10 h-10 rounded overflow-hidden mr-2">
+                                                                                    <Image
+                                                                                        src={item.image || '/images/placeholder.jpg'}
+                                                                                        alt={item.name}
+                                                                                        fill
+                                                                                        sizes="40px"
+                                                                                        className="object-cover"
+                                                                                    />
+                                                                                </div>
                                                                                 <span className="text-sm text-gray-900">{item.name}</span>
                                                                             </div>
                                                                         </td>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAppContext, useCart } from '@/context/AppContext';
+import Image from 'next/image';
 import { Button, Icon, VerificationBadge } from '@/components/common/UIComponents';
 import { getProductById } from '@/utils/productApi';
 import { showToast } from '@/utils/toast';
@@ -99,11 +100,12 @@ const ProductDetailPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2">
                         <div className="p-4">
                             {/* Main Image */}
-                            <div className="mb-4">
-                                <img
+                            <div className="relative mb-4 h-96 rounded-lg overflow-hidden">
+                                <Image
                                     src={product.images?.[selectedImageIndex]?.url || 'https://placehold.co/600x600/E9F5E9/164A26?text=Product'}
                                     alt={product.name}
-                                    className="w-full h-96 object-cover rounded-lg"
+                                    fill
+                                    className="object-cover"
                                 />
                             </div>
 
@@ -114,15 +116,17 @@ const ProductDetailPage = () => {
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
-                                            className={`border-2 rounded-lg overflow-hidden ${selectedImageIndex === index
+                                            className={`relative border-2 rounded-lg overflow-hidden h-20 ${selectedImageIndex === index
                                                 ? 'border-secondary'
                                                 : 'border-gray-200 hover:border-gray-400'
                                                 }`}
                                         >
-                                            <img
+                                            <Image
                                                 src={image.url}
                                                 alt={`${product.name} ${index + 1}`}
-                                                className="w-full h-20 object-cover"
+                                                fill
+                                                sizes="80px"
+                                                className="object-cover"
                                             />
                                         </button>
                                     ))}

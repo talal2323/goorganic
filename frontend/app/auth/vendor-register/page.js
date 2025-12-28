@@ -219,6 +219,7 @@ const VendorRegisterPage = () => {
                     handleFinalSubmit={handleFinalSubmit}
                     loading={loading}
                     uploading={uploading}
+                    vendorData={vendorData}
                 />
             )}
             <div className="absolute top-4 right-4 text-xs font-semibold text-gray-500">
@@ -232,25 +233,27 @@ export default VendorRegisterPage;
 
 // Extracted stable components to prevent remounting on each keystroke (preserves input focus)
 const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInputChange, dispatch, goNext, isClient, showBackButton, router }) {
+    const isStep1Valid = vendorData.name && vendorData.email && vendorData.phoneNumber && vendorData.password;
+
     return (
         <>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Personal Information</h2>
             <div className="space-y-4">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <label className="block text-sm font-medium text-gray-700">Full Name <span className="text-red-500">*</span></label>
                     <input type="text" name="name" value={vendorData.name} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Enter your full name" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                     <input type="email" name="email" value={vendorData.email} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Enter your email" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Contact No</label>
+                    <label className="block text-sm font-medium text-gray-700">Contact No <span className="text-red-500">*</span></label>
                     <input type="tel" name="phoneNumber" value={vendorData.phoneNumber} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Enter your contact number" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
                     <input type="password" name="password" value={vendorData.password} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Create a password" />
                 </div>
                 <div className="flex justify-between items-center pt-4">
@@ -259,7 +262,7 @@ const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInput
                             &larr; Back to Login
                         </Button>
                     )}
-                    <Button type="button" onClick={() => goNext(2)}>Next</Button>
+                    <Button type="button" onClick={() => goNext(2)} disabled={!isStep1Valid}>Next</Button>
                 </div>
             </div>
         </>
@@ -267,30 +270,34 @@ const Step1Form = React.memo(function Step1Form({ vendorData, error, handleInput
 });
 
 const Step2Form = React.memo(function Step2Form({ vendorData, error, handleInputChange, handleNextStep, goNext }) {
+    const isStep2Valid = vendorData.shopName && vendorData.shopDescription &&
+        vendorData.shopAddress.address && vendorData.shopAddress.city &&
+        vendorData.businessCategory;
+
     return (
         <>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Business Details</h2>
             <div className="space-y-4">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Business Name</label>
+                    <label className="block text-sm font-medium text-gray-700">Business Name <span className="text-red-500">*</span></label>
                     <input type="text" name="shopName" value={vendorData.shopName} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Enter your business name" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Business Description</label>
+                    <label className="block text-sm font-medium text-gray-700">Business Description <span className="text-red-500">*</span></label>
                     <textarea name="shopDescription" value={vendorData.shopDescription} onChange={handleInputChange} required rows="3" className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Tell us about your business..."></textarea>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Business Address</label>
+                    <label className="block text-sm font-medium text-gray-700">Business Address <span className="text-red-500">*</span></label>
                     <input type="text" name="shopAddress.address" value={vendorData.shopAddress.address} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Street, Building, Unit" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">City</label>
+                        <label className="block text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></label>
                         <input type="text" name="shopAddress.city" value={vendorData.shopAddress.city} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="City" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Business Category</label>
+                        <label className="block text-sm font-medium text-gray-700">Business Category <span className="text-red-500">*</span></label>
                         <select name="businessCategory" value={vendorData.businessCategory} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 bg-white">
                             <option value="">Select Category</option>
                             <option>Farmer</option>
@@ -303,34 +310,45 @@ const Step2Form = React.memo(function Step2Form({ vendorData, error, handleInput
                 </div>
                 <div className="flex justify-between items-center pt-4">
                     <Button type="button" onClick={() => handleNextStep(1)}>Back</Button>
-                    <Button type="button" onClick={() => goNext(3)}>Next</Button>
+                    <Button type="button" onClick={() => goNext(3)} disabled={!isStep2Valid}>Next</Button>
                 </div>
             </div>
         </>
     );
 });
 
-const Step3Form = React.memo(function Step3Form({ error, handleUploadCertification, handleUploadCnicFront, handleUploadCnicBack, handleNextStep, handleFinalSubmit, loading, uploading }) {
+const Step3Form = React.memo(function Step3Form({ error, handleUploadCertification, handleUploadCnicFront, handleUploadCnicBack, handleNextStep, handleFinalSubmit, loading, uploading, vendorData }) {
+    const isStep3Valid = vendorData.cnic.front && vendorData.cnic.back && vendorData.certifications.length > 0;
+
     return (
         <>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Certifications & Verification</h2>
             <form className="space-y-4" onSubmit={handleFinalSubmit}>
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Upload Organic Certification <span className="text-xs text-gray-500">(Max 10MB)</span></label>
-                    <input id="certification-upload" name="certification" type="file" onChange={handleUploadCertification} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary-light file:text-secondary hover:file:bg-secondary-dark" />
+                    <label className="block text-sm font-medium text-gray-700">Upload Organic Certification <span className="text-red-500">*</span> <span className="text-xs text-gray-500">(Max 10MB)</span></label>
+                    <input id="certification-upload" name="certification" type="file" onChange={handleUploadCertification} required className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary-light file:text-secondary hover:file:bg-secondary-dark" />
+                    {vendorData.certifications.length > 0 && (
+                        <p className="text-xs text-green-600 mt-1">✓ {vendorData.certifications.length} certification(s) uploaded</p>
+                    )}
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">CNIC Front <span className="text-xs text-gray-500">(Max 10MB)</span></label>
+                    <label className="block text-sm font-medium text-gray-700">CNIC Front <span className="text-red-500">*</span> <span className="text-xs text-gray-500">(Max 10MB)</span></label>
                     <input id="cnic-front-upload" name="cnicFront" type="file" onChange={handleUploadCnicFront} required className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary-light file:text-secondary hover:file:bg-secondary-dark" />
+                    {vendorData.cnic.front && (
+                        <p className="text-xs text-green-600 mt-1">✓ CNIC front uploaded</p>
+                    )}
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">CNIC Back <span className="text-xs text-gray-500">(Max 10MB)</span></label>
+                    <label className="block text-sm font-medium text-gray-700">CNIC Back <span className="text-red-500">*</span> <span className="text-xs text-gray-500">(Max 10MB)</span></label>
                     <input id="cnic-back-upload" name="cnicBack" type="file" onChange={handleUploadCnicBack} required className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary-light file:text-secondary hover:file:bg-secondary-dark" />
+                    {vendorData.cnic.back && (
+                        <p className="text-xs text-green-600 mt-1">✓ CNIC back uploaded</p>
+                    )}
                 </div>
                 <div className="flex justify-between items-center pt-4">
                     <Button type="button" onClick={() => handleNextStep(2)}>Back</Button>
-                    <Button type="submit" disabled={loading || uploading}>
+                    <Button type="submit" disabled={loading || uploading || !isStep3Valid}>
                         {loading || uploading ? 'Submitting...' : 'Complete Registration'}
                     </Button>
                 </div>

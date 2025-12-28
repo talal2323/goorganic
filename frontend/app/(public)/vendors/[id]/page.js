@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Button, Icon, StarRating, VerificationBadge } from '@/components/common/UIComponents';
 import { getVendorByIdUser } from '@/utils/userApi';
@@ -99,20 +100,24 @@ const VendorDetailPage = () => {
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
                     {/* Cover Image */}
                     <div className="relative h-64 bg-gradient-to-r from-green-600 to-green-800">
-                        <img
+                        <Image
                             src={vendor.shopImages?.[0]?.url || vendor.avatar?.url || 'https://placehold.co/1200x300/E9F5E9/164A26?text=Vendor+Cover'}
                             alt="Cover"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                             onError={(e) => { e.target.src = 'https://placehold.co/1200x300/E9F5E9/164A26?text=Vendor+Cover'; }}
                         />
                         {/* Profile Picture */}
                         <div className="absolute -bottom-16 left-8">
-                            <img
-                                src={vendor.avatar?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'}
-                                alt={vendor.shopName || vendor.name}
-                                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
-                                onError={(e) => { e.target.src = 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'; }}
-                            />
+                            <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+                                <Image
+                                    src={vendor.avatar?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'}
+                                    alt={vendor.shopName || vendor.name}
+                                    fill
+                                    className="object-cover"
+                                    onError={(e) => { e.target.src = 'https://placehold.co/200x200/E9F5E9/164A26?text=Vendor'; }}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -211,11 +216,14 @@ const VendorDetailPage = () => {
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <img
-                                                            src={cert.url}
-                                                            alt={cert.name || `Certification ${index + 1}`}
-                                                            className="w-full h-32 object-cover rounded-md"
-                                                        />
+                                                        <div className="relative w-full h-32">
+                                                            <Image
+                                                                src={cert.url}
+                                                                alt={cert.name || `Certification ${index + 1}`}
+                                                                fill
+                                                                className="object-cover rounded-md"
+                                                            />
+                                                        </div>
                                                         {cert.name && (
                                                             <p className="text-sm text-gray-700 mt-2 text-center font-medium">{cert.name}</p>
                                                         )}
@@ -255,11 +263,15 @@ const VendorDetailPage = () => {
                                     className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
                                     onClick={() => router.push(`/products/${product._id}`)}
                                 >
-                                    <img
-                                        src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=No+Image'}
-                                        alt={product.name}
-                                        className="w-full h-48 object-cover"
-                                    />
+                                    <div className="relative h-48">
+                                        <Image
+                                            src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=No+Image'}
+                                            alt={product.name}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            className="object-cover"
+                                        />
+                                    </div>
                                     <div className="p-4">
                                         <h2 className="text-lg font-semibold text-gray-900">{product.name}</h2>
                                         <p className="text-sm text-gray-600 line-clamp-2 mt-1">{product.description}</p>

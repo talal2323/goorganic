@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Button } from '@/components/common/UIComponents';
@@ -34,11 +35,12 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
                         <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Platform Activity</h3>
-                        <div className="h-64 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-4">
-                            <img
+                        <div className="relative h-64 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-4 overflow-hidden">
+                            <Image
                                 src="https://placehold.co/800x250/E9F5E9/164A26?text=Admin+Traffic+and+Sales+Chart"
                                 alt="Admin Chart"
-                                className="w-full h-full object-cover rounded-lg"
+                                fill
+                                className="object-cover rounded-lg"
                             />
                         </div>
                     </div>

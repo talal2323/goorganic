@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Button, Icon } from '@/components/common/UIComponents';
 import { getAllProductsAdmin, updateProductStatus } from '@/utils/productApi';
@@ -218,11 +219,15 @@ const AdminProductsCategories = () => {
                                             <tr key={product._id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center">
-                                                        <img
-                                                            src={product.images?.[0]?.url || 'https://placehold.co/40x40/E9F5E9/164A26?text=No+Img'}
-                                                            alt={product.name}
-                                                            className="h-10 w-10 rounded object-cover mr-3"
-                                                        />
+                                                        <div className="relative h-10 w-10 rounded overflow-hidden mr-3">
+                                                            <Image
+                                                                src={product.images?.[0]?.url || 'https://placehold.co/40x40/E9F5E9/164A26?text=No+Img'}
+                                                                alt={product.name}
+                                                                fill
+                                                                sizes="40px"
+                                                                className="object-cover"
+                                                            />
+                                                        </div>
                                                         <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
                                                             {product.name}
                                                         </div>

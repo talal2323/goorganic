@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Button, Icon } from '@/components/common/UIComponents';
 import { getMyProducts, createProduct, updateProduct, deleteProduct } from '@/utils/productApi';
@@ -261,11 +262,15 @@ const VendorProducts = () => {
                                 {products.map(product => (
                                     <tr key={product._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <img
-                                                src={product.images?.[0]?.url || 'https://placehold.co/40x40/E9F5E9/164A26?text=No+Img'}
-                                                alt={product.name}
-                                                className="h-10 w-10 rounded-md object-cover"
-                                            />
+                                            <div className="relative h-10 w-10 rounded-md overflow-hidden">
+                                                <Image
+                                                    src={product.images?.[0]?.url || 'https://placehold.co/40x40/E9F5E9/164A26?text=No+Img'}
+                                                    alt={product.name}
+                                                    fill
+                                                    sizes="40px"
+                                                    className="object-cover"
+                                                />
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
                                             <div className="max-w-xs truncate">{product.name}</div>
@@ -457,8 +462,8 @@ const VendorProducts = () => {
                                 {imagePreviews.length > 0 && (
                                     <div className="mt-2 grid grid-cols-4 gap-2">
                                         {imagePreviews.map((preview, index) => (
-                                            <div key={index} className="relative">
-                                                <img src={preview} alt={`Preview ${index + 1}`} className="h-24 w-24 object-cover rounded-lg" />
+                                            <div key={index} className="relative h-24 w-24 rounded-lg overflow-hidden">
+                                                <Image src={preview} alt={`Preview ${index + 1}`} fill sizes="96px" className="object-cover" />
                                                 <button
                                                     type="button"
                                                     onClick={() => handleRemoveImage(index)}

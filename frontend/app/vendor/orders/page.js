@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard } from '@/components/common/UIComponents';
 import { getVendorOrders } from '@/utils/orderApi';
@@ -208,11 +209,15 @@ const VendorOrders = () => {
                                                     <tr key={idx}>
                                                         <td className="px-4 py-3 whitespace-nowrap">
                                                             <div className="flex items-center">
-                                                                <img
-                                                                    src={item.image || '/images/placeholder.jpg'}
-                                                                    alt={item.name}
-                                                                    className="w-10 h-10 rounded object-cover mr-3"
-                                                                />
+                                                                <div className="relative w-10 h-10 rounded overflow-hidden mr-3">
+                                                                    <Image
+                                                                        src={item.image || '/images/placeholder.jpg'}
+                                                                        alt={item.name}
+                                                                        fill
+                                                                        sizes="40px"
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
                                                                 <span className="text-sm text-gray-900">{item.name}</span>
                                                             </div>
                                                         </td>
