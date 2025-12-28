@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/common/UIComponents';
 import { useAppContext } from '@/context/AppContext';
@@ -592,13 +593,16 @@ const VendorBusinessInfo = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">CNIC Front <span className="text-xs text-gray-500">(Max 10MB)</span></label>
                                         {formData.cnic.front.url ? (
                                             <div className="space-y-2">
-                                                <img
-                                                    key={formData.cnic.front.url}
-                                                    src={formData.cnic.front.url}
-                                                    alt="CNIC Front"
-                                                    className="w-full h-48 object-cover rounded-md border"
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E9F5E9/164A26?text=CNIC+Image+Not+Found'; }}
-                                                />
+                                                <div className="relative w-full h-48 rounded-md border overflow-hidden">
+                                                    <Image
+                                                        key={formData.cnic.front.url}
+                                                        src={formData.cnic.front.url}
+                                                        alt="CNIC Front"
+                                                        fill
+                                                        className="object-cover"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E9F5E9/164A26?text=CNIC+Image+Not+Found'; }}
+                                                    />
+                                                </div>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -628,13 +632,16 @@ const VendorBusinessInfo = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">CNIC Back <span className="text-xs text-gray-500">(Max 10MB)</span></label>
                                         {formData.cnic.back.url ? (
                                             <div className="space-y-2">
-                                                <img
-                                                    key={formData.cnic.back.url}
-                                                    src={formData.cnic.back.url}
-                                                    alt="CNIC Back"
-                                                    className="w-full h-48 object-cover rounded-md border"
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E9F5E9/164A26?text=CNIC+Image+Not+Found'; }}
-                                                />
+                                                <div className="relative w-full h-48 rounded-md border overflow-hidden">
+                                                    <Image
+                                                        key={formData.cnic.back.url}
+                                                        src={formData.cnic.back.url}
+                                                        alt="CNIC Back"
+                                                        fill
+                                                        className="object-cover"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E9F5E9/164A26?text=CNIC+Image+Not+Found'; }}
+                                                    />
+                                                </div>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -724,7 +731,9 @@ const VendorBusinessInfo = () => {
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                         {formData.shopImages.map((image, index) => (
                                             <div key={image._id || index} className="relative group">
-                                                <img src={image.url} alt={`Shop ${index + 1}`} className="w-full h-32 object-cover rounded-md border" onError={(e) => { e.target.src = 'https://placehold.co/400x300/E9F5E9/164A26?text=Image+Not+Found'; }} />
+                                                <div className="relative w-full h-32 rounded-md border overflow-hidden">
+                                                    <Image src={image.url} alt={`Shop ${index + 1}`} fill className="object-cover" onError={(e) => { e.target.src = 'https://placehold.co/400x300/E9F5E9/164A26?text=Image+Not+Found'; }} />
+                                                </div>
                                                 <button
                                                     onClick={() => handleDeleteShopImage(image._id)}
                                                     disabled={!canEdit()}

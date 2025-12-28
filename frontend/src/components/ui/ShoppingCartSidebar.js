@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react'; import Image from 'next/image'; import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/AppContext';
 import { Icon, Button } from '@/components/common/UIComponents';
 import { showToast } from '@/utils/toast';
@@ -74,9 +73,9 @@ const ShoppingCartSidebar = () => {
             <ul className="space-y-4">
               {cartItems.map(item => (
                 <li key={item.productId || item.id} className="flex items-start space-x-3">
-                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                  <div className="relative w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
                     ) : (
                       <span className="text-sm text-gray-600">{(item.name || '').charAt(0)}</span>
                     )}

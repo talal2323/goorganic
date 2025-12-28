@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/common/UIComponents';
 import { getOrderById } from '@/utils/orderApi';
@@ -201,7 +202,7 @@ const OrderConfirmationPage = () => {
                             <div key={idx} className="mb-6 pb-6 border-b last:border-b-0">
                                 <div className="flex justify-between items-center mb-3">
                                     <p className="text-sm text-gray-600">
-                                        Vendor: <span className="font-medium text-gray-900">{subOrder.vendor?.businessName || subOrder.vendor?.name || 'N/A'}</span>
+                                        Vendor: <span className="font-medium text-gray-900">{subOrder.vendor?.shopName || subOrder.vendor?.name || 'N/A'}</span>
                                     </p>
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(subOrder.orderStatus)}`}>
                                         {subOrder.orderStatus}
@@ -209,7 +210,9 @@ const OrderConfirmationPage = () => {
                                 </div>
                                 {subOrder.items.map((item, itemIdx) => (
                                     <div key={itemIdx} className="flex items-center gap-4 mb-2">
-                                        <img src={item.image || '/images/placeholder.jpg'} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                                        <div className="relative w-16 h-16 rounded overflow-hidden">
+                                            <Image src={item.image || '/images/placeholder.jpg'} alt={item.name} fill sizes="64px" className="object-cover" />
+                                        </div>
                                         <div className="flex-1">
                                             <p className="font-medium text-gray-900">{item.name}</p>
                                             <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>

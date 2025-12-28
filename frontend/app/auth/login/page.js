@@ -85,12 +85,14 @@ const LoginPage = () => {
         }
     };
 
+    const isFormValid = email.trim() && password.trim();
+
     return (
         <AuthLayout title="Welcome Back">
             <form onSubmit={handleLogin} className="space-y-6 mt-6">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                     <input
                         type="email"
                         value={email}
@@ -101,7 +103,7 @@ const LoginPage = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
                     <input
                         type="password"
                         required
@@ -123,7 +125,7 @@ const LoginPage = () => {
                         Forgot Password?
                     </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !isFormValid}>
                     {loading ? 'Logging in...' : 'Login'}
                 </Button>
             </form>

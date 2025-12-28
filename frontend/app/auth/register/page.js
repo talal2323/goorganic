@@ -38,13 +38,15 @@ const RegisterPage = () => {
         }
     };
 
+    const isFormValid = name.trim() && email.trim() && password.trim();
+
     return (
         <AuthLayout title="Join Our Community">
             {(
                 <form onSubmit={handleRegister} className="space-y-4 mt-6">
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700">Full Name <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             required
@@ -55,7 +57,7 @@ const RegisterPage = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                         <input
                             type="email"
                             required
@@ -66,7 +68,7 @@ const RegisterPage = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
                         <input
                             type="password"
                             required
@@ -76,7 +78,7 @@ const RegisterPage = () => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <Button type="submit" className="w-full mt-6" disabled={loading}>
+                    <Button type="submit" className="w-full mt-6" disabled={loading || !isFormValid}>
                         {loading ? 'Creating Account...' : 'Create Account'}
                     </Button>
                 </form>

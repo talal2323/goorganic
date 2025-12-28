@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext, useCart } from '@/context/AppContext';
 import { Icon, Button } from '@/components/common/UIComponents';
 import { getProducts } from '@/utils/productApi';
@@ -42,19 +43,23 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
             <div className="relative group overflow-hidden h-48">
                 {/* Render all images with crossfade effect */}
                 {product.images?.map((image, index) => (
-                    <img
+                    <Image
                         key={index}
                         src={image.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=No+Image'}
                         alt={`${product.name} - ${index + 1}`}
-                        className={`absolute inset-0 w-full h-48 object-cover transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className={`object-cover transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                             }`}
                     />
                 ))}
                 {!product.images?.length && (
-                    <img
+                    <Image
                         src="https://placehold.co/200x200/E9F5E9/164A26?text=No+Image"
                         alt={product.name}
-                        className="w-full h-48 object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
                     />
                 )}
 

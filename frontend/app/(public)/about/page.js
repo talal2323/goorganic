@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Button, Icon } from '@/components/common/UIComponents';
 import { COLORS } from '@/utils/config';
@@ -75,8 +76,8 @@ const AboutPage = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="relative">
-                                <img src="/images/about_us.png" alt="About GOorganic" className="rounded-lg shadow-xl" />
+                            <div className="relative h-96">
+                                <Image src="/images/about_us.png" alt="About GOorganic" fill unoptimized className="rounded-lg shadow-xl object-cover" />
                                 <div className="absolute inset-0 bg-secondary opacity-10 rounded-lg" style={{ mixBlendMode: 'multiply' }}></div>
                             </div>
                         </div>

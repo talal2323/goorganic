@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/common/UIComponents';
@@ -269,9 +270,9 @@ const ProfilePage = () => {
                             <form onSubmit={handleUpdateProfile}>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="md:col-span-1 text-center">
-                                        <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                                        <div className="relative w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                                             {user.avatar?.url ? (
-                                                <img src={user.avatar.url} alt="avatar" className="w-32 h-32 object-cover" />
+                                                <Image src={user.avatar.url} alt="avatar" fill className="object-cover" />
                                             ) : (
                                                 <span className="text-gray-500">Avatar</span>
                                             )}
@@ -455,9 +456,9 @@ const ProfilePage = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-1 text-center">
-                                <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                                <div className="relative w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                                     {user.avatar?.url ? (
-                                        <img src={user.avatar.url} alt="avatar" className="w-32 h-32 object-cover" />
+                                        <Image src={user.avatar.url} alt="avatar" fill className="object-cover" />
                                     ) : (
                                         <span className="text-gray-500">Avatar</span>
                                     )}

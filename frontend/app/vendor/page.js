@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Icon } from '@/components/common/UIComponents';
@@ -46,11 +47,12 @@ const VendorDashboard = () => {
                     {/* Monthly Sales Overview - Chart Placeholder */}
                     <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
                         <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Monthly Performance</h3>
-                        <div className="h-64 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-4">
-                            <img
+                        <div className="relative h-64 flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200 p-4 overflow-hidden">
+                            <Image
                                 src="https://placehold.co/800x250/F0FFF0/164A26?text=Sales+and+Traffic+Chart"
                                 alt="Monthly Sales Chart"
-                                className="w-full h-full object-cover rounded-lg"
+                                fill
+                                className="object-cover rounded-lg"
                             />
                         </div>
                     </div>

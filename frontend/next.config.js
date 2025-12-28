@@ -6,6 +6,16 @@ const nextConfig = {
     // Optimize images
     images: {
         domains: ['localhost'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'placehold.co',
+            },
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+            },
+        ],
         formats: ['image/webp', 'image/avif'],
     },
     // Compiler optimizations

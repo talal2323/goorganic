@@ -2,6 +2,7 @@
 
 import React, { use } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
 import { COLORS, posts as POSTS } from '@/config/theme';
 import { Button } from '@/components/common/UIComponents';
@@ -37,11 +38,12 @@ const BlogPostPage = ({ params }) => {
                 </div>
 
                 {/* Featured Image */}
-                <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden mb-8">
-                    <img
+                <div className="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden mb-8">
+                    <Image
                         src={post.cover}
                         alt={post.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                     />
                 </div>
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Button, VerificationBadge } from '@/components/common/UIComponents';
 import { getVendorsWithPagination } from '@/utils/userApi';
@@ -64,18 +65,22 @@ const VendorListPage = () => {
                         {vendors.map((vendor) => (
                             <div key={vendor._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
                                 <div className="relative h-48">
-                                    <img
+                                    <Image
                                         src={vendor.avatar?.url || 'https://placehold.co/800x200/E9F5E9/164A26?text=Vendor+Cover'}
                                         alt={vendor.shopName || vendor.name}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
                                         onError={(e) => { e.target.src = 'https://placehold.co/800x200/E9F5E9/164A26?text=Vendor+Cover'; }}
                                     />
-                                    <img
-                                        src={vendor.avatar?.url || 'https://placehold.co/150x150/E9F5E9/164A26?text=Vendor'}
-                                        alt={vendor.shopName || vendor.name}
-                                        className="absolute -bottom-10 left-6 w-20 h-20 rounded-full border-4 border-white shadow-md object-cover"
-                                        onError={(e) => { e.target.src = 'https://placehold.co/150x150/E9F5E9/164A26?text=Vendor'; }}
-                                    />
+                                    <div className="absolute -bottom-10 left-6 w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden">
+                                        <Image
+                                            src={vendor.avatar?.url || 'https://placehold.co/150x150/E9F5E9/164A26?text=Vendor'}
+                                            alt={vendor.shopName || vendor.name}
+                                            fill
+                                            className="object-cover"
+                                            onError={(e) => { e.target.src = 'https://placehold.co/150x150/E9F5E9/164A26?text=Vendor'; }}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="p-6 pt-12">

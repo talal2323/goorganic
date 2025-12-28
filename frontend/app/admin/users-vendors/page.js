@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button, Icon } from '@/components/common/UIComponents';
 import { getAllCustomers } from '@/utils/userApi';
@@ -545,12 +546,12 @@ const AdminUsersVendors = () => {
                                         <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Shop Images</h4>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             {selectedVendor.shopImages.map((img, idx) => (
-                                                <div key={idx} className="relative">
-                                                    <img
+                                                <div key={idx} className="relative w-full h-32 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:opacity-80" onClick={() => window.open(img.url, '_blank')}>
+                                                    <Image
                                                         src={img.url}
                                                         alt={`Shop ${idx + 1}`}
-                                                        className="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80"
-                                                        onClick={() => window.open(img.url, '_blank')}
+                                                        fill
+                                                        className="object-cover"
                                                     />
                                                 </div>
                                             ))}
@@ -565,23 +566,27 @@ const AdminUsersVendors = () => {
                                         {selectedVendor.cnic?.front?.url && (
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-2">CNIC Front</p>
-                                                <img
-                                                    src={selectedVendor.cnic.front.url}
-                                                    alt="CNIC Front"
-                                                    className="w-full h-48 object-contain border border-gray-300 rounded-lg cursor-pointer hover:opacity-80"
-                                                    onClick={() => window.open(selectedVendor.cnic.front.url, '_blank')}
-                                                />
+                                                <div className="relative w-full h-48 border border-gray-300 rounded-lg overflow-hidden cursor-pointer hover:opacity-80" onClick={() => window.open(selectedVendor.cnic.front.url, '_blank')}>
+                                                    <Image
+                                                        src={selectedVendor.cnic.front.url}
+                                                        alt="CNIC Front"
+                                                        fill
+                                                        className="object-contain"
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                         {selectedVendor.cnic?.back?.url && (
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-2">CNIC Back</p>
-                                                <img
-                                                    src={selectedVendor.cnic.back.url}
-                                                    alt="CNIC Back"
-                                                    className="w-full h-48 object-contain border border-gray-300 rounded-lg cursor-pointer hover:opacity-80"
-                                                    onClick={() => window.open(selectedVendor.cnic.back.url, '_blank')}
-                                                />
+                                                <div className="relative w-full h-48 border border-gray-300 rounded-lg overflow-hidden cursor-pointer hover:opacity-80" onClick={() => window.open(selectedVendor.cnic.back.url, '_blank')}>
+                                                    <Image
+                                                        src={selectedVendor.cnic.back.url}
+                                                        alt="CNIC Back"
+                                                        fill
+                                                        className="object-contain"
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                         {!selectedVendor.cnic?.front?.url && !selectedVendor.cnic?.back?.url && (
