@@ -10,6 +10,16 @@ const protect = async (req, res, next) => {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
             req.user = await User.findById(decoded.id).select('-password');
+
+            // Check if user is suspended
+            if (req.user && req.user.isSuspended) {
+                return res.status(403).json({
+                    message: 'Your account has been suspended. Please contact support for more information.',
+                    isSuspended: true,
+                    suspensionReason: req.user.suspensionReason
+                });
+            }
+
             return next();
         } catch (error) {
             console.error(error);

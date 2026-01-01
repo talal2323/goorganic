@@ -158,6 +158,16 @@ export const loginUser = async (req, res) => {
                 });
             }
 
+            // Check if account is suspended
+            if (user.isSuspended) {
+                return res.status(403).json({
+                    message: 'Your account has been suspended. Please contact support for more information.',
+                    isSuspended: true,
+                    suspensionReason: user.suspensionReason,
+                    suspendedAt: user.suspendedAt
+                });
+            }
+
             if (!user.isEmailVerified) {
                 return res.status(403).json({ message: 'Please verify your email before logging in.' });
             }

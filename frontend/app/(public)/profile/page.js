@@ -412,46 +412,48 @@ const ProfilePage = () => {
                                 </div>
                             </div>
 
-                            {/* Danger Zone Section */}
-                            <div className="border-t pt-4 mt-6">
-                                <h3 className="text-lg font-semibold mb-2 text-red-600">Danger Zone</h3>
-                                {hasPendingRequest ? (
-                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                                        <div className="flex items-start">
-                                            <div className="flex-shrink-0">
-                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                            </div>
-                                            <div className="ml-3">
-                                                <h3 className="text-sm font-medium text-yellow-800">
-                                                    Account Deletion Request Pending
-                                                </h3>
-                                                <div className="mt-2 text-sm text-yellow-700">
-                                                    <p>
-                                                        Your account deletion request has been submitted and is pending admin review.
-                                                        You will receive an email notification once your request is processed.
-                                                    </p>
+                            {/* Danger Zone Section - Hidden for Admin */}
+                            {!user.roles?.includes('admin') && (
+                                <div className="border-t pt-4 mt-6">
+                                    <h3 className="text-lg font-semibold mb-2 text-red-600">Danger Zone</h3>
+                                    {hasPendingRequest ? (
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                                            <div className="flex items-start">
+                                                <div className="flex-shrink-0">
+                                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="ml-3">
+                                                    <h3 className="text-sm font-medium text-yellow-800">
+                                                        Account Deletion Request Pending
+                                                    </h3>
+                                                    <div className="mt-2 text-sm text-yellow-700">
+                                                        <p>
+                                                            Your account deletion request has been submitted and is pending admin review.
+                                                            You will receive an email notification once your request is processed.
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="border border-red-300 rounded-lg p-4">
-                                        <h4 className="font-semibold text-gray-900 mb-2">Delete Account</h4>
-                                        <p className="text-sm text-gray-600 mb-4">
-                                            Once you request account deletion, an admin will review your request.
-                                            This action cannot be undone by you.
-                                        </p>
-                                        <Button
-                                            onClick={() => setShowDeletionConfirm(true)}
-                                            className="bg-red-600 hover:bg-red-700"
-                                        >
-                                            Request Account Deletion
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
+                                    ) : (
+                                        <div className="border border-red-300 rounded-lg p-4">
+                                            <h4 className="font-semibold text-gray-900 mb-2">Delete Account</h4>
+                                            <p className="text-sm text-gray-600 mb-4">
+                                                Once you request account deletion, an admin will review your request.
+                                                This action cannot be undone by you.
+                                            </p>
+                                            <Button
+                                                onClick={() => setShowDeletionConfirm(true)}
+                                                className="bg-red-600 hover:bg-red-700"
+                                            >
+                                                Request Account Deletion
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

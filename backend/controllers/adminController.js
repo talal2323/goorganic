@@ -484,8 +484,7 @@ export const getAllCustomers = async (req, res) => {
         const totalCustomers = await User.countDocuments(filter);
 
         const customers = await User.find(filter)
-
-            .select('name email createdAt')
+            .select('name email phoneNumber createdAt isSuspended suspendedAt suspendedBy suspensionReason')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
 
@@ -737,6 +736,138 @@ export const restoreAccount = async (req, res) => {
 
         res.status(200).json({
             message: 'User account restored successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Suspend a user
+export const suspendUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        if (!reason) {
+            return res.status(400).json({ message: 'Suspension reason is required' });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Prevent suspending admin users
+        if (user.roles && user.roles.includes('admin')) {
+            return res.status(403).json({ message: 'Cannot suspend admin users' });
+        }
+
+        if (user.isSuspended) {
+            return res.status(400).json({ message: 'User is already suspended' });
+        }
+
+        user.isSuspended = true;
+        user.suspendedAt = new Date();
+        user.suspendedBy = req.user._id;
+        user.suspensionReason = reason;
+        await user.save({ validateBeforeSave: false });
+
+        // Send email notification
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: '⚠️ Account Suspended - GOorganic',
+                message: `Dear ${user.name},\n\nYour GOorganic account has been suspended.\n\nReason: ${reason}\n\nSuspension Date: ${new Date().toLocaleString()}\n\nIf you believe this is an error, please contact us at goorganic.co.pk@gmail.com\n\nBest regards,\nGOorganic Team`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="background-color: #fee2e2; width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                                    <span style="font-size: 40px;">⚠️</span>
+                                </div>
+                                <h2 style="color: #dc2626; margin: 0;">Account Suspended</h2>
+                            </div>
+                            <p style="font-size: 16px; color: #374151;">Dear ${user.name},</p>
+                            <p style="font-size: 16px; color: #374151;">We regret to inform you that your GOorganic account has been suspended.</p>
+                            <div style="background-color: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+                                <h4 style="color: #991b1b; margin-top: 0;">Suspension Reason:</h4>
+                                <p style="margin: 0; color: #374151;">${reason}</p>
+                            </div>
+                            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <p style="margin: 5px 0; color: #374151;"><strong>Suspension Date:</strong> ${new Date().toLocaleString()}</p>
+                            </div>
+                            <p style="font-size: 16px; color: #374151; margin-top: 20px;">If you believe this is an error or have any questions, please contact us at goorganic.co.pk@gmail.com</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
+            });
+        } catch (emailError) {
+            console.error('Failed to send suspension notification:', emailError);
+        }
+
+        res.status(200).json({
+            message: 'User suspended successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Unsuspend a user
+export const unsuspendUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.isSuspended) {
+            return res.status(400).json({ message: 'User is not suspended' });
+        }
+
+        user.isSuspended = false;
+        user.suspendedAt = null;
+        user.suspendedBy = null;
+        user.suspensionReason = null;
+        await user.save({ validateBeforeSave: false });
+
+        // Send email notification
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: '✅ Account Unsuspended - GOorganic',
+                message: `Dear ${user.name},\n\nGood news! Your GOorganic account suspension has been lifted.\n\nYou can now log in and continue using our services.\n\nRestoration Date: ${new Date().toLocaleString()}\n\nBest regards,\nGOorganic Team`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+                        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="background-color: #d1fae5; width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                                    <span style="font-size: 40px;">✅</span>
+                                </div>
+                                <h2 style="color: #2d6a4f; margin: 0;">Account Unsuspended!</h2>
+                            </div>
+                            <p style="font-size: 16px; color: #374151;">Dear ${user.name},</p>
+                            <p style="font-size: 16px; color: #374151;">Good news! Your GOorganic account suspension has been lifted.</p>
+                            <div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <h4 style="color: #065f46; margin-top: 0;">Account Status:</h4>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Status:</strong> Active</p>
+                                <p style="margin: 5px 0; color: #374151;"><strong>Restoration Date:</strong> ${new Date().toLocaleString()}</p>
+                            </div>
+                            <p style="font-size: 16px; color: #374151;">You can now log in and continue using our services!</p>
+                            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Welcome back!<br/>GOorganic Team 🌱</p>
+                        </div>
+                    </div>
+                `
+            });
+        } catch (emailError) {
+            console.error('Failed to send unsuspension notification:', emailError);
+        }
+
+        res.status(200).json({
+            message: 'User unsuspended successfully'
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

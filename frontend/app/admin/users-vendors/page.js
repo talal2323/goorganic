@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button, Icon } from '@/components/common/UIComponents';
-import { getAllCustomers } from '@/utils/userApi';
+import { getAllCustomers, suspendUser, unsuspendUser } from '@/utils/userApi';
 import { getAllVendorsAdmin, approveVendor, rejectVendor, upgradeVendorSubscription } from '@/utils/vendorApi';
 import { getAllSubscriptionPlans } from '@/utils/subscriptionApi';
 import { showToast } from '@/utils/toast';
@@ -16,6 +16,7 @@ const AdminUsersVendors = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All'); // All, Pending, Approved, Rejected
     const [selectedVendor, setSelectedVendor] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showPdfModal, setShowPdfModal] = useState(false);
@@ -25,6 +26,8 @@ const AdminUsersVendors = () => {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [availablePlans, setAvailablePlans] = useState([]);
     const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState('');
+    const [showSuspendModal, setShowSuspendModal] = useState(false);
+    const [suspensionReason, setSuspensionReason] = useState('');
 
     // Fetch all vendors
     const fetchVendors = async () => {
@@ -91,7 +94,15 @@ const AdminUsersVendors = () => {
     // Filter vendors based on status
     const filteredVendors = Array.isArray(vendors) ? vendors.filter(vendor => {
         if (filter === 'All') return true;
+        if (filter === 'Suspended') return vendor.isSuspended;
         return vendor.vendorStatus === filter;
+    }) : [];
+
+    // Filter users based on status
+    const filteredUsers = Array.isArray(users) ? users.filter(user => {
+        if (filter === 'All') return true;
+        if (filter === 'Suspended') return user.isSuspended;
+        return true;
     }) : [];
 
     // Approve vendor
@@ -172,6 +183,63 @@ const AdminUsersVendors = () => {
         }
     };
 
+    // Open suspend modal
+    const openSuspendModal = (user) => {
+        setSelectedUser(user);
+        setSuspensionReason('');
+        setShowSuspendModal(true);
+    };
+
+    // Handle user suspension
+    const handleSuspend = async () => {
+        if (!suspensionReason.trim()) {
+            showToast.error('Please provide a suspension reason');
+            return;
+        }
+
+        try {
+            setActionLoading(true);
+            await suspendUser(selectedUser._id, suspensionReason);
+
+            // Refresh the correct list based on active tab
+            if (activeTab === 'vendors') {
+                await fetchVendors();
+            } else {
+                await fetchUsers();
+            }
+
+            showToast.success('User suspended successfully. Email notification sent.');
+            setShowSuspendModal(false);
+            setSelectedUser(null);
+            setSuspensionReason('');
+        } catch (error) {
+            showToast.error(error.response?.data?.message || 'Failed to suspend user');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // Handle user unsuspension
+    const handleUnsuspend = async (userId) => {
+        if (!confirm('Are you sure you want to unsuspend this user?')) return;
+
+        try {
+            setActionLoading(true);
+            await unsuspendUser(userId);
+            showToast.success('User unsuspended successfully. Email notification sent.');
+            // Refresh the correct list based on active tab
+            if (activeTab === 'vendors') {
+                await fetchVendors();
+            } else {
+                await fetchUsers();
+            }
+        } catch (error) {
+            showToast.error(error.response?.data?.message || 'Failed to unsuspend user');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     return (
         <DashboardLayout title="Users & Vendors" userRole="admin">
             <div className="space-y-6">
@@ -203,7 +271,7 @@ const AdminUsersVendors = () => {
                 {activeTab === 'vendors' && (
                     <>
                         {/* Header with Stats */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
                                 <p className="text-sm text-gray-600">Total Vendors</p>
                                 <p className="text-2xl font-bold text-gray-800">{vendors.length}</p>
@@ -226,12 +294,18 @@ const AdminUsersVendors = () => {
                                     {vendors.filter(v => v.vendorStatus === 'Rejected').length}
                                 </p>
                             </div>
+                            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                                <p className="text-sm text-gray-600">Suspended</p>
+                                <p className="text-2xl font-bold text-orange-600">
+                                    {vendors.filter(v => v.isSuspended).length}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Filter Tabs */}
                         <div className="bg-white rounded-lg shadow p-4">
                             <div className="flex flex-wrap gap-2 mb-4">
-                                {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
+                                {['All', 'Pending', 'Approved', 'Rejected', 'Suspended'].map(status => (
                                     <button
                                         key={status}
                                         onClick={() => setFilter(status)}
@@ -288,14 +362,21 @@ const AdminUsersVendors = () => {
                                                         {vendor.phoneNumber || 'N/A'}
                                                     </td>
                                                     <td className="px-4 py-4">
-                                                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${vendor.vendorStatus === 'Approved'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : vendor.vendorStatus === 'Rejected'
-                                                                ? 'bg-red-100 text-red-800'
-                                                                : 'bg-yellow-100 text-yellow-800'
-                                                            }`}>
-                                                            {vendor.vendorStatus}
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${vendor.vendorStatus === 'Approved'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : vendor.vendorStatus === 'Rejected'
+                                                                    ? 'bg-red-100 text-red-800'
+                                                                    : 'bg-yellow-100 text-yellow-800'
+                                                                }`}>
+                                                                {vendor.vendorStatus}
+                                                            </span>
+                                                            {vendor.isSuspended && (
+                                                                <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                                    Suspended
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="px-4 py-4 text-sm text-gray-500">
                                                         {new Date(vendor.createdAt).toLocaleDateString()}
@@ -333,6 +414,39 @@ const AdminUsersVendors = () => {
                                                                 View Reason
                                                             </button>
                                                         )}
+                                                        {vendor.vendorStatus === 'Approved' && (
+                                                            <>
+                                                                {vendor.isSuspended ? (
+                                                                    <button
+                                                                        onClick={() => handleUnsuspend(vendor._id)}
+                                                                        disabled={actionLoading}
+                                                                        className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                                                                    >
+                                                                        ✓ Unsuspend
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setSelectedUser(vendor);
+                                                                            setSuspensionReason('');
+                                                                            setShowSuspendModal(true);
+                                                                        }}
+                                                                        disabled={actionLoading}
+                                                                        className="text-orange-600 hover:text-orange-800 font-medium disabled:opacity-50"
+                                                                    >
+                                                                        🚫 Suspend
+                                                                    </button>
+                                                                )}
+                                                                {vendor.suspensionReason && (
+                                                                    <button
+                                                                        onClick={() => alert(`Suspension Reason:\n${vendor.suspensionReason}\n\nSuspended At: ${new Date(vendor.suspendedAt).toLocaleString()}`)}
+                                                                        className="text-gray-600 hover:text-gray-800 text-xs"
+                                                                    >
+                                                                        View Reason
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -346,66 +460,132 @@ const AdminUsersVendors = () => {
 
                 {/* Users Tab Content */}
                 {activeTab === 'users' && (
-                    <div className="bg-white rounded-lg shadow p-4">
-                        <div className="mb-4">
-                            <h3 className="text-lg font-semibold text-gray-800">Customer Users</h3>
-                            <p className="text-sm text-gray-600">All registered customers on the platform</p>
+                    <>
+                        {/* Header with Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                                <p className="text-sm text-gray-600">Total Customers</p>
+                                <p className="text-2xl font-bold text-gray-800">{users.length}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
+                                <p className="text-sm text-gray-600">Suspended</p>
+                                <p className="text-2xl font-bold text-orange-600">
+                                    {users.filter(u => u.isSuspended).length}
+                                </p>
+                            </div>
                         </div>
 
-                        {loading ? (
-                            <div className="text-center py-8">
-                                <p className="text-gray-500">Loading users...</p>
+                        <div className="bg-white rounded-lg shadow p-4">
+                            {/* Filter Tabs */}
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {['All', 'Suspended'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setFilter(status)}
+                                        className={`px-4 py-2 rounded-lg font-medium transition ${filter === status
+                                            ? 'bg-primary text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
                             </div>
-                        ) : users.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-gray-500">No users found</p>
+
+                            <div className="mb-4">
+                                <h3 className="text-lg font-semibold text-gray-800">Customer Users</h3>
+                                <p className="text-sm text-gray-600">All registered customers on the platform</p>
                             </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {users.map(user => (
-                                            <tr key={user._id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-4">
-                                                    <div className="flex items-center">
-                                                        <div className="w-10 h-10 bg-secondary text-white rounded-full flex items-center justify-center font-bold">
-                                                            {user.name?.charAt(0).toUpperCase() || 'U'}
-                                                        </div>
-                                                        <div className="ml-3">
-                                                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4 text-sm text-gray-700">
-                                                    {user.email}
-                                                </td>
-                                                <td className="px-4 py-4 text-sm text-gray-700">
-                                                    {user.phoneNumber || 'N/A'}
-                                                </td>
-                                                <td className="px-4 py-4 text-sm text-gray-500">
-                                                    {new Date(user.createdAt).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                        Active
-                                                    </span>
-                                                </td>
+
+                            {loading ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">Loading users...</p>
+                                </div>
+                            ) : filteredUsers.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">No users found</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {filteredUsers.map(user => (
+                                                <tr key={user._id} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center">
+                                                            <div className="w-10 h-10 bg-secondary text-white rounded-full flex items-center justify-center font-bold">
+                                                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                                                            </div>
+                                                            <div className="ml-3">
+                                                                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-sm text-gray-700">
+                                                        {user.email}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-sm text-gray-700">
+                                                        {user.phoneNumber || '-'}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-sm text-gray-500">
+                                                        {new Date(user.createdAt).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        {user.isSuspended ? (
+                                                            <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                                Suspended
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                                Active
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-sm space-x-2">
+                                                        {user.isSuspended ? (
+                                                            <button
+                                                                onClick={() => handleUnsuspend(user._id)}
+                                                                disabled={actionLoading}
+                                                                className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                                                            >
+                                                                ✓ Unsuspend
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => openSuspendModal(user)}
+                                                                disabled={actionLoading}
+                                                                className="text-orange-600 hover:text-orange-800 font-medium disabled:opacity-50"
+                                                            >
+                                                                🚫 Suspend
+                                                            </button>
+                                                        )}
+                                                        {user.suspensionReason && (
+                                                            <button
+                                                                onClick={() => alert(`Suspension Reason:\n${user.suspensionReason}\n\nSuspended At: ${new Date(user.suspendedAt).toLocaleString()}`)}
+                                                                className="text-gray-600 hover:text-gray-800 text-xs"
+                                                            >
+                                                                View Reason
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -861,6 +1041,60 @@ const AdminUsersVendors = () => {
                                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {actionLoading ? 'Upgrading...' : 'Upgrade Subscription'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Suspend User Modal */}
+            {showSuspendModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Suspend User</h3>
+                            <button
+                                onClick={() => setShowSuspendModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <Icon path="M6 18L18 6M6 6l12 12" className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-2">
+                                Suspending: <span className="font-medium text-gray-900">{selectedUser?.name}</span>
+                            </p>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Please provide a reason for suspension. The user will receive this via email and will not be able to login.
+                            </p>
+
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Suspension Reason <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={suspensionReason}
+                                onChange={(e) => setSuspensionReason(e.target.value)}
+                                rows="4"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                placeholder="e.g., Multiple violations of community guidelines, inappropriate behavior, etc."
+                            />
+                        </div>
+
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={() => setShowSuspendModal(false)}
+                                disabled={actionLoading}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSuspend}
+                                disabled={actionLoading || !suspensionReason.trim()}
+                                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                            >
+                                {actionLoading ? 'Suspending...' : 'Suspend User'}
                             </button>
                         </div>
                     </div>

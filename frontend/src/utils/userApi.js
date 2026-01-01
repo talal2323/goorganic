@@ -327,3 +327,34 @@ export const setDefaultAddress = async (addressId) => {
         throw error;
     }
 };
+
+/**
+ * Suspend a user (Admin only)
+ * @param {string} userId - User ID to suspend
+ * @param {string} reason - Reason for suspension
+ * @returns {Promise} Suspension result
+ */
+export const suspendUser = async (userId, reason) => {
+    try {
+        const response = await api.put(`/admin/users/${userId}/suspend`, { reason });
+        return response.data;
+    } catch (error) {
+        console.error('Error suspending user:', error);
+        throw error;
+    }
+};
+
+/**
+ * Unsuspend a user (Admin only)
+ * @param {string} userId - User ID to unsuspend
+ * @returns {Promise} Unsuspension result
+ */
+export const unsuspendUser = async (userId) => {
+    try {
+        const response = await api.put(`/admin/users/${userId}/unsuspend`);
+        return response.data;
+    } catch (error) {
+        console.error('Error unsuspending user:', error);
+        throw error;
+    }
+};
