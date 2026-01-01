@@ -94,6 +94,12 @@ const userSchema = new mongoose.Schema({
 
     loyaltyPoints: { type: Number, default: 0 },
 
+    // Account Suspension Fields
+    isSuspended: { type: Boolean, default: false },
+    suspendedAt: { type: Date, default: null },
+    suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    suspensionReason: { type: String, default: null },
+
     // Soft Delete Fields
     isDeleted: { type: Boolean, default: false },
     deletionRequested: { type: Boolean, default: false },

@@ -17,7 +17,9 @@ import {
     getDeletionRequests,
     approveDeletion,
     rejectDeletion,
-    restoreAccount
+    restoreAccount,
+    suspendUser,
+    unsuspendUser
 } from '../controllers/adminController.js';
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 router.use(protect, isAdmin);
@@ -51,5 +53,9 @@ router.get('/deletion-requests', getDeletionRequests);
 router.put('/users/:userId/approve-deletion', approveDeletion);
 router.put('/users/:userId/reject-deletion', rejectDeletion);
 router.put('/users/:userId/restore', restoreAccount);
+
+// User suspension routes
+router.put('/users/:id/suspend', suspendUser);
+router.put('/users/:id/unsuspend', unsuspendUser);
 
 export default router;

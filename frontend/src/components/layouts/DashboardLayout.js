@@ -42,7 +42,7 @@ const DashboardLayout = ({ title, userRole, children }) => {
           {children}
         </main>
         <footer className="p-3 text-center text-xs text-gray-500 border-t border-gray-200">
-          GOorganic Dashboard | Static Mockup - {new Date().getFullYear()}
+          GOorganic Dashboard
         </footer>
       </div>
     </div>
