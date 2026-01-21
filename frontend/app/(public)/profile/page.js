@@ -272,7 +272,7 @@ const ProfilePage = () => {
                                     <div className="md:col-span-1 text-center">
                                         <div className="relative w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                                             {user.avatar?.url ? (
-                                                <Image src={user.avatar.url} alt="avatar" fill className="object-cover" />
+                                                <Image src={user.avatar.url} alt="avatar" fill sizes="128px" className="object-cover" />
                                             ) : (
                                                 <span className="text-gray-500">Avatar</span>
                                             )}
@@ -460,7 +460,7 @@ const ProfilePage = () => {
                             <div className="md:col-span-1 text-center">
                                 <div className="relative w-32 h-32 rounded-full bg-gray-200 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                                     {user.avatar?.url ? (
-                                        <Image src={user.avatar.url} alt="avatar" fill className="object-cover" />
+                                        <Image src={user.avatar.url} alt="avatar" fill sizes="128px" className="object-cover" />
                                     ) : (
                                         <span className="text-gray-500">Avatar</span>
                                     )}

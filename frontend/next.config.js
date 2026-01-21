@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    // Enable SWC minification for faster builds
-    swcMinify: true,
+    // Turbopack configuration
+    turbopack: {
+        root: process.cwd(),
+    },
     // Optimize images
     images: {
         domains: ['localhost'],

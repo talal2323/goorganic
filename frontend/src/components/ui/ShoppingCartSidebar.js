@@ -75,7 +75,7 @@ const ShoppingCartSidebar = () => {
                 <li key={item.productId || item.id} className="flex items-start space-x-3">
                   <div className="relative w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
                     {item.image ? (
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <Image src={item.image} alt={item.name} fill sizes="48px" className="object-cover" />
                     ) : (
                       <span className="text-sm text-gray-600">{(item.name || '').charAt(0)}</span>
                     )}

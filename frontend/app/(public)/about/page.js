@@ -77,7 +77,7 @@ const AboutPage = () => {
                                 </div>
                             </div>
                             <div className="relative h-96">
-                                <Image src="/images/about_us.png" alt="About GOorganic" fill unoptimized className="rounded-lg shadow-xl object-cover" />
+                                <Image src="/images/about_us.png" alt="About GOorganic" fill sizes="(max-width: 768px) 100vw, 50vw" unoptimized className="rounded-lg shadow-xl object-cover" />
                                 <div className="absolute inset-0 bg-secondary opacity-10 rounded-lg" style={{ mixBlendMode: 'multiply' }}></div>
                             </div>
                         </div>

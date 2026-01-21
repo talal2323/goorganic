@@ -87,11 +87,10 @@ const NotificationsPopover = ({ onClose, onRefresh }) => {
     };
   }, [onClose]);
 
+  // Only fetch when popover opens, not on every mount
   useEffect(() => {
-    if (state.isLoggedIn) {
-      fetchNotifications();
-    }
-  }, [state.isLoggedIn]);
+    fetchNotifications();
+  }, []); // Empty dependency - fetch only once when popover opens
 
   const fetchNotifications = async () => {
     try {

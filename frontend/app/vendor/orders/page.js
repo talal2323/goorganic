@@ -18,15 +18,32 @@ const VendorOrders = () => {
     const [cancellingOrderId, setCancellingOrderId] = React.useState(null);
     const [cancellationReason, setCancellationReason] = React.useState('');
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const [totalPages, setTotalPages] = React.useState(1);
+    const ordersPerPage = 10;
+
     React.useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [currentPage]);
 
     const fetchOrders = async () => {
         try {
             setLoading(true);
             const data = await getVendorOrders();
-            setOrders(data);
+
+            // Calculate pagination
+            const allOrders = Array.isArray(data) ? data : [];
+            const totalOrdersCount = allOrders.length;
+            const calculatedTotalPages = Math.ceil(totalOrdersCount / ordersPerPage);
+
+            // Get orders for current page
+            const startIndex = (currentPage - 1) * ordersPerPage;
+            const endIndex = startIndex + ordersPerPage;
+            const paginatedOrders = allOrders.slice(startIndex, endIndex);
+
+            setOrders(paginatedOrders);
+            setTotalPages(calculatedTotalPages);
         } catch (error) {
             console.error('Error fetching orders:', error);
             showToast.error('Failed to load orders');
@@ -316,7 +333,7 @@ const VendorOrders = () => {
 
             <div>
                 <DashboardLayout title="Orders Management" userRole="vendor">
-                    <DashboardCard title="Recent Orders" className="!p-0 overflow-hidden">
+                    <DashboardCard title="Orders" className="!p-0 overflow-hidden">
                         {loading ? (
                             <div className="p-8 text-center text-gray-500">Loading orders...</div>
                         ) : orders.length === 0 ? (
@@ -408,6 +425,66 @@ const VendorOrders = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {!loading && orders.length > 0 && (
+                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                <div className="text-sm text-gray-700">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                {totalPages > 1 && (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+
+                                        {/* Page numbers */}
+                                        <div className="flex gap-1">
+                                            {[...Array(totalPages)].map((_, idx) => {
+                                                const pageNum = idx + 1;
+                                                // Show first page, last page, current page, and pages around current
+                                                if (
+                                                    pageNum === 1 ||
+                                                    pageNum === totalPages ||
+                                                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                                ) {
+                                                    return (
+                                                        <button
+                                                            key={pageNum}
+                                                            onClick={() => setCurrentPage(pageNum)}
+                                                            className={`px-4 py-2 text-sm font-medium rounded-lg ${currentPage === pageNum
+                                                                ? 'bg-secondary text-white'
+                                                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            {pageNum}
+                                                        </button>
+                                                    );
+                                                } else if (
+                                                    pageNum === currentPage - 2 ||
+                                                    pageNum === currentPage + 2
+                                                ) {
+                                                    return <span key={pageNum} className="px-2 py-2 text-gray-500">...</span>;
+                                                }
+                                                return null;
+                                            })}
+                                        </div>
+
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </DashboardCard>

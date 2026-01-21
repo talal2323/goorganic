@@ -15,7 +15,7 @@ const BlogCard = ({ post }) => {
             onClick={() => router.push(`/blog/${post.id}`)}
         >
             <div className="relative h-48 bg-gray-100 overflow-hidden">
-                <Image src={post.cover} alt={post.title} fill className="object-cover" />
+                <Image src={post.cover} alt={post.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
             </div>
             <div className="p-5">
                 <h3 className="text-xl font-semibold mb-2" style={{ color: COLORS.text }}>{post.title}</h3>
