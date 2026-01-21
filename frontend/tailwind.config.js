@@ -10,6 +10,9 @@ module.exports = {
                 primary: '#175017',
                 secondary: '#4CAF50',
             },
+            fontFamily: {
+                'serif': ['Playfair Display', 'serif'],
+            },
         },
     },
     plugins: [],

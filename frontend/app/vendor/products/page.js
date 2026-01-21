@@ -45,15 +45,8 @@ const VendorProducts = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const data = await getMyProducts();
-            // Filter by search keyword on client side since API might not support it
-            let filteredProducts = data.products || [];
-            if (searchKeyword) {
-                filteredProducts = filteredProducts.filter(p =>
-                    p.name.toLowerCase().includes(searchKeyword.toLowerCase())
-                );
-            }
-            setProducts(filteredProducts);
+            const data = await getMyProducts(currentPage, searchKeyword);
+            setProducts(data.products || []);
             setTotalPages(data.totalPages || 1);
         } catch (error) {
             showToast.error(error.response?.data?.message || 'Failed to fetch products');
@@ -321,49 +314,63 @@ const VendorProducts = () => {
                     </div>
                 )}
 
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                    <div className="mt-6 flex justify-center items-center space-x-2">
-                        <Button
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            primary={false}
-                            className="px-4 py-2"
-                        >
-                            Previous
-                        </Button>
-                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                            let pageNumber;
-                            if (totalPages <= 5) {
-                                pageNumber = i + 1;
-                            } else if (currentPage <= 3) {
-                                pageNumber = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                                pageNumber = totalPages - 4 + i;
-                            } else {
-                                pageNumber = currentPage - 2 + i;
-                            }
-                            return (
+                {/* Pagination */}
+                {products.length > 0 && totalPages > 0 && (
+                    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                            Page {currentPage} of {totalPages}
+                        </div>
+                        {totalPages > 1 && (
+                            <div className="flex gap-2">
                                 <button
-                                    key={pageNumber}
-                                    onClick={() => setCurrentPage(pageNumber)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-md border ${currentPage === pageNumber
-                                        ? 'bg-secondary text-white border-secondary'
-                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
-                                        }`}
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {pageNumber}
+                                    Previous
                                 </button>
-                            );
-                        })}
-                        <Button
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            primary={false}
-                            className="px-4 py-2"
-                        >
-                            Next
-                        </Button>
+
+                                {/* Page numbers */}
+                                <div className="flex gap-1">
+                                    {[...Array(totalPages)].map((_, idx) => {
+                                        const pageNum = idx + 1;
+                                        // Show first page, last page, current page, and pages around current
+                                        if (
+                                            pageNum === 1 ||
+                                            pageNum === totalPages ||
+                                            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                        ) {
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className={`px-4 py-2 text-sm font-medium rounded-lg ${currentPage === pageNum
+                                                        ? 'bg-secondary text-white'
+                                                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        } else if (
+                                            pageNum === currentPage - 2 ||
+                                            pageNum === currentPage + 2
+                                        ) {
+                                            return <span key={pageNum} className="px-2 py-2 text-gray-500">...</span>;
+                                        }
+                                        return null;
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </DashboardCard>

@@ -256,14 +256,14 @@ const VendorDetailPage = () => {
                             <p className="text-gray-400 text-sm mt-2">This vendor hasn't listed any products.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {products.map((product) => (
                                 <div
                                     key={product._id}
-                                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-2xl transition-all border border-gray-100"
                                     onClick={() => router.push(`/products/${product._id}`)}
                                 >
-                                    <div className="relative h-48">
+                                    <div className="relative h-56">
                                         <Image
                                             src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=No+Image'}
                                             alt={product.name}
@@ -272,15 +272,15 @@ const VendorDetailPage = () => {
                                             className="object-cover"
                                         />
                                     </div>
-                                    <div className="p-4">
+                                    <div className="p-6">
                                         <h2 className="text-lg font-semibold text-gray-900">{product.name}</h2>
-                                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">{product.description}</p>
-                                        <div className="flex items-center justify-between mt-3">
-                                            <p className="text-secondary font-bold text-lg">Rs. {product.price}</p>
+                                        <p className="text-sm text-gray-600 line-clamp-2 mt-2">{product.description}</p>
+                                        <div className="flex items-center justify-between mt-4">
+                                            <p className="text-primary font-bold text-2xl">Rs. {product.price}</p>
                                             {product.stock > 0 ? (
-                                                <span className="text-xs text-green-600 font-medium">In Stock</span>
+                                                <span className="text-xs text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full">In Stock</span>
                                             ) : (
-                                                <span className="text-xs text-red-600 font-medium">Out of Stock</span>
+                                                <span className="text-xs text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full">Out of Stock</span>
                                             )}
                                         </div>
                                         {/* Low Stock Warning */}

@@ -13,6 +13,7 @@ const ContactPage = () => {
     const [submitting, setSubmitting] = useState(false);
     const [faqs, setFaqs] = useState([]);
     const [loadingFaqs, setLoadingFaqs] = useState(true);
+    const [openFaqId, setOpenFaqId] = useState(null);
 
     useEffect(() => {
         fetchFAQs();
@@ -31,10 +32,10 @@ const ContactPage = () => {
     };
 
     const handleInputChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
-    
-    const handleSubmit = async (e) => { 
-        e.preventDefault(); 
-        
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
         try {
             setSubmitting(true);
             const response = await sendContactMessage(formData);
@@ -63,8 +64,8 @@ const ContactPage = () => {
                 <div className="grid lg:grid-cols-2 gap-12">
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h2 className="text-2xl font-semibold mb-6">Send us a Message</h2>
-                            {submitted ? (<div className="text-center py-8"><div className="inline-block p-3 rounded-full bg-green-100 mb-4"><Icon path="M5 13l4 4L19 7" className="w-6 h-6" color={COLORS.secondary} /></div><h3 className="text-xl font-semibold text-gray-900 mb-2">Thank you for your message!</h3><p className="text-gray-600">We'll get back to you within 24-48 hours.</p><Button onClick={() => setSubmitted(false)} className="mt-6">Send Another Message</Button></div>) : (<form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700">Name</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Subject</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Message</label><textarea name="message" value={formData.message} onChange={handleInputChange} required rows="4" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"></textarea></div><Button type="submit" className="w-full" disabled={submitting}>{submitting ? 'Sending...' : 'Send Message'}</Button></form>)}
-                        </div>
+                        {submitted ? (<div className="text-center py-8"><div className="inline-block p-3 rounded-full bg-green-100 mb-4"><Icon path="M5 13l4 4L19 7" className="w-6 h-6" color={COLORS.secondary} /></div><h3 className="text-xl font-semibold text-gray-900 mb-2">Thank you for your message!</h3><p className="text-gray-600">We'll get back to you within 24-48 hours.</p><Button onClick={() => setSubmitted(false)} className="mt-6">Send Another Message</Button></div>) : (<form onSubmit={handleSubmit} className="space-y-4"><div><label className="block text-sm font-medium text-gray-700">Name</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Subject</label><input type="text" name="subject" value={formData.subject} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Message</label><textarea name="message" value={formData.message} onChange={handleInputChange} required rows="4" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"></textarea></div><Button type="submit" className="w-full" disabled={submitting}>{submitting ? 'Sending...' : 'Send Message'}</Button></form>)}
+                    </div>
 
                     <div>
                         <h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
@@ -73,11 +74,25 @@ const ContactPage = () => {
                         ) : faqs.length === 0 ? (
                             <div className="bg-white p-6 rounded-lg shadow-md text-center text-gray-500">No FAQs available at the moment.</div>
                         ) : (
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 {faqs.map((faq) => (
-                                    <div key={faq._id} className="bg-white p-6 rounded-lg shadow-md">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
-                                        <p className="text-gray-600">{faq.answer}</p>
+                                    <div key={faq._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                                        <button
+                                            onClick={() => setOpenFaqId(openFaqId === faq._id ? null : faq._id)}
+                                            className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                        >
+                                            <h3 className="text-lg font-semibold text-gray-900 pr-4">{faq.question}</h3>
+                                            <Icon
+                                                path={openFaqId === faq._id ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"}
+                                                className="w-5 h-5 flex-shrink-0 transition-transform"
+                                                color={COLORS.secondary}
+                                            />
+                                        </button>
+                                        {openFaqId === faq._id && (
+                                            <div className="px-6 pb-4 pt-2 border-t border-gray-100">
+                                                <p className="text-gray-600">{faq.answer}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

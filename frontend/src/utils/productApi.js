@@ -108,9 +108,11 @@ export const deleteProduct = async (productId) => {
  * Get vendor's own products
  * @returns {Promise} Array of vendor's products
  */
-export const getMyProducts = async () => {
+export const getMyProducts = async (page = 1, keyword = '') => {
     try {
-        const response = await api.get('/products/my-products');
+        const response = await api.get('/products/my-products', {
+            params: { page, keyword }
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching my products:', error);

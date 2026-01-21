@@ -79,179 +79,199 @@ export default function Home() {
     };
 
     return (
-        <div className="bg-gray-50">
+        <div>
             <main>
-                {/* Hero Section */}
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
-                    <div className="relative overflow-hidden rounded-xl h-[450px] bg-gray-100 shadow-2xl">
-                        <div className="absolute inset-0 flex">
-                            <div className="w-1/2 bg-gray-200 hidden sm:block"></div>
-                            <div className="w-1/2 w-full" style={{ backgroundColor: '#DBE9DB' }}></div>
-                        </div>
+                {/* Hero Section - Full Width */}
+                <div className="relative w-full h-[600px] overflow-hidden">
+                    {/* Background Video */}
+                    <div className="absolute inset-0">
+                        <video
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                        >
+                            <source src="/videos/Video_for_Organic_Brand_Website.mp4" type="video/mp4" />
+                        </video>
+                        {/* Dark overlay for better text visibility */}
+                        <div className="absolute inset-0 bg-black/30"></div>
+                    </div>
 
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-full h-full flex">
-                                <div className="w-full sm:w-1/2 p-6 sm:p-12 flex flex-col justify-center">
-                                    <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
-                                        GO<span style={{ color: COLORS.secondary }}>organic</span>
-                                    </h1>
-                                    <p className="text-lg mt-2 text-gray-700">
-                                        Your path to natural living: Fresh, Verified, Sustainable.
-                                    </p>
-                                    <Link href="/shop">
-                                        <Button className="mt-8 self-start">
-                                            Shop Now
-                                        </Button>
-                                    </Link>
-                                </div>
-                                <div className="w-full hidden sm:flex items-center justify-center p-4">
-                                    <div className="relative w-full h-full min-h-[300px]">
-                                        <Image
-                                            src="/images/hero.png"
-                                            alt="Organic products"
-                                            fill
-                                            className="object-cover rounded-lg shadow-2xl"
-                                        />
-                                    </div>
-                                </div>
+                    {/* Glassmorphism Card */}
+                    <div className="relative h-full flex items-center justify-center px-4">
+                        <div className="backdrop-blur-md bg-white/20 rounded-3xl shadow-2xl p-8 sm:p-12 max-w-2xl border border-white/30">
+                            <h1 className="text-5xl sm:text-7xl font-serif font-bold text-white leading-tight text-center">
+                                GO<span className="text-green-300">organic</span>
+                            </h1>
+                            <p className="text-xl mt-4 text-white/90 text-center font-light">
+                                Your path to natural living: Fresh, Verified, Sustainable.
+                            </p>
+                            <div className="flex justify-center mt-8">
+                                <Link href="/shop">
+                                    <Button className="px-8 py-3 text-lg bg-white text-primary hover:bg-gray-100">
+                                        Shop Now
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Why Choose GOorganic Section */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Why Choose GOorganic?</h2>
-                    <p className="text-gray-600 mb-12">Your trusted gateway to verified organic vendors and fresh, authentic products.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {features.map((feature, index) => (
-                            <div key={index} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-md">
-                                <div className="rounded-full p-3 mb-4 bg-secondary">
-                                    <Icon path={feature.iconPath} className="w-8 h-8 text-white" color="white" />
+                <section className="bg-white py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Why Choose GOorganic?</h2>
+                        <p className="text-gray-600 mb-12">Your trusted gateway to verified organic vendors and fresh, authentic products.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {features.map((feature, index) => (
+                                <div key={index} className="flex flex-col items-center p-4 bg-white rounded-xl shadow-md">
+                                    <div className="rounded-full p-3 mb-4 bg-secondary">
+                                        <Icon path={feature.iconPath} className="w-8 h-8 text-white" color="white" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
+                                    <p className="text-sm text-gray-600">{feature.desc}</p>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                                <p className="text-sm text-gray-600">{feature.desc}</p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </section>
 
                 {/* Featured Vendors Section */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Vendors</h2>
-                    <p className="text-gray-600 text-center mb-12">Discover our premium verified organic vendors</p>
-                    {loading ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">Loading featured vendors...</p>
-                        </div>
-                    ) : featuredVendors.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No featured vendors available at the moment.</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-wrap justify-center gap-8">
-                            {featuredVendors.slice(0, 6).map((vendor) => (
-                                <div
-                                    key={vendor._id}
-                                    className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col items-center text-center p-6 transition duration-300 hover:shadow-xl cursor-pointer w-full max-w-sm"
-                                    onClick={() => handleVendorClick(vendor)}
-                                >
-                                    <div className="relative w-full h-24 mb-4">
-                                        <Image
-                                            src={vendor.avatar?.url || 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'}
-                                            alt={vendor.shopName || vendor.name}
-                                            fill
-                                            className="object-cover rounded-md"
-                                            onError={(e) => { e.target.src = 'https://placehold.co/150x100/164A26/FFFFFF?text=Vendor'; }}
-                                        />
-                                    </div>
-                                    <h3 className="text-xl font-semibold text-gray-800 flex items-center justify-center">
-                                        {vendor.shopName || vendor.name}
-                                        <div className="ml-2">
-                                            <VerificationBadge />
-                                        </div>
-                                    </h3>
-                                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                        {vendor.shopDescription || 'Premium organic vendor'}
-                                    </p>
-                                    {vendor.shopAddress?.city && (
-                                        <p className="text-xs text-gray-500 mt-1">{vendor.shopAddress.city}</p>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleVendorClick(vendor);
-                                        }}
-                                        className="mt-4 text-xs font-medium hover:underline text-secondary"
+                <section className="bg-gray-50 py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Vendors</h2>
+                        <p className="text-gray-600 text-center mb-12">Discover our premium verified organic vendors</p>
+                        {loading ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">Loading featured vendors...</p>
+                            </div>
+                        ) : featuredVendors.length === 0 ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">No featured vendors available at the moment.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {featuredVendors.slice(0, 6).map((vendor) => (
+                                    <div
+                                        key={vendor._id}
+                                        className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-2xl cursor-pointer border border-gray-100"
+                                        onClick={() => handleVendorClick(vendor)}
                                     >
-                                        View Profile &rarr;
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                        <div className="relative w-full h-56">
+                                            <Image
+                                                src={vendor.avatar?.url || 'https://placehold.co/800x400/164A26/FFFFFF?text=Vendor'}
+                                                alt={vendor.shopName || vendor.name}
+                                                fill
+                                                className="object-cover"
+                                                onError={(e) => { e.target.src = 'https://placehold.co/800x400/164A26/FFFFFF?text=Vendor'; }}
+                                            />
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="flex items-center justify-center gap-2 mb-3">
+                                                <h3 className="text-xl font-bold text-gray-800">
+                                                    {vendor.shopName || vendor.name}
+                                                </h3>
+                                                <VerificationBadge />
+                                            </div>
+                                            {vendor.businessCategory && (
+                                                <p className="text-xs text-center text-gray-500 mb-2">
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-primary font-medium">
+                                                        {vendor.businessCategory}
+                                                    </span>
+                                                </p>
+                                            )}
+                                            <p className="text-sm text-gray-600 mt-2 line-clamp-3 text-center">
+                                                {vendor.shopDescription || 'Premium organic vendor'}
+                                            </p>
+                                            {vendor.shopAddress?.city && (
+                                                <div className="flex items-center justify-center mt-2 text-xs text-gray-500">
+                                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    {vendor.shopAddress.city}
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleVendorClick(vendor);
+                                                }}
+                                                className="mt-4 w-full py-2.5 px-4 border-2 border-primary text-primary rounded-lg font-medium hover:bg-primary hover:text-white transition-all"
+                                            >
+                                                View Profile
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </section>
 
                 {/* Featured Products Section */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Products</h2>
-                    <p className="text-gray-600 text-center mb-12">Hand-picked organic products from our premium vendors</p>
-                    {loading ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">Loading featured products...</p>
-                        </div>
-                    ) : featuredProducts.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No featured products available at the moment.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {featuredProducts.slice(0, 12).map((product) => (
-                                <div
-                                    key={product._id}
-                                    className="bg-white rounded-xl shadow-md overflow-hidden transition-shadow hover:shadow-xl cursor-pointer"
-                                    onClick={() => handleProductClick(product)}
-                                >
-                                    <div className="relative w-full h-48">
-                                        <Image
-                                            src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Product'}
-                                            alt={product.name}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                    <div className="p-4">
-                                        <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
-                                            {product.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{product.description}</p>
-                                        {product.vendor?.shopName && (
-                                            <p className="text-xs text-gray-500 mt-1">by {product.vendor.shopName}</p>
-                                        )}
-                                        <div className="flex items-center justify-between mt-3">
-                                            <p className="text-secondary font-bold text-xl">
-                                                Rs. {product.price}
-                                            </p>
-                                            {product.stock > 0 ? (
-                                                <span className="text-xs text-green-600 font-medium">In Stock</span>
-                                            ) : (
-                                                <span className="text-xs text-red-600 font-medium">Out of Stock</span>
-                                            )}
+                <section className="bg-white py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Products</h2>
+                        <p className="text-gray-600 text-center mb-12">Hand-picked organic products from our premium vendors</p>
+                        {loading ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">Loading featured products...</p>
+                            </div>
+                        ) : featuredProducts.length === 0 ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">No featured products available at the moment.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {featuredProducts.slice(0, 12).map((product) => (
+                                    <div
+                                        key={product._id}
+                                        className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-2xl cursor-pointer border border-gray-100"
+                                        onClick={() => handleProductClick(product)}
+                                    >
+                                        <div className="relative w-full h-56">
+                                            <Image
+                                                src={product.images?.[0]?.url || 'https://placehold.co/200x200/E9F5E9/164A26?text=Product'}
+                                                alt={product.name}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                className="object-cover"
+                                            />
                                         </div>
-                                        <Button
-                                            className="mt-3 w-full"
-                                            onClick={(e) => handleAddToCart(e, product)}
-                                            disabled={product.stock === 0}
-                                        >
-                                            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                                        </Button>
+                                        <div className="p-6">
+                                            <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
+                                                {product.name}
+                                            </h3>
+                                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.description}</p>
+                                            {product.vendor?.shopName && (
+                                                <p className="text-xs text-gray-500 mt-2">by {product.vendor.shopName}</p>
+                                            )}
+                                            <div className="flex items-center justify-between mt-4">
+                                                <p className="text-primary font-bold text-2xl">
+                                                    Rs. {product.price}
+                                                </p>
+                                                {product.stock > 0 ? (
+                                                    <span className="text-xs text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full">In Stock</span>
+                                                ) : (
+                                                    <span className="text-xs text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full">Out of Stock</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                className="mt-4 w-full py-2.5 px-4 border-2 border-primary text-primary rounded-lg font-medium hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={(e) => handleAddToCart(e, product)}
+                                                disabled={product.stock === 0}
+                                            >
+                                                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </section>
 
                 {/* Call to Action Banner (Green Background) */}

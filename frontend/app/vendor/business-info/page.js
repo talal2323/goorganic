@@ -732,7 +732,7 @@ const VendorBusinessInfo = () => {
                                         {formData.shopImages.map((image, index) => (
                                             <div key={image._id || index} className="relative group">
                                                 <div className="relative w-full h-32 rounded-md border overflow-hidden">
-                                                    <Image src={image.url} alt={`Shop ${index + 1}`} fill className="object-cover" onError={(e) => { e.target.src = 'https://placehold.co/400x300/E9F5E9/164A26?text=Image+Not+Found'; }} />
+                                                    <Image src={image.url} alt={`Shop ${index + 1}`} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" onError={(e) => { e.target.src = 'https://placehold.co/400x300/E9F5E9/164A26?text=Image+Not+Found'; }} />
                                                 </div>
                                                 <button
                                                     onClick={() => handleDeleteShopImage(image._id)}
