@@ -7,11 +7,6 @@ import TokenRefreshIndicator from '@/components/common/TokenRefreshIndicator'
 export const metadata = {
     title: 'GOorganic - 100% Organic Products',
     description: 'Your trusted source for 100% organic products from verified vendors',
-    icons: {
-        icon: '/icon.png',
-        shortcut: '/icon.png',
-        apple: '/icon.png',
-    },
 }
 
 export default function RootLayout({ children }) {
