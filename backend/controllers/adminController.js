@@ -216,22 +216,55 @@ export const upgradeVendorSubscription = async (req, res) => {
 
         await vendor.save();
 
+        // Reactivate products that were auto-unlisted by system due to subscription limits
+        const reactivatedProducts = await Product.updateMany(
+            {
+                vendor: vendor._id,
+                status: 'Unlisted',
+                unlistReason: 'system_unlisted'
+            },
+            {
+                status: 'Active',
+                unlistReason: undefined
+            }
+        );
+
+        if (reactivatedProducts.modifiedCount > 0) {
+            console.log(`Reactivated ${reactivatedProducts.modifiedCount} system-unlisted products for ${vendor.email}`);
+        }
+
         // Create in-app notification
+        const notificationMessage = reactivatedProducts.modifiedCount > 0
+            ? `Your subscription has been upgraded to ${plan.name.toUpperCase()} plan (${plan.productLimit} products). ${reactivatedProducts.modifiedCount} product${reactivatedProducts.modifiedCount > 1 ? 's have' : ' has'} been reactivated!`
+            : `Your subscription has been upgraded to ${plan.name.toUpperCase()} plan (${plan.productLimit} products)`;
+
         await createNotification({
             userId: vendor._id,
             type: 'subscription',
             title: 'Subscription Upgraded',
-            message: `Your subscription has been upgraded to ${plan.name.toUpperCase()} plan (${plan.productLimit} products)`,
+            message: notificationMessage,
             link: '/vendor/subscriptions',
-            metadata: { planName: plan.name, productLimit: plan.productLimit, endDate: vendor.subscription.endDate }
+            metadata: { planName: plan.name, productLimit: plan.productLimit, endDate: vendor.subscription.endDate, reactivatedCount: reactivatedProducts.modifiedCount }
         });
 
         // Send email notification to vendor
         try {
+            const reactivationSection = reactivatedProducts.modifiedCount > 0
+                ? `\n\nGreat news! We have automatically reactivated ${reactivatedProducts.modifiedCount} product${reactivatedProducts.modifiedCount > 1 ? 's' : ''} that ${reactivatedProducts.modifiedCount > 1 ? 'were' : 'was'} previously unlisted due to subscription limits. ${reactivatedProducts.modifiedCount > 1 ? 'They are' : 'It is'} now live on your store!`
+                : '';
+
+            const reactivationHtml = reactivatedProducts.modifiedCount > 0
+                ? `<div style="background-color: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                                <h4 style="color: #065f46; margin-top: 0;">✨ Products Reactivated!</h4>
+                                <p style="margin: 5px 0; color: #374151; font-size: 18px; font-weight: bold;">${reactivatedProducts.modifiedCount} product${reactivatedProducts.modifiedCount > 1 ? 's have' : ' has'} been automatically reactivated</p>
+                                <p style="margin: 5px 0; color: #374151;">Your previously unlisted products are now live on your store!</p>
+                            </div>`
+                : '';
+
             await sendEmail({
                 email: vendor.email,
                 subject: '🎉 Subscription Upgraded - GOorganic',
-                message: `Hi ${vendor.name},\n\nYour subscription has been successfully upgraded to the ${plan.name.toUpperCase()} plan!\n\nPlan Details:\n- Product Limit: ${plan.productLimit} products\n- Price: PKR ${plan.price}/month\n- Valid Until: ${vendor.subscription.endDate.toLocaleDateString()}\n\nYou can now enjoy all the features of your new plan.\n\nThank you for being a valued vendor!\n\nBest regards,\nGOorganic Team`,
+                message: `Hi ${vendor.name},\n\nYour subscription has been successfully upgraded to the ${plan.name.toUpperCase()} plan!\n\nPlan Details:\n- Product Limit: ${plan.productLimit} products\n- Price: PKR ${plan.price}/month\n- Valid Until: ${vendor.subscription.endDate.toLocaleDateString()}${reactivationSection}\n\nYou can now enjoy all the features of your new plan.\n\nThank you for being a valued vendor!\n\nBest regards,\nGOorganic Team`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
                         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -249,6 +282,7 @@ export const upgradeVendorSubscription = async (req, res) => {
                                 <p style="margin: 5px 0; color: #374151;"><strong>Price:</strong> PKR ${plan.price}/month</p>
                                 <p style="margin: 5px 0; color: #374151;"><strong>Valid Until:</strong> ${vendor.subscription.endDate.toLocaleDateString()}</p>
                             </div>
+                            ${reactivationHtml}
                             <p style="font-size: 16px; color: #374151;">You can now enjoy all the features of your new plan!</p>
                             <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Thank you for being a valued vendor!<br/>GOorganic Team 🌱</p>
                         </div>
