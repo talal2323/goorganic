@@ -62,7 +62,7 @@ const premiumVendor = (req, res, next) => {
 const isApprovedVendor = (req, res, next) => {
 
     if (Array.isArray(req.user.roles) && req.user.roles.includes('vendor') &&
-        (req.user.vendorStatus === 'Approved' || req.user.vendorStatus === 'Rejected')) {
+        req.user.vendorStatus === 'Approved') {
         next();
     } else {
         res.status(403).json({ message: 'Access denied. Your account is not approved to perform this action.' });
