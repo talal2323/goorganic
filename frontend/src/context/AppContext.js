@@ -76,7 +76,11 @@ const stateReducer = (state, action) => {
                 price: item.product.price,
                 qty: item.quantity,
                 image: item.product.images?.[0]?.url,
-                stock: item.product.stock
+                stock: item.product.stock,
+                // Extract vendor information
+                vendorId: item.vendor?._id || item.vendor,
+                vendorName: item.vendor?.name,
+                shopName: item.vendor?.shopName
             }));
             return { ...state, cartItems: items, cartLoading: false };
         }

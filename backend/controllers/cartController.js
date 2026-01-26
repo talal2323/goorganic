@@ -6,12 +6,13 @@ export const getMyCart = async (req, res) => {
     try {
 
         const cart = await Cart.findOne({ user: req.user._id })
-            .populate('items.product', 'name price images stock');
-        
+            .populate('items.product', 'name price images stock')
+            .populate('items.vendor', 'name shopName');
+
         if (!cart || cart.items.length === 0) {
             return res.status(200).json({ items: [] });
         }
-        
+
         res.status(200).json(cart);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -25,7 +26,7 @@ export const addItemToCart = async (req, res) => {
     const userId = req.user._id;
 
     try {
-    
+
         const product = await Product.findById(productId);
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -44,17 +45,18 @@ export const addItemToCart = async (req, res) => {
         if (itemIndex > -1) {
             cart.items[itemIndex].quantity = quantity;
         } else {
-            cart.items.push({ 
-                product: productId, 
-                quantity: quantity, 
+            cart.items.push({
+                product: productId,
+                quantity: quantity,
                 vendor: product.vendor
             });
         }
-        
+
         await cart.save();
         const updatedCart = await Cart.findOne({ user: userId })
-            .populate('items.product', 'name price images stock');
-            
+            .populate('items.product', 'name price images stock')
+            .populate('items.vendor', 'name shopName');
+
         res.status(200).json(updatedCart);
 
     } catch (error) {
@@ -71,14 +73,15 @@ export const removeItemFromCart = async (req, res) => {
         }
 
         cart.items = cart.items.filter(item => item.product.toString() !== req.params.productId);
-        
+
         await cart.save();
-        
+
         const updatedCart = await Cart.findOne({ user: req.user._id })
-            .populate('items.product', 'name price images stock');
+            .populate('items.product', 'name price images stock')
+            .populate('items.vendor', 'name shopName');
 
         res.status(200).json(updatedCart || { items: [] });
-        
+
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

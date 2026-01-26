@@ -165,6 +165,25 @@ const CheckoutPage = () => {
     const shipping = subtotal >= 3000 ? 0 : 200;
     const total = subtotal + shipping;
 
+    // Group items by vendor
+    const groupedByVendor = React.useMemo(() => {
+        const groups = {};
+        cartItems.forEach(item => {
+            const vendorId = item.vendorId || 'unknown';
+            const vendorName = item.vendorName || item.shopName || 'Unknown Vendor';
+
+            if (!groups[vendorId]) {
+                groups[vendorId] = {
+                    vendorId,
+                    vendorName,
+                    items: []
+                };
+            }
+            groups[vendorId].items.push(item);
+        });
+        return Object.values(groups);
+    }, [cartItems]);
+
     return (
         <div className="bg-gray-50">
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -240,17 +259,27 @@ const CheckoutPage = () => {
                             ) : cartItems.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">Your cart is empty</div>
                             ) : (
-                                <div className="space-y-4">
-                                    {cartItems.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center py-2 border-b">
-                                            <div>
-                                                <h3 className="font-medium">{item.name}</h3>
-                                                <p className="text-sm text-gray-500">Quantity: {item.qty || 1}</p>
+                                <div className="space-y-6">
+                                    {groupedByVendor.map(group => (
+                                        <div key={group.vendorId} className="border-b pb-4 last:border-b-0">
+                                            <div className="flex items-center space-x-2 mb-3 bg-gray-50 p-2 rounded">
+                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span className="font-semibold text-gray-700">{group.vendorName}</span>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-500">{`Rs. ${toNumber(item.price).toLocaleString()}`} x {item.qty || 1}</p>
-                                                <p className="font-medium">{`Rs. ${(toNumber(item.price) * (item.qty || 1)).toLocaleString()}`}</p>
-                                            </div>
+                                            {group.items.map(item => (
+                                                <div key={item.id} className="flex justify-between items-center py-2 pl-7">
+                                                    <div>
+                                                        <h3 className="font-medium">{item.name}</h3>
+                                                        <p className="text-sm text-gray-500">Quantity: {item.qty || 1}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-sm text-gray-500">{`Rs. ${toNumber(item.price).toLocaleString()}`} x {item.qty || 1}</p>
+                                                        <p className="font-medium">{`Rs. ${(toNumber(item.price) * (item.qty || 1)).toLocaleString()}`}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     ))}
                                     <div className="pt-4">

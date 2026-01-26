@@ -41,6 +41,25 @@ const ShoppingCartSidebar = () => {
 
   const subtotal = cartItems.reduce((s, it) => s + (toNumber(it.price) * (it.qty || 1)), 0);
 
+  // Group items by vendor
+  const groupedByVendor = React.useMemo(() => {
+    const groups = {};
+    cartItems.forEach(item => {
+      const vendorId = item.vendorId || 'unknown';
+      const vendorName = item.vendorName || item.shopName || 'Unknown Vendor';
+
+      if (!groups[vendorId]) {
+        groups[vendorId] = {
+          vendorId,
+          vendorName,
+          items: []
+        };
+      }
+      groups[vendorId].items.push(item);
+    });
+    return Object.values(groups);
+  }, [cartItems]);
+
   if (!isCartOpen) return null;
 
   return (
@@ -70,59 +89,69 @@ const ShoppingCartSidebar = () => {
               <p className="text-sm">Add products to see them here.</p>
             </div>
           ) : (
-            <ul className="space-y-4">
-              {cartItems.map(item => (
-                <li key={item.productId || item.id} className="flex items-start space-x-3">
-                  <div className="relative w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                    {item.image ? (
-                      <Image src={item.image} alt={item.name} fill sizes="48px" className="object-cover" />
-                    ) : (
-                      <span className="text-sm text-gray-600">{(item.name || '').charAt(0)}</span>
-                    )}
+            <div className="space-y-6">
+              {groupedByVendor.map(group => (
+                <div key={group.vendorId} className="border-b pb-4 last:border-b-0">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Icon path="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" className="w-4 h-4 text-green-600" />
+                    <h4 className="font-semibold text-sm text-gray-700">{group.vendorName}</h4>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-sm">{item.name}</div>
-                        <div className="text-xs text-gray-500">{`Rs. ${toNumber(item.price).toLocaleString()}`}</div>
-                        {item.stock !== undefined && item.stock < 5 && (
-                          <div className="text-xs text-orange-500 mt-1">Only {item.stock} left</div>
-                        )}
-                      </div>
-                      <div className="text-sm font-medium">{`Rs. ${(toNumber(item.price) * (item.qty || 1)).toLocaleString()}`}</div>
-                    </div>
-                    <div className="mt-2 flex items-center space-x-2">
-                      <button
-                        onClick={() => handleUpdateQty(item.productId || item.id, (item.qty || 1) - 1)}
-                        className="px-2 py-1 bg-gray-200 rounded text-sm font-medium hover:bg-gray-300 disabled:opacity-50"
-                        aria-label={`Decrease quantity for ${item.name}`}
-                        disabled={cartLoading || (item.qty || 1) <= 1}
-                      >
-                        -
-                      </button>
-                      <span className="px-3 py-1 border rounded text-sm font-medium">
-                        {item.qty}
-                      </span>
-                      <button
-                        onClick={() => handleUpdateQty(item.productId || item.id, (item.qty || 1) + 1)}
-                        className="px-2 py-1 bg-gray-200 rounded text-sm font-medium hover:bg-gray-300 disabled:opacity-50"
-                        aria-label={`Increase quantity for ${item.name}`}
-                        disabled={cartLoading || (item.stock !== undefined && (item.qty || 1) >= item.stock)}
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => handleRemoveItem(item.productId || item.id)}
-                        className="text-sm text-red-600 hover:underline disabled:opacity-50"
-                        disabled={cartLoading}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </li>
+                  <ul className="space-y-3">
+                    {group.items.map(item => (
+                      <li key={item.productId || item.id} className="flex items-start space-x-3">
+                        <div className="relative w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                          {item.image ? (
+                            <Image src={item.image} alt={item.name} fill sizes="48px" className="object-cover" />
+                          ) : (
+                            <span className="text-sm text-gray-600">{(item.name || '').charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium text-sm">{item.name}</div>
+                              <div className="text-xs text-gray-500">{`Rs. ${toNumber(item.price).toLocaleString()}`}</div>
+                              {item.stock !== undefined && item.stock < 5 && (
+                                <div className="text-xs text-orange-500 mt-1">Only {item.stock} left</div>
+                              )}
+                            </div>
+                            <div className="text-sm font-medium">{`Rs. ${(toNumber(item.price) * (item.qty || 1)).toLocaleString()}`}</div>
+                          </div>
+                          <div className="mt-2 flex items-center space-x-2">
+                            <button
+                              onClick={() => handleUpdateQty(item.productId || item.id, (item.qty || 1) - 1)}
+                              className="px-2 py-1 bg-gray-200 rounded text-sm font-medium hover:bg-gray-300 disabled:opacity-50"
+                              aria-label={`Decrease quantity for ${item.name}`}
+                              disabled={cartLoading || (item.qty || 1) <= 1}
+                            >
+                              -
+                            </button>
+                            <span className="px-3 py-1 border rounded text-sm font-medium">
+                              {item.qty}
+                            </span>
+                            <button
+                              onClick={() => handleUpdateQty(item.productId || item.id, (item.qty || 1) + 1)}
+                              className="px-2 py-1 bg-gray-200 rounded text-sm font-medium hover:bg-gray-300 disabled:opacity-50"
+                              aria-label={`Increase quantity for ${item.name}`}
+                              disabled={cartLoading || (item.stock !== undefined && (item.qty || 1) >= item.stock)}
+                            >
+                              +
+                            </button>
+                            <button
+                              onClick={() => handleRemoveItem(item.productId || item.id)}
+                              className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                              disabled={cartLoading}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
 
