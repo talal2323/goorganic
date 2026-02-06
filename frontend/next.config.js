@@ -5,10 +5,6 @@ const nextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
-    // Turbopack configuration
-    turbopack: {
-        root: process.cwd(),
-    },
     // Optimize images
     images: {
         domains: ['localhost'],
@@ -30,7 +26,6 @@ const nextConfig = {
     },
     // Performance optimizations
     experimental: {
-        optimizeCss: true,
         optimizePackageImports: ['@heroicons/react'],
     },
     async rewrites() {
