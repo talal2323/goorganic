@@ -1,16 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/common/UIComponents';
 import { resetPassword } from '@/utils/userApi';
 
-// Force dynamic rendering for this page since it uses search params
-export const dynamic = 'force-dynamic';
-
-const ResetPasswordPage = () => {
+function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { dispatch } = useAppContext();
@@ -71,7 +68,16 @@ const ResetPasswordPage = () => {
             </form>
         </AuthLayout>
     );
-};
+}
 
-export default ResetPasswordPage;
-
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <AuthLayout title="Reset Password">
+                <div className="text-center py-8">Loading...</div>
+            </AuthLayout>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
+    );
+}
