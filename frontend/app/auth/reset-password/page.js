@@ -7,6 +7,9 @@ import AuthLayout from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/common/UIComponents';
 import { resetPassword } from '@/utils/userApi';
 
+// Force dynamic rendering for this page since it uses search params
+export const dynamic = 'force-dynamic';
+
 const ResetPasswordPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
