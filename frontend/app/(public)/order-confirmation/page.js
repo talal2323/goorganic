@@ -8,6 +8,9 @@ import { getOrderById } from '@/utils/orderApi';
 import { showToast } from '@/utils/toast';
 import { COLORS } from '@/utils/config';
 
+// Force dynamic rendering for this page since it uses search params
+export const dynamic = 'force-dynamic';
+
 const OrderConfirmationPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
