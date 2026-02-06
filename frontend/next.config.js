@@ -34,7 +34,7 @@ const nextConfig = {
                 // Proxy API requests to backend in local development
                 {
                     source: '/api/:path*',
-                    destination: 'http://localhost:5001/api/:path*',
+                    destination: 'http://localhost:5000/api/:path*',
                 },
             ],
             // Removed afterFiles that was breaking App Router
