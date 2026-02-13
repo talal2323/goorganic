@@ -13,3 +13,6 @@ seeder.js
 *.zip
 *.rar
 *.7z
+
+# images and videos
+frontend/public
