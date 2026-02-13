@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/common/UIComponents';
@@ -8,7 +8,7 @@ import { getOrderById } from '@/utils/orderApi';
 import { showToast } from '@/utils/toast';
 import { COLORS } from '@/utils/config';
 
-const OrderConfirmationPage = () => {
+function OrderConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
@@ -248,7 +248,20 @@ const OrderConfirmationPage = () => {
             </main>
         </div>
     );
-};
+}
 
-export default OrderConfirmationPage;
-
+export default function OrderConfirmationPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 py-12">
+                <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                        <div className="text-gray-600">Loading order details...</div>
+                    </div>
+                </main>
+            </div>
+        }>
+            <OrderConfirmationContent />
+        </Suspense>
+    );
+}
