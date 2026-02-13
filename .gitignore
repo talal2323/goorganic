@@ -15,5 +15,4 @@ seeder.js
 *.7z
 
 # images and videos
-frontend/public/images/
-frontend/public/videos/
+frontend/public
