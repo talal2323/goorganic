@@ -8,22 +8,29 @@ import { Logo, Icon } from '@/components/common/UIComponents'; // Import the Log
 const Footer = () => {
   const { dispatch } = useAppContext();
 
-  // Link data based on the screenshot
   const shopLinks = [
     { name: 'All Products', href: '/shop' },
-    { name: 'Food & Beverages', href: '/shop' },
-    { name: 'Personal Care & Wellness', href: '/shop' },
-    { name: 'Supplements & Functional Nutrition', href: '/shop' }
+    { name: 'Food & Beverages', href: '/shop?category=food' },
+    { name: 'Personal Care & Wellness', href: '/shop?category=personal-care' },
+    { name: 'Supplements & Functional Nutrition', href: '/shop?category=supplements' }
   ];
 
   const supportLinks = [
     { name: 'Contact Us', href: '/contact' },
-    { name: 'FAQ', href: '/contact' } // FAQ is on the Contact page
+    { name: 'FAQ', href: '/contact' }
   ];
 
   const companyLinks = [
     { name: 'About Us', href: '/about' },
     { name: 'Blog', href: '/blog' }
+  ];
+
+  const legalLinks = [
+    { name: 'Privacy Policy', href: '/privacy' },
+    { name: 'Terms & Conditions', href: '/terms' },
+    { name: 'Return Policy', href: '/return-policy' },
+    { name: 'Refund Policy', href: '/refund-policy' },
+    { name: 'Shipping Policy', href: '/shipping-policy' }
   ];
 
   const socialLinks = [
@@ -41,21 +48,19 @@ const Footer = () => {
 
   return (
     <footer className="bg-black text-gray-300 w-full overflow-x-hidden">
-      <div className="container mx-auto px-4 py-12 max-w-full">
-        {/* 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="container mx-auto py-12">
+        {/* Main Footer Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-8 px-4 sm:px-6 lg:px-8">
 
-          {/* Column 1: Logo, Tagline, Social */}
-          <div className="lg:col-span-1">
-            <div className="inline-block">
-              <Link href="/">
-                <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer" />
-              </Link>
-            </div>
-            <p className="text-sm mt-4 text-gray-400">
+          {/* Column 1: Logo & Tagline */}
+          <div className="md:col-span-4 lg:col-span-3 -ml-4 sm:-ml-6 lg:-ml-8 pl-4 sm:pl-6 lg:pl-8">
+            <Link href="/" className="inline-block">
+              <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer mb-4" />
+            </Link>
+            <p className="text-sm text-gray-400 leading-relaxed mb-6">
               Connecting you with the best organic products from verified vendors.
             </p>
-            <div className="flex space-x-4 mt-4">
+            <div className="flex space-x-4">
               {socialLinks.map((item) => (
                 <a
                   key={item.name}
@@ -71,16 +76,13 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Column 2: Shop Links */}
-          <div>
+          {/* Column 2: Shop */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-semibold text-white mb-4">Shop</h3>
             <ul className="space-y-3">
               {shopLinks.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="text-sm hover:text-white"
-                  >
+                  <Link href={item.href} className="text-sm hover:text-white">
                     {item.name}
                   </Link>
                 </li>
@@ -88,16 +90,13 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3: Support Links */}
-          <div>
+          {/* Column 3: Support */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-semibold text-white mb-4">Support</h3>
             <ul className="space-y-3">
               {supportLinks.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="text-sm hover:text-white"
-                  >
+                  <Link href={item.href} className="text-sm hover:text-white">
                     {item.name}
                   </Link>
                 </li>
@@ -105,16 +104,27 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 4: Company Links */}
-          <div>
+          {/* Column 4: Company */}
+          <div className="lg:col-span-2">
             <h3 className="text-lg font-semibold text-white mb-4">Company</h3>
             <ul className="space-y-3">
               {companyLinks.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="text-sm hover:text-white"
-                  >
+                  <Link href={item.href} className="text-sm hover:text-white">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 5: Legal */}
+          <div className="lg:col-span-3">
+            <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
+            <ul className="space-y-3">
+              {legalLinks.map((item) => (
+                <li key={item.name}>
+                  <Link href={item.href} className="text-sm hover:text-white">
                     {item.name}
                   </Link>
                 </li>
@@ -124,12 +134,10 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-gray-700">
-          <div className="text-center">
-            <p className="text-sm text-gray-500">
-              © 2025 GOorganic. All rights reserved.
-            </p>
-          </div>
+        <div className="mt-12 pt-8 border-t border-gray-700 text-center">
+          <p className="text-sm text-gray-500">
+            © {new Date().getFullYear()} GOorganic. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

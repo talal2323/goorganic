@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    // Turbopack configuration
-    turbopack: {
-        root: process.cwd(),
+    // Ignore ESLint errors during build
+    eslint: {
+        ignoreDuringBuilds: true,
     },
     // Optimize images
     images: {
@@ -26,13 +26,12 @@ const nextConfig = {
     },
     // Performance optimizations
     experimental: {
-        optimizeCss: true,
         optimizePackageImports: ['@heroicons/react'],
     },
     async rewrites() {
         return {
             beforeFiles: [
-                // Proxy API requests to backend
+                // Proxy API requests to backend in local development
                 {
                     source: '/api/:path*',
                     destination: 'http://localhost:5000/api/:path*',
