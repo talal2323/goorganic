@@ -9,7 +9,7 @@ import { createNotification } from './notificationController.js';
 export const createOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { shippingAddress, phoneNumber, saveAddress, addressLabel } = req.body;
+        const { shippingAddress, phoneNumber, saveAddress, addressLabel, paymentMethod, paymentIntentId } = req.body;
 
         if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
             return res.status(400).json({ message: 'Please provide a complete shipping address.' });
@@ -53,6 +53,13 @@ export const createOrder = async (req, res) => {
             totalAmount,
             shippingAddress,
             phoneNumber,
+            paymentMethod: paymentMethod || 'COD',
+            paymentStatus: paymentMethod === 'Stripe' ? 'Completed' : 'Pending',
+            paymentInfo: paymentMethod === 'Stripe' && paymentIntentId ? {
+                paymentIntentId: paymentIntentId,
+                status: 'paid',
+                paidAt: new Date(),
+            } : undefined,
         });
 
         // Generate and save order number

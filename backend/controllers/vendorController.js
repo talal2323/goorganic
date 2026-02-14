@@ -445,7 +445,7 @@ export const getMyVendorOrders = async (req, res) => {
         const orders = await SubOrder.find({ vendor: req.user._id })
             .populate({
                 path: 'order',
-                select: 'orderNumber shippingAddress customer phoneNumber',
+                select: 'orderNumber shippingAddress customer phoneNumber paymentMethod',
                 populate: { path: 'customer', select: 'name email' }
             })
             .populate('items.product', 'images')

@@ -46,7 +46,7 @@ const TermsPage = () => {
                             <li>We reserve the right to refuse any order you place with us</li>
                             <li>Prices and availability are subject to change without notice</li>
                             <li>Payment must be completed at the time of order placement</li>
-                            <li>We accept Cash on Delivery (COD) and online payments through PayFast</li>
+                            <li>We accept Cash on Delivery (COD) and online payments through Stripe</li>
                             <li>All prices are listed in Pakistani Rupees (PKR) and include applicable taxes</li>
                         </ul>
 

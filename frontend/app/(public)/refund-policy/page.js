@@ -38,7 +38,7 @@ const RefundPolicyPage = () => {
                         </p>
                         <ul className="list-disc pl-6 text-gray-600 space-y-2 mb-4">
                             <li><strong>Cash on Delivery (COD):</strong> Refunds will be processed via bank transfer. Please provide your bank account details to our customer service team.</li>
-                            <li><strong>PayFast/Online Payment:</strong> Refunds will be credited to the same bank account or payment method used for the transaction within 7-10 business days.</li>
+                            <li><strong>Stripe/Online Payment:</strong> Refunds will be credited to the same bank account or payment method used for the transaction within 7-10 business days.</li>
                             <li><strong>Bank Transfer:</strong> Refunds typically appear in your account within 7-10 business days depending on your bank's processing time.</li>
                         </ul>
 

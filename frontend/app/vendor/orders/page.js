@@ -260,7 +260,7 @@ const VendorOrders = () => {
                                         <span className="text-base font-medium text-gray-900">Subtotal</span>
                                         <span className="text-lg font-bold text-secondary">Rs. {selectedOrder.subTotal?.toLocaleString()}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-2">Payment Method: Cash on Delivery</p>
+                                    <p className="text-sm text-gray-500 mt-2">Payment Method: {selectedOrder.order?.paymentMethod === 'Stripe' ? 'Online Payment (Stripe)' : 'Cash on Delivery'}</p>
                                 </div>
                             </div>
 
