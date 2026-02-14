@@ -229,7 +229,7 @@ function OrderConfirmationContent() {
                             <span>Total Amount</span>
                             <span style={{ color: COLORS.secondary }}>Rs. {order.totalAmount.toLocaleString()}</span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-2">Payment Method: Cash on Delivery</p>
+                        <p className="text-sm text-gray-600 mt-2">Payment Method: {order.paymentMethod === 'Stripe' ? 'Online Payment (Stripe)' : 'Cash on Delivery'}</p>
                     </div>
                 </div>
 

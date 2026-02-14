@@ -8,6 +8,12 @@ import { COLORS } from '@/utils/config';
 import { createOrder } from '@/utils/orderApi';
 import { getProfile, getAddresses } from '@/utils/userApi';
 import { showToast } from '@/utils/toast';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { createPaymentIntent } from '@/utils/paymentApi';
+import StripeCheckoutForm from '@/components/common/StripeCheckoutForm';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutPage = () => {
     const router = useRouter();
@@ -26,6 +32,20 @@ const CheckoutPage = () => {
     const [selectedAddressId, setSelectedAddressId] = React.useState('');
     const [saveAddress, setSaveAddress] = React.useState(false);
     const [addressLabel, setAddressLabel] = React.useState('');
+    const [clientSecret, setClientSecret] = React.useState('');
+    const [paymentIntentId, setPaymentIntentId] = React.useState('');
+
+    // Calculate cart totals
+    const toNumber = (price) => {
+        if (typeof price === 'number' && !isNaN(price)) return price;
+        const str = String(price || '').replace(/,/g, '');
+        const match = str.match(/\d+(?:\.\d+)?/);
+        return match ? parseFloat(match[0]) : 0;
+    };
+
+    const subtotal = cartItems.reduce((sum, it) => sum + (toNumber(it.price) * (it.qty || 1)), 0);
+    const shipping = subtotal >= 3000 ? 0 : 200;
+    const total = subtotal + shipping;
 
     // Refresh cart and load user profile on mount
     React.useEffect(() => {
@@ -74,6 +94,24 @@ const CheckoutPage = () => {
         loadSavedAddresses();
     }, []);
 
+    // Create payment intent when payment method is Stripe
+    React.useEffect(() => {
+        const initializeStripePayment = async () => {
+            if (formData.paymentMethod === 'stripe' && total > 0) {
+                try {
+                    const { clientSecret, paymentIntentId: piId } = await createPaymentIntent(total);
+                    setClientSecret(clientSecret);
+                    setPaymentIntentId(piId);
+                } catch (error) {
+                    console.error('Error initializing Stripe payment:', error);
+                    showToast.error('Failed to initialize payment. Please try again.');
+                }
+            }
+        };
+
+        initializeStripePayment();
+    }, [formData.paymentMethod, total]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -110,10 +148,16 @@ const CheckoutPage = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
 
         if (cartItems.length === 0) {
             showToast.error('Your cart is empty');
+            return;
+        }
+
+        // Validate required fields
+        if (!formData.fullName || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.postalCode) {
+            showToast.error('Please fill in all required fields');
             return;
         }
 
@@ -123,6 +167,12 @@ const CheckoutPage = () => {
             return;
         }
 
+        // For Stripe payment, the form submission is handled by StripeCheckoutForm
+        if (formData.paymentMethod === 'stripe') {
+            return;
+        }
+
+        // Handle COD payment
         setLoading(true);
         try {
             const orderData = {
@@ -134,7 +184,8 @@ const CheckoutPage = () => {
                 },
                 phoneNumber: formData.phone,
                 saveAddress: saveAddress,
-                addressLabel: saveAddress ? addressLabel : undefined
+                addressLabel: saveAddress ? addressLabel : undefined,
+                paymentMethod: 'COD',
             };
 
             const order = await createOrder(orderData);
@@ -154,16 +205,54 @@ const CheckoutPage = () => {
         }
     };
 
-    const toNumber = (price) => {
-        if (typeof price === 'number' && !isNaN(price)) return price;
-        const str = String(price || '').replace(/,/g, '');
-        const match = str.match(/\d+(?:\.\d+)?/);
-        return match ? parseFloat(match[0]) : 0;
+    const handleStripePaymentSuccess = async (paymentIntentId) => {
+        // Validate form before creating order
+        if (!formData.fullName || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.postalCode) {
+            showToast.error('Please fill in all required shipping information');
+            return;
+        }
+
+        if (saveAddress && !addressLabel.trim()) {
+            showToast.error('Please enter a label for this address');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const orderData = {
+                shippingAddress: {
+                    address: formData.address,
+                    city: formData.city,
+                    postalCode: formData.postalCode,
+                    country: 'Pakistan'
+                },
+                phoneNumber: formData.phone,
+                saveAddress: saveAddress,
+                addressLabel: saveAddress ? addressLabel : undefined,
+                paymentMethod: 'Stripe',
+                paymentIntentId: paymentIntentId,
+            };
+
+            const order = await createOrder(orderData);
+            showToast.success('Payment successful! Order placed.');
+
+            // Refresh cart to clear items after successful order
+            await refreshCart();
+
+            // Navigate to order confirmation with order ID
+            router.push(`/order-confirmation?orderId=${order._id}`);
+        } catch (error) {
+            console.error('Error creating order after payment:', error);
+            const message = error.response?.data?.message || 'Payment was successful but failed to create order. Please contact support.';
+            showToast.error(message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const subtotal = cartItems.reduce((sum, it) => sum + (toNumber(it.price) * (it.qty || 1)), 0);
-    const shipping = subtotal >= 3000 ? 0 : 200;
-    const total = subtotal + shipping;
+    const handleStripePaymentError = (errorMessage) => {
+        showToast.error(errorMessage);
+    };
 
     // Group items by vendor
     const groupedByVendor = React.useMemo(() => {
@@ -190,7 +279,7 @@ const CheckoutPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="bg-gray-50">
                         <h2 className="text-2xl font-semibold mb-6">Shipping Information</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-4">
                             <div><label className="block text-sm font-medium text-gray-700">Full Name</label><input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
                             <div><label className="block text-sm font-medium text-gray-700">Email</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
                             <div><label className="block text-sm font-medium text-gray-700">Phone</label><input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
@@ -244,11 +333,61 @@ const CheckoutPage = () => {
                                 </div>
                             )}
 
-                            <div><label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label><div className="space-y-2"><label className="flex items-center"><input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={handleInputChange} className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300" /><span className="ml-2">Cash on Delivery</span></label><label className="flex items-center opacity-50 cursor-not-allowed"><input type="radio" disabled className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300" /><span className="ml-2">Online Payment (Coming Soon)</span></label></div></div>
-                            <Button type="submit" className="w-full" disabled={loading || cartLoading || cartItems.length === 0}>
-                                {loading ? 'Placing Order...' : 'Place Order'}
-                            </Button>
-                        </form>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="cod"
+                                            checked={formData.paymentMethod === 'cod'}
+                                            onChange={handleInputChange}
+                                            className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300"
+                                        />
+                                        <span className="ml-2">Cash on Delivery</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="stripe"
+                                            checked={formData.paymentMethod === 'stripe'}
+                                            onChange={handleInputChange}
+                                            className="focus:ring-secondary h-4 w-4 text-secondary border-gray-300"
+                                        />
+                                        <span className="ml-2">💳 Pay with Card (Stripe)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {formData.paymentMethod === 'cod' && (
+                                <Button type="button" onClick={handleSubmit} className="w-full" disabled={loading || cartLoading || cartItems.length === 0}>
+                                    {loading ? 'Placing Order...' : 'Place Order'}
+                                </Button>
+                            )}
+
+                            {formData.paymentMethod === 'stripe' && clientSecret && (
+                                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                                    <StripeCheckoutForm
+                                        onSuccess={handleStripePaymentSuccess}
+                                        onError={handleStripePaymentError}
+                                        amount={total}
+                                        loading={loading}
+                                        setLoading={setLoading}
+                                        formData={formData}
+                                        saveAddress={saveAddress}
+                                        addressLabel={addressLabel}
+                                    />
+                                </Elements>
+                            )}
+
+                            {formData.paymentMethod === 'stripe' && !clientSecret && (
+                                <div className="text-center py-4 text-gray-500">
+                                    Loading payment form...
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div>
