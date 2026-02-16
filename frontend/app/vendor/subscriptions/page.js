@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { DashboardCard, Button, Icon } from '@/components/common/UIComponents';
-import { getSubscriptionPlans, getSubscriptionUsage, requestSubscriptionUpgrade, cancelSubscription } from '@/utils/subscriptionApi';
+import { getSubscriptionPlans, getSubscriptionUsage, createSubscriptionCheckout, cancelStripeSubscription } from '@/utils/subscriptionApi';
 import { showToast } from '@/utils/toast';
 
 const VendorSubscriptions = () => {
@@ -11,9 +11,7 @@ const VendorSubscriptions = () => {
     const [plans, setPlans] = useState([]);
     const [currentPlan, setCurrentPlan] = useState(null);
     const [usage, setUsage] = useState(null);
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState(null);
     const [upgrading, setUpgrading] = useState(false);
     const [cancelling, setCancelling] = useState(false);
 
@@ -54,22 +52,19 @@ const VendorSubscriptions = () => {
         }
     };
 
-    const handleUpgrade = (plan) => {
-        setSelectedPlan(plan);
-        setShowUpgradeModal(true);
-    };
-
-    const confirmUpgrade = async () => {
-        if (!selectedPlan) return;
+    const handleUpgrade = async (plan) => {
+        if (plan.name === 'free') {
+            showToast.error('Cannot subscribe to free plan');
+            return;
+        }
 
         try {
             setUpgrading(true);
-            const response = await requestSubscriptionUpgrade(selectedPlan.name);
-            showToast.success(response.message || 'Upgrade request sent to admin successfully!');
-            setShowUpgradeModal(false);
+            const { checkoutUrl } = await createSubscriptionCheckout(plan.name);
+            // Redirect to Stripe Checkout
+            window.location.href = checkoutUrl;
         } catch (error) {
-            showToast.error(error.response?.data?.message || 'Failed to send upgrade request');
-        } finally {
+            showToast.error(error.response?.data?.message || 'Failed to initiate checkout');
             setUpgrading(false);
         }
     };
@@ -81,17 +76,14 @@ const VendorSubscriptions = () => {
     const confirmCancel = async () => {
         try {
             setCancelling(true);
-            const response = await cancelSubscription();
-            showToast.success(response.message || 'Subscription cancelled successfully!');
+            const response = await cancelStripeSubscription();
+            showToast.success(response.message || 'Subscription cancelled successfully');
             setShowCancelModal(false);
             // Refresh data
             await fetchPlansAndUsage();
         } catch (error) {
             const errorMsg = error.response?.data?.message || 'Failed to cancel subscription';
             showToast.error(errorMsg);
-            if (error.response?.data?.productCount && error.response?.data?.maxAllowed) {
-                showToast.warning(`You have ${error.response.data.productCount} products. Maximum allowed: ${error.response.data.maxAllowed}`);
-            }
         } finally {
             setCancelling(false);
         }
@@ -253,51 +245,6 @@ const VendorSubscriptions = () => {
                 </div>
             </DashboardCard>
 
-            {/* Upgrade Modal */}
-            {showUpgradeModal && selectedPlan && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <h3 className="text-xl font-bold mb-4">Upgrade to {selectedPlan.name} Plan</h3>
-                        <div className="mb-4">
-                            <p className="text-gray-600 mb-2">You are upgrading to:</p>
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                <p className="text-2xl font-bold text-green-600">
-                                    PKR {selectedPlan.price.toLocaleString()}
-                                    <span className="text-sm font-normal text-gray-500"> / month</span>
-                                </p>
-                                <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                                    <li>✓ {selectedPlan.productLimit} Products</li>
-                                    {selectedPlan.features?.map((feature, idx) => (
-                                        <li key={idx}>✓ {feature}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Click the button below to send an upgrade request to the administrator.
-                            You will be notified once your request is processed.
-                        </p>
-                        <div className="flex gap-3">
-                            <Button
-                                onClick={() => setShowUpgradeModal(false)}
-                                primary={false}
-                                className="flex-1"
-                                disabled={upgrading}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={confirmUpgrade}
-                                className="flex-1"
-                                disabled={upgrading}
-                            >
-                                {upgrading ? 'Sending Request...' : 'Request Upgrade'}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Cancel Subscription Modal */}
             {showCancelModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -310,10 +257,10 @@ const VendorSubscriptions = () => {
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-3">
                                 <p className="text-sm text-yellow-800 font-medium mb-2">⚠️ Important:</p>
                                 <ul className="text-sm text-yellow-700 space-y-1">
-                                    <li>• You will be downgraded to the FREE plan</li>
-                                    <li>• Product limit will be reduced to {plans.find(p => p.name === 'free')?.productLimit || 8} products</li>
-                                    <li>• Premium features will be disabled</li>
-                                    <li>• You can upgrade again anytime</li>
+                                    <li>• Your subscription will be cancelled at the end of your billing period</li>
+                                    <li>• You can continue using premium features until then</li>
+                                    <li>• After cancellation, you'll be downgraded to FREE plan</li>
+                                    <li>• You can resubscribe anytime</li>
                                 </ul>
                             </div>
                             {usage?.productCount > (plans.find(p => p.name === 'free')?.productLimit || 8) && (

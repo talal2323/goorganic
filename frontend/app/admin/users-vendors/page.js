@@ -5,8 +5,7 @@ import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button, Icon } from '@/components/common/UIComponents';
 import { getAllCustomers, suspendUser, unsuspendUser } from '@/utils/userApi';
-import { getAllVendorsAdmin, approveVendor, rejectVendor, upgradeVendorSubscription } from '@/utils/vendorApi';
-import { getAllSubscriptionPlans } from '@/utils/subscriptionApi';
+import { getAllVendorsAdmin, approveVendor, rejectVendor } from '@/utils/vendorApi';
 import { showToast } from '@/utils/toast';
 
 const AdminUsersVendors = () => {
@@ -23,9 +22,6 @@ const AdminUsersVendors = () => {
     const [selectedPdf, setSelectedPdf] = useState(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const [availablePlans, setAvailablePlans] = useState([]);
-    const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState('');
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [suspensionReason, setSuspensionReason] = useState('');
 
@@ -64,32 +60,10 @@ const AdminUsersVendors = () => {
     useEffect(() => {
         if (activeTab === 'vendors') {
             fetchVendors();
-            fetchSubscriptionPlans();
         } else {
             fetchUsers();
         }
     }, [activeTab]);
-
-    // Fetch subscription plans for upgrade
-    const fetchSubscriptionPlans = async () => {
-        try {
-            const data = await getAllSubscriptionPlans();
-
-            // Handle different response structures
-            let plansData = [];
-            if (data.plans) {
-                plansData = data.plans;
-            } else if (Array.isArray(data)) {
-                plansData = data;
-            } else if (data.data) {
-                plansData = data.data;
-            }
-
-            setAvailablePlans(plansData);
-        } catch (error) {
-            console.error('Error fetching subscription plans:', error);
-        }
-    };
 
     // Filter vendors based on status
     const filteredVendors = Array.isArray(vendors) ? vendors.filter(vendor => {
@@ -132,33 +106,6 @@ const AdminUsersVendors = () => {
         setSelectedVendor(vendor);
         setRejectionReason('');
         setShowRejectModal(true);
-    };
-
-    // Open upgrade subscription modal
-    const openUpgradeModal = (vendor) => {
-        setSelectedVendor(vendor);
-        setSelectedPlanForUpgrade('');
-        setShowUpgradeModal(true);
-    };
-
-    // Handle subscription upgrade
-    const handleUpgradeSubscription = async () => {
-        if (!selectedPlanForUpgrade) {
-            showToast.error('Please select a plan');
-            return;
-        }
-
-        try {
-            setActionLoading(true);
-            await upgradeVendorSubscription(selectedVendor._id, selectedPlanForUpgrade);
-            showToast.success('Vendor subscription upgraded successfully!');
-            setShowUpgradeModal(false);
-            fetchVendors();
-        } catch (error) {
-            showToast.error(error.response?.data?.message || 'Failed to upgrade subscription');
-        } finally {
-            setActionLoading(false);
-        }
     };
 
     // Reject vendor
@@ -801,14 +748,6 @@ const AdminUsersVendors = () => {
                                                 </p>
                                             </div>
                                         )}
-                                        <div className="col-span-3">
-                                            <button
-                                                onClick={() => openUpgradeModal(selectedVendor)}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                            >
-                                                Upgrade Subscription
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -957,90 +896,6 @@ const AdminUsersVendors = () => {
                                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                             >
                                 {actionLoading ? 'Rejecting...' : 'Reject Vendor'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Upgrade Subscription Modal */}
-            {showUpgradeModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900">Upgrade Vendor Subscription</h3>
-                            <button
-                                onClick={() => setShowUpgradeModal(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                            >
-                                <Icon path="M6 18L18 6M6 6l12 12" className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="mb-4">
-                            <p className="text-sm text-gray-600 mb-2">
-                                Vendor: <span className="font-medium text-gray-900">{selectedVendor?.name}</span>
-                            </p>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Current Plan: <span className="font-medium text-gray-900 capitalize">
-                                    {selectedVendor?.subscription?.plan || 'free'}
-                                </span>
-                            </p>
-
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Select New Plan <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                value={selectedPlanForUpgrade}
-                                onChange={(e) => setSelectedPlanForUpgrade(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                <option value="">-- Select a plan --</option>
-                                {availablePlans.map((plan) => (
-                                    <option key={plan._id} value={plan.name}>
-                                        {plan.name.toUpperCase()} - PKR {plan.price.toLocaleString()}/month ({plan.productLimit} products)
-                                    </option>
-                                ))}
-                            </select>
-
-                            {selectedPlanForUpgrade && (
-                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <p className="text-sm font-medium text-blue-900 mb-2">Selected Plan Details:</p>
-                                    {availablePlans
-                                        .filter(p => p.name === selectedPlanForUpgrade)
-                                        .map(plan => (
-                                            <div key={plan._id} className="text-sm text-blue-800">
-                                                <p>• Price: PKR {plan.price.toLocaleString()}/month</p>
-                                                <p>• Product Limit: {plan.productLimit}</p>
-                                                {plan.features?.length > 0 && (
-                                                    <div className="mt-2">
-                                                        <p className="font-medium">Features:</p>
-                                                        {plan.features.map((feature, idx) => (
-                                                            <p key={idx} className="ml-2">• {feature}</p>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    }
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex space-x-3">
-                            <button
-                                onClick={() => setShowUpgradeModal(false)}
-                                disabled={actionLoading}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleUpgradeSubscription}
-                                disabled={actionLoading || !selectedPlanForUpgrade}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                            >
-                                {actionLoading ? 'Upgrading...' : 'Upgrade Subscription'}
                             </button>
                         </div>
                     </div>

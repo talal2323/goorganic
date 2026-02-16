@@ -1,10 +1,22 @@
 import Stripe from 'stripe';
 import { Order } from '../models/orderModel.js';
+import User from '../models/userModel.js';
+import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
+import Product from '../models/productModel.js';
+import { createNotification } from './notificationController.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Lazy initialization - create Stripe instance when needed, not at module load
+let stripeInstance;
+const getStripe = () => {
+    if (!stripeInstance) {
+        stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+    }
+    return stripeInstance;
+};
 
 // Create a payment intent
 export const createPaymentIntent = async (req, res) => {
+    const stripe = getStripe();
     try {
         const { amount, orderId } = req.body;
 
@@ -40,6 +52,7 @@ export const createPaymentIntent = async (req, res) => {
 
 // Get payment intent status
 export const getPaymentStatus = async (req, res) => {
+    const stripe = getStripe();
     try {
         const { paymentIntentId } = req.params;
 
@@ -61,6 +74,7 @@ export const getPaymentStatus = async (req, res) => {
 
 // Webhook handler for Stripe events (optional but recommended)
 export const handleWebhook = async (req, res) => {
+    const stripe = getStripe();
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
