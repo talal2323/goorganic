@@ -29,30 +29,45 @@ export const getSubscriptionUsage = async () => {
 };
 
 /**
- * Request subscription upgrade
+ * Create Stripe checkout session for subscription
  * @param {string} planName - Target subscription plan name
- * @returns {Promise} Upgrade request result
+ * @returns {Promise} Checkout URL
  */
-export const requestSubscriptionUpgrade = async (planName) => {
+export const createSubscriptionCheckout = async (planName) => {
     try {
-        const response = await api.post('/vendors/subscriptions/request-upgrade', { planName });
+        const response = await api.post('/vendors/subscriptions/create-checkout', { planName });
         return response.data;
     } catch (error) {
-        console.error('Error requesting subscription upgrade:', error);
+        console.error('Error creating subscription checkout:', error);
         throw error;
     }
 };
 
 /**
- * Cancel subscription
- * @returns {Promise} Cancellation result
+ * Verify subscription session after payment
+ * @param {string} sessionId - Stripe session ID
+ * @returns {Promise} Verification result
  */
-export const cancelSubscription = async () => {
+export const verifySubscriptionSession = async (sessionId) => {
     try {
-        const response = await api.post('/vendors/subscriptions/cancel');
+        const response = await api.get(`/vendors/subscriptions/verify-session/${sessionId}`);
         return response.data;
     } catch (error) {
-        console.error('Error cancelling subscription:', error);
+        console.error('Error verifying subscription session:', error);
+        throw error;
+    }
+};
+
+/**
+ * Cancel Stripe subscription (downgrades to free plan)
+ * @returns {Promise} Cancellation result
+ */
+export const cancelStripeSubscription = async () => {
+    try {
+        const response = await api.post('/vendors/subscriptions/cancel-stripe');
+        return response.data;
+    } catch (error) {
+        console.error('Error cancelling Stripe subscription:', error);
         throw error;
     }
 };

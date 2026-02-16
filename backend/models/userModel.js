@@ -87,8 +87,11 @@ const userSchema = new mongoose.Schema({
     },
     subscription: {
         plan: { type: String, enum: ['free', 'paid'], default: 'free' },
-        status: { type: String, enum: ['active', 'inactive', 'expired'], default: 'active' },
+        status: { type: String, enum: ['active', 'inactive', 'expired', 'cancelled', 'past_due'], default: 'active' },
         endDate: Date,
+        stripeCustomerId: String,
+        stripeSubscriptionId: String,
+        stripeCurrentPeriodEnd: Date,
     },
     averageRating: { type: Number, default: 0 },
 

@@ -4,7 +4,6 @@ import {
     approveVendor,
     rejectVendor,
     createSubscriptionPlan,
-    upgradeVendorSubscription,
     getAllVendorsForAdmin,
     getAllProductsForAdmin,
     updateProductStatus,
@@ -35,8 +34,6 @@ router.get('/vendors', getAllVendorsForAdmin);
 
 router.put('/vendors/:id/approve', approveVendor);
 router.put('/vendors/:id/reject', rejectVendor);
-
-router.put('/vendors/:id/upgrade', upgradeVendorSubscription);
 
 router.get('/orders', getAllOrders);
 

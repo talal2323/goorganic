@@ -132,22 +132,6 @@ export const rejectVendor = async (vendorId, reason) => {
 };
 
 /**
- * Upgrade vendor subscription (Admin only)
- * @param {string} vendorId - The vendor ID
- * @param {string} planName - New subscription plan name
- * @returns {Promise} Upgrade result
- */
-export const upgradeVendorSubscription = async (vendorId, planName) => {
-    try {
-        const response = await api.put(`/admin/vendors/${vendorId}/upgrade`, { planName });
-        return response.data;
-    } catch (error) {
-        console.error('Error upgrading vendor subscription:', error);
-        throw error;
-    }
-};
-
-/**
  * Add certification to vendor profile
  * @param {Object} certificationData - Certification data with url and publicId
  * @returns {Promise} Result

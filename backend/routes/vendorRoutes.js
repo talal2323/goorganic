@@ -11,13 +11,16 @@ import {
     deleteShopImage,
     getAvailablePlans,
     getSubscriptionUsage,
-    requestSubscriptionUpgrade,
-    cancelSubscription,
     getMyVendorOrders,
     updateOrderStatus,
     acceptOrder,
     cancelOrder
 } from '../controllers/vendorController.js';
+import {
+    createSubscriptionCheckout,
+    verifySubscriptionSession,
+    cancelStripeSubscription
+} from '../controllers/subscriptionPaymentController.js';
 import { protect, vendor, premiumVendor, isApprovedVendor } from '../middleware/authMiddleware.js';
 
 router.post('/register', registerVendor);
@@ -28,8 +31,11 @@ router.get('/dashboard/sales-overview', isApprovedVendor, premiumVendor, getSale
 router.get('/dashboard/activity', isApprovedVendor, premiumVendor, getRecentActivity);
 router.get('/subscriptions/plans', isApprovedVendor, getAvailablePlans);
 router.get('/profile/subscription-usage', isApprovedVendor, getSubscriptionUsage);
-router.post('/subscriptions/request-upgrade', isApprovedVendor, requestSubscriptionUpgrade);
-router.post('/subscriptions/cancel', isApprovedVendor, cancelSubscription);
+
+// Stripe Subscription Routes (One-time payment, manual renewal)
+router.post('/subscriptions/create-checkout', isApprovedVendor, createSubscriptionCheckout);
+router.get('/subscriptions/verify-session/:sessionId', isApprovedVendor, verifySubscriptionSession);
+router.post('/subscriptions/cancel-stripe', isApprovedVendor, cancelStripeSubscription);
 router.get('/orders', isApprovedVendor, getMyVendorOrders);
 router.put('/orders/:id/status', isApprovedVendor, updateOrderStatus);
 router.put('/orders/:id/accept', isApprovedVendor, acceptOrder);
