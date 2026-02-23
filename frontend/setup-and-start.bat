@@ -8,7 +8,7 @@ echo ========================================
 echo.
 
 echo [1/3] Checking directory...
-cd /d "d:\frontend 1\frontend-nextjs"
+cd /d "%~dp0"
 if errorlevel 1 (
     echo ERROR: Could not find directory
     pause
