@@ -4,12 +4,13 @@ import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import sendEmail from '../utils/sendEmail.js';
 import { createNotification } from './notificationController.js';
+import { generateInvoice } from '../utils/generateInvoice.js';
 
 //   Create a new order from the user's cart
 export const createOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { shippingAddress, phoneNumber, saveAddress, addressLabel, paymentMethod, paymentIntentId } = req.body;
+        const { shippingAddress, phoneNumber, saveAddress, addressLabel, paymentMethod, paymentIntentId, shippingFee } = req.body;
 
         if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
             return res.status(400).json({ message: 'Please provide a complete shipping address.' });
@@ -23,7 +24,7 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'Your cart is empty.' });
         }
 
-        let totalAmount = 0;
+        let productsTotal = 0;
         const vendorItems = new Map();
 
         for (const item of cart.items) {
@@ -33,7 +34,7 @@ export const createOrder = async (req, res) => {
             }
 
             const price = item.product.price * item.quantity;
-            totalAmount += price;
+            productsTotal += price;
 
             const vendorId = item.vendor.toString();
             if (!vendorItems.has(vendorId)) {
@@ -48,9 +49,14 @@ export const createOrder = async (req, res) => {
             });
         }
 
+        // Calculate total amount including shipping fee
+        const shippingFeeAmount = shippingFee || 0;
+        const totalAmount = productsTotal + shippingFeeAmount;
+
         const parentOrder = await Order.create({
             customer: userId,
             totalAmount,
+            shippingFee: shippingFeeAmount,
             shippingAddress,
             phoneNumber,
             paymentMethod: paymentMethod || 'COD',
@@ -251,5 +257,51 @@ export const getOrderById = async (req, res) => {
         res.status(200).json({ order, subOrders });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Generate and download invoice PDF for an order
+export const downloadInvoice = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id).populate('customer', 'name email');
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Check if user is authorized to download this invoice
+        const isAdmin = req.user.roles && req.user.roles.includes('admin');
+        const isOrderOwner = order.customer._id.toString() === req.user._id.toString();
+        const isVendor = req.user.roles && req.user.roles.includes('vendor');
+
+        // Check if vendor is part of this order
+        let isOrderVendor = false;
+        if (isVendor) {
+            const subOrders = await SubOrder.find({ order: id, vendor: req.user._id });
+            isOrderVendor = subOrders.length > 0;
+        }
+
+        if (!isOrderOwner && !isAdmin && !isOrderVendor) {
+            return res.status(403).json({ message: 'Not authorized to download this invoice' });
+        }
+
+        // Get all sub-orders for this order
+        const subOrders = await SubOrder.find({ order: id }).populate('vendor', 'name email shopName');
+
+        // Generate the PDF
+        const doc = generateInvoice(order, subOrders);
+
+        // Set response headers for PDF download
+        const filename = `GOorganic-Invoice-${order.orderNumber || order._id.toString().slice(-8).toUpperCase()}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // Pipe the PDF to the response
+        doc.pipe(res);
+        doc.end();
+    } catch (error) {
+        console.error('Error generating invoice:', error);
+        res.status(500).json({ message: 'Error generating invoice' });
     }
 };

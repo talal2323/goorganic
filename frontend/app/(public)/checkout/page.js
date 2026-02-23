@@ -186,6 +186,7 @@ const CheckoutPage = () => {
                 saveAddress: saveAddress,
                 addressLabel: saveAddress ? addressLabel : undefined,
                 paymentMethod: 'COD',
+                shippingFee: shipping,
             };
 
             const order = await createOrder(orderData);
@@ -231,6 +232,7 @@ const CheckoutPage = () => {
                 addressLabel: saveAddress ? addressLabel : undefined,
                 paymentMethod: 'Stripe',
                 paymentIntentId: paymentIntentId,
+                shippingFee: shipping,
             };
 
             const order = await createOrder(orderData);

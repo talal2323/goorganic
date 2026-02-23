@@ -4,7 +4,7 @@ import React, { Suspense } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/common/UIComponents';
-import { getOrderById } from '@/utils/orderApi';
+import { getOrderById, downloadInvoice } from '@/utils/orderApi';
 import { showToast } from '@/utils/toast';
 import { COLORS } from '@/utils/config';
 
@@ -16,6 +16,7 @@ function OrderConfirmationContent() {
     const [order, setOrder] = React.useState(null);
     const [subOrders, setSubOrders] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [downloadingInvoice, setDownloadingInvoice] = React.useState(false);
 
     React.useEffect(() => {
         const fetchOrderDetails = async () => {
@@ -61,6 +62,19 @@ function OrderConfirmationContent() {
         if (statuses.some(s => s === 'Processing')) return 'Processing';
         if (statuses.every(s => s === 'Pending')) return 'Pending';
         return 'Pending';
+    };
+
+    const handleDownloadInvoice = async () => {
+        try {
+            setDownloadingInvoice(true);
+            await downloadInvoice(order._id, order.orderNumber);
+            showToast.success('Invoice downloaded successfully!');
+        } catch (error) {
+            console.error('Error downloading invoice:', error);
+            showToast.error('Failed to download invoice');
+        } finally {
+            setDownloadingInvoice(false);
+        }
     };
 
     if (loading) {
@@ -225,7 +239,17 @@ function OrderConfirmationContent() {
                     </div>
 
                     <div className="border-t pt-4">
-                        <div className="flex justify-between text-lg font-semibold">
+                        <div className="space-y-2 mb-3">
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Subtotal:</span>
+                                <span>Rs. {(order.totalAmount - (order.shippingFee || 0)).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Shipping Fee:</span>
+                                <span>Rs. {(order.shippingFee || 0).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between text-lg font-semibold border-t pt-3">
                             <span>Total Amount</span>
                             <span style={{ color: COLORS.secondary }}>Rs. {order.totalAmount.toLocaleString()}</span>
                         </div>
@@ -235,6 +259,13 @@ function OrderConfirmationContent() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button
+                        onClick={handleDownloadInvoice}
+                        disabled={downloadingInvoice}
+                        className="bg-secondary hover:bg-secondary/90 text-white"
+                    >
+                        {downloadingInvoice ? 'Downloading...' : '📄 Download Invoice'}
+                    </Button>
                     <Button onClick={() => router.push('/')}>Continue Shopping</Button>
                     <Button onClick={() => router.push('/orders')} className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                         View All Orders

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { getMyOrders } from '@/utils/orderApi';
+import { getMyOrders, downloadInvoice } from '@/utils/orderApi';
 import { showToast } from '@/utils/toast';
 import { COLORS } from '@/utils/config';
 import { Button } from '@/components/common/UIComponents';
@@ -11,6 +11,7 @@ const OrderHistoryPage = () => {
     const router = useRouter();
     const [orders, setOrders] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [downloadingInvoiceId, setDownloadingInvoiceId] = React.useState(null);
 
     React.useEffect(() => {
         fetchOrders();
@@ -35,6 +36,19 @@ const OrderHistoryPage = () => {
             month: 'short',
             day: 'numeric'
         });
+    };
+
+    const handleDownloadInvoice = async (orderId, orderNumber) => {
+        try {
+            setDownloadingInvoiceId(orderId);
+            await downloadInvoice(orderId, orderNumber);
+            showToast.success('Invoice downloaded successfully!');
+        } catch (error) {
+            console.error('Error downloading invoice:', error);
+            showToast.error('Failed to download invoice');
+        } finally {
+            setDownloadingInvoiceId(null);
+        }
     };
 
     return (
@@ -65,6 +79,9 @@ const OrderHistoryPage = () => {
                                         <div className="font-bold text-lg" style={{ color: COLORS.secondary }}>
                                             Rs. {order.totalAmount?.toLocaleString()}
                                         </div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            (incl. Rs. {(order.shippingFee || 0).toLocaleString()} shipping)
+                                        </div>
                                     </div>
                                 </div>
 
@@ -81,7 +98,14 @@ const OrderHistoryPage = () => {
                                                 <span className="font-medium">Phone:</span> {order.phoneNumber}
                                             </p>
                                         </div>
-                                        <div className="flex items-end justify-end">
+                                        <div className="flex items-end justify-end gap-2">
+                                            <Button
+                                                onClick={() => handleDownloadInvoice(order._id, order.orderNumber)}
+                                                disabled={downloadingInvoiceId === order._id}
+                                                className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                                            >
+                                                {downloadingInvoiceId === order._id ? 'Downloading...' : '📄 Invoice'}
+                                            </Button>
                                             <Button
                                                 onClick={() => router.push(`/order-confirmation?orderId=${order._id}`)}
                                                 className="bg-secondary hover:bg-secondary/90 text-white"
