@@ -4,10 +4,13 @@ import React from 'react'; import Image from 'next/image'; import { useRouter } 
 import { useCart } from '@/context/AppContext';
 import { Icon, Button } from '@/components/common/UIComponents';
 import { showToast } from '@/utils/toast';
+import { getFrequentlyBoughtTogether } from '@/utils/productApi';
 
 const ShoppingCartSidebar = () => {
   const router = useRouter();
-  const { cartItems, isCartOpen, cartLoading, updateCartItem, removeItemFromCart, closeCart } = useCart();
+  const { cartItems, isCartOpen, cartLoading, updateCartItem, removeItemFromCart, closeCart, addItemToCart } = useCart();
+  const [fbtItems, setFbtItems] = React.useState([]);
+  const [fbtLoading, setFbtLoading] = React.useState(false);
 
   // Normalize price to a number even if it comes as a string like "Rs. 120 / kg"
   const toNumber = (price) => {
@@ -41,6 +44,66 @@ const ShoppingCartSidebar = () => {
 
   const subtotal = cartItems.reduce((s, it) => s + (toNumber(it.price) * (it.qty || 1)), 0);
 
+  React.useEffect(() => {
+    const fetchFrequentlyBoughtTogether = async () => {
+      if (!isCartOpen || cartItems.length === 0) {
+        setFbtItems([]);
+        return;
+      }
+
+      const seedProductIds = [...new Set(cartItems.map(item => item.productId || item.id).filter(Boolean))].slice(0, 3);
+      if (seedProductIds.length === 0) {
+        setFbtItems([]);
+        return;
+      }
+
+      setFbtLoading(true);
+      try {
+        const responses = await Promise.all(
+          seedProductIds.map((id) => getFrequentlyBoughtTogether(id).catch(() => ({ suggestions: [] })))
+        );
+
+        const cartProductIds = new Set(cartItems.map(item => String(item.productId || item.id)));
+        const scored = new Map();
+
+        responses.forEach((payload) => {
+          (payload?.suggestions || []).forEach((product, index) => {
+            const productId = String(product?._id || '');
+            if (!productId || cartProductIds.has(productId) || Number(product?.stock || 0) <= 0) return;
+
+            const existing = scored.get(productId) || { ...product, score: 0 };
+            const rankScore = Math.max(1, 6 - index);
+            const frequencyScore = Number(product.frequency) || 0;
+            existing.score += rankScore + frequencyScore;
+            scored.set(productId, existing);
+          });
+        });
+
+        const sorted = [...scored.values()]
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 6);
+
+        setFbtItems(sorted);
+      } catch {
+        setFbtItems([]);
+      } finally {
+        setFbtLoading(false);
+      }
+    };
+
+    fetchFrequentlyBoughtTogether();
+  }, [cartItems, isCartOpen]);
+
+  const handleAddSuggestedItem = async (productId, name) => {
+    try {
+      await addItemToCart(productId, 1);
+      showToast.success(`${name} added to cart`);
+    } catch (error) {
+      console.error('Error adding suggested product:', error);
+      showToast.error('Failed to add suggested item');
+    }
+  };
+
   // Group items by vendor
   const groupedByVendor = React.useMemo(() => {
     const groups = {};
@@ -65,9 +128,9 @@ const ShoppingCartSidebar = () => {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={close} />
+      <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={closeCart} />
 
-      <aside className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white z-50 shadow-xl flex flex-col">
+      <aside className="fixed right-0 top-0 h-full w-full sm:w-[28rem] bg-white z-50 shadow-xl flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold">Shopping Cart</h3>
           <div className="flex items-center space-x-2">
@@ -151,6 +214,73 @@ const ShoppingCartSidebar = () => {
                   </ul>
                 </div>
               ))}
+
+              <section className="rounded-2xl border border-orange-100 bg-gradient-to-br from-amber-50 via-white to-lime-50 p-4 shadow-sm">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Frequently Bought Together</h4>
+                    <p className="text-xs text-gray-600 mt-1">Curated from products commonly purchased with your cart items.</p>
+                  </div>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-semibold leading-none text-orange-700">Top picks</span>
+                </div>
+
+                {fbtLoading ? (
+                  <div className="grid grid-cols-1 gap-3">
+                    {[1, 2, 3].map((skeleton) => (
+                      <div key={skeleton} className="h-20 animate-pulse rounded-xl bg-white/70 border border-orange-100" />
+                    ))}
+                  </div>
+                ) : fbtItems.length === 0 ? (
+                  <p className="text-xs text-gray-500">No suggestions yet. Add more products to unlock smarter bundles.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {fbtItems.map((product) => (
+                      <div key={product._id} className="group rounded-xl border border-orange-100 bg-white/80 p-2 transition hover:bg-white hover:shadow-md">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => { router.push(`/products/${product._id}`); closeCart(); }}
+                            className="relative h-16 w-16 overflow-hidden rounded-lg bg-gray-100"
+                            aria-label={`View ${product.name}`}
+                          >
+                            {product.images?.[0]?.url ? (
+                              <Image src={product.images[0].url} alt={product.name} fill sizes="64px" className="object-cover" />
+                            ) : (
+                              <span className="text-xs text-gray-500">No image</span>
+                            )}
+                          </button>
+
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => { router.push(`/products/${product._id}`); closeCart(); }}
+                              className="block truncate text-left text-sm font-semibold text-gray-900 hover:text-orange-700"
+                            >
+                              {product.name}
+                            </button>
+                            <p className="truncate text-xs text-gray-500 mt-0.5">{product.vendor?.shopName || product.vendor?.name || 'Selected for you'}</p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="text-sm font-bold text-orange-700">Rs. {toNumber(product.price).toLocaleString()}</span>
+                              {product.frequency ? (
+                                <span className="rounded-full bg-lime-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lime-700">{product.frequency}x together</span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAddSuggestedItem(product._id, product.name)}
+                            className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={cartLoading}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
           )}
         </div>

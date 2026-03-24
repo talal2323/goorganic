@@ -59,6 +59,21 @@ export const getProductById = async (productId) => {
 };
 
 /**
+ * Get frequently bought together suggestions for a product
+ * @param {string} productId - The product ID
+ * @returns {Promise} Suggestions payload
+ */
+export const getFrequentlyBoughtTogether = async (productId) => {
+    try {
+        const response = await api.get(`/products/${productId}/frequently-bought-together`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching frequently bought together products:', error);
+        throw error;
+    }
+};
+
+/**
  * Create a new product (Vendor only)
  * @param {Object} productData - Product information
  * @returns {Promise} Created product

@@ -1,6 +1,8 @@
 import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
+import { SubOrder } from '../models/orderModel.js';
+import mongoose from 'mongoose';
 
 
 //    Create a new product
@@ -230,5 +232,106 @@ export const getMyProducts = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+//   Get real-time frequently bought together products for a product
+
+export const getFrequentlyBoughtTogether = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid product ID' });
+        }
+
+        const currentProduct = await Product.findById(id).select('category');
+
+        if (!currentProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        const productObjectId = new mongoose.Types.ObjectId(id);
+        const limit = 5;
+
+        const coPurchaseResults = await SubOrder.aggregate([
+            {
+                $match: {
+                    orderStatus: { $ne: 'Cancelled' },
+                    'items.product': productObjectId,
+                },
+            },
+            {
+                $project: {
+                    otherItems: {
+                        $filter: {
+                            input: '$items',
+                            as: 'item',
+                            cond: { $ne: ['$$item.product', productObjectId] },
+                        },
+                    },
+                },
+            },
+            { $unwind: '$otherItems' },
+            {
+                $group: {
+                    _id: '$otherItems.product',
+                    frequency: { $sum: 1 },
+                    totalQuantity: { $sum: '$otherItems.quantity' },
+                },
+            },
+            { $sort: { frequency: -1, totalQuantity: -1 } },
+            { $limit: limit },
+        ]);
+
+        const coPurchasedIds = coPurchaseResults.map((item) => item._id);
+
+        let suggestedProducts = [];
+
+        if (coPurchasedIds.length > 0) {
+            const products = await Product.find({
+                _id: { $in: coPurchasedIds },
+                status: 'Active',
+                stock: { $gt: 0 },
+            })
+                .populate('vendor', 'name shopName')
+                .populate('category', 'name');
+
+            const scoreMap = new Map(
+                coPurchaseResults.map((item, index) => [item._id.toString(), { frequency: item.frequency, rank: index }])
+            );
+
+            suggestedProducts = products
+                .sort((a, b) => scoreMap.get(a._id.toString()).rank - scoreMap.get(b._id.toString()).rank)
+                .map((product) => ({
+                    ...product.toObject(),
+                    frequency: scoreMap.get(product._id.toString()).frequency,
+                }));
+        }
+
+        if (suggestedProducts.length < limit) {
+            const excludeIds = [productObjectId, ...suggestedProducts.map((product) => product._id)];
+            const remaining = limit - suggestedProducts.length;
+
+            const fallbackProducts = await Product.find({
+                _id: { $nin: excludeIds },
+                category: currentProduct.category,
+                status: 'Active',
+                stock: { $gt: 0 },
+            })
+                .populate('vendor', 'name shopName')
+                .populate('category', 'name')
+                .sort({ averageRating: -1, createdAt: -1 })
+                .limit(remaining);
+
+            suggestedProducts = [...suggestedProducts, ...fallbackProducts];
+        }
+
+        res.status(200).json({
+            productId: id,
+            suggestions: suggestedProducts,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
 };

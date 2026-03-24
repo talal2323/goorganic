@@ -12,7 +12,7 @@ const ProductDetailPage = () => {
     const router = useRouter();
     const params = useParams();
     const { dispatch, state } = useAppContext();
-    const { addItemToCart, openCart } = useCart();
+    const { addItemToCart } = useCart();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -52,7 +52,6 @@ const ProductDetailPage = () => {
         try {
             await addItemToCart(product._id, qty);
             showToast.success(`${product.name} added to cart`);
-            openCart();
         } catch (error) {
             console.error('Error adding to cart:', error);
             const message = error.response?.data?.message || error.message || 'Failed to add item to cart';

@@ -20,7 +20,7 @@ const features = [
 export default function Home() {
     const router = useRouter();
     const { state } = useAppContext();
-    const { addItemToCart, openCart } = useCart();
+    const { addItemToCart } = useCart();
     const [isClient, setIsClient] = useState(false);
     const [showVendorButton, setShowVendorButton] = useState(false);
     const [featuredVendors, setFeaturedVendors] = useState([]);
@@ -62,7 +62,6 @@ export default function Home() {
         try {
             await addItemToCart(product._id, 1);
             showToast.success(`${product.name} added to cart`);
-            openCart();
         } catch (error) {
             console.error('Error adding to cart:', error);
             const message = error.response?.data?.message || error.message || 'Failed to add item to cart';
