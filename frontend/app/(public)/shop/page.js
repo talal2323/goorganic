@@ -163,7 +163,7 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
 const ShopPage = () => {
     const router = useRouter();
     const { dispatch, state } = useAppContext();
-    const { addItemToCart, openCart } = useCart();
+    const { addItemToCart } = useCart();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -258,7 +258,6 @@ const ShopPage = () => {
         try {
             await addItemToCart(product._id, 1);
             showToast.success(`${product.name} added to cart`);
-            openCart();
         } catch (error) {
             console.error('Error adding to cart:', error);
             const message = error.response?.data?.message || error.message || 'Failed to add item to cart';
