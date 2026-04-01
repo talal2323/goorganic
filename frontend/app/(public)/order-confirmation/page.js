@@ -218,9 +218,19 @@ function OrderConfirmationContent() {
                                     <p className="text-sm text-gray-600">
                                         Vendor: <span className="font-medium text-gray-900">{subOrder.vendor?.shopName || subOrder.vendor?.name || 'N/A'}</span>
                                     </p>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(subOrder.orderStatus)}`}>
-                                        {subOrder.orderStatus}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {subOrder.vendor?._id && (
+                                            <Button
+                                                onClick={() => router.push(`/chat/${subOrder.vendor._id}`)}
+                                                className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                                            >
+                                                Chat with Vendor
+                                            </Button>
+                                        )}
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(subOrder.orderStatus)}`}>
+                                            {subOrder.orderStatus}
+                                        </span>
+                                    </div>
                                 </div>
                                 {subOrder.items.map((item, itemIdx) => (
                                     <div key={itemIdx} className="flex items-center gap-4 mb-2">
