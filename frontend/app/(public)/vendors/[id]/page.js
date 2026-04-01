@@ -12,7 +12,7 @@ import { showToast } from '@/utils/toast';
 const VendorDetailPage = () => {
     const router = useRouter();
     const params = useParams();
-    const { dispatch } = useAppContext();
+    const { dispatch, state } = useAppContext();
 
     const [vendor, setVendor] = useState(null);
     const [products, setProducts] = useState([]);
@@ -56,6 +56,23 @@ const VendorDetailPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleStartChat = () => {
+        const vendorId = params?.id;
+        if (!vendorId) {
+            showToast.error('Vendor is unavailable for chat');
+            return;
+        }
+
+        const chatRoute = `/chat/${vendorId}`;
+
+        if (!state?.isLoggedIn) {
+            router.push(`/auth/login?redirect=${encodeURIComponent(chatRoute)}`);
+            return;
+        }
+
+        router.push(chatRoute);
     };
 
     if (loading && !vendor) {
@@ -152,6 +169,12 @@ const VendorDetailPage = () => {
                                         <span className="ml-2 text-gray-600">({vendor.totalReviews || 0} reviews)</span>
                                     </div>
                                 )}
+                            </div>
+                            <div className="mt-4 md:mt-0 md:ml-6">
+                                <Button onClick={handleStartChat} className="w-full md:w-auto">
+                                    <Icon path="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-3 3-3-3z" className="w-4 h-4 mr-2" />
+                                    Chat with Vendor
+                                </Button>
                             </div>
                         </div>
 

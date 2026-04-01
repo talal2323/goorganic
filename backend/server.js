@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { createServer } from 'http';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -15,7 +16,9 @@ import faqRoutes from './routes/faqRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 import { startScheduler } from './utils/scheduler.js';
+import { initializeSocket } from './utils/socketHandlers.js';
 
 // Configure dotenv
 dotenv.config();
@@ -25,6 +28,7 @@ connectDB();
 
 // Initialize express app
 const app = express();
+const httpServer = createServer(app);
 
 // CORS configuration
 app.use(cors({
@@ -51,6 +55,7 @@ app.use('/api/v1/faqs', faqRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 // Test Route
 app.get('/', (req, res) => {
@@ -72,9 +77,11 @@ const PORT = process.env.PORT || 5000;
 startScheduler();
 
 // Start Server
-const server = app.listen(PORT, () => {
+const server = httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+initializeSocket(httpServer);
 
 // Increase server timeout for large file uploads
 server.timeout = 300000; // 5 minutes
