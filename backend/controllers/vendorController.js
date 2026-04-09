@@ -656,12 +656,8 @@ export const cancelOrder = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized to cancel this order' });
         }
 
-        if (subOrder.orderStatus === 'Delivered') {
-            return res.status(400).json({ message: 'Cannot cancel a delivered order' });
-        }
-
-        if (subOrder.orderStatus === 'Cancelled') {
-            return res.status(400).json({ message: 'Order is already cancelled' });
+        if (subOrder.orderStatus !== 'Pending') {
+            return res.status(400).json({ message: 'Only pending orders can be cancelled' });
         }
 
         subOrder.orderStatus = 'Cancelled';
