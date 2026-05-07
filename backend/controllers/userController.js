@@ -507,7 +507,7 @@ export const getAllVendors = async (req, res) => {
         const totalVendors = await User.countDocuments(filter);
 
         const vendors = await User.find(filter)
-            .select('_id shopName shopDescription averageRating avatar shopAddress.city name vendorStatus')
+            .select('_id shopName shopDescription averageRating reviewCount avatar shopAddress.city name vendorStatus')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
 
@@ -528,7 +528,7 @@ export const getAllVendors = async (req, res) => {
 export const getVendorById = async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
-            .select('name email phoneNumber shopName shopDescription avatar shopAddress shopImages certifications businessCategory productCategories averageRating subscription createdAt roles vendorStatus');
+            .select('name email phoneNumber shopName shopDescription avatar shopAddress shopImages certifications businessCategory productCategories averageRating reviewCount subscription createdAt roles vendorStatus');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });

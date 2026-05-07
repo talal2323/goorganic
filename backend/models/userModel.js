@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
         stripeCurrentPeriodEnd: Date,
     },
     averageRating: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
 
     loyaltyPoints: { type: Number, default: 0 },
 
