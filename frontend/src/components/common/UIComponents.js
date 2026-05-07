@@ -90,19 +90,38 @@ export const DashboardCard = ({ title, children, className = 'p-6' }) => (
   </div>
 );
 
-// --- ADDING STAR RATING (from previous error) ---
-export const StarRating = ({ rating }) => (
-  <div className="flex items-center text-yellow-500">
-    {[...Array(5)].map((_, i) => (
-      <Icon
-        key={i}
-        path="M11.049 2.222a.75.75 0 00-.707 0l-5.385 2.146a.75.75 0 00-.401.678v11.754a.75.75 0 00.401.678l5.385 2.146a.75.75 0 00.707 0l5.385-2.146a.75.75 0 00.401-.678V5.046a.75.75 0 00-.401-.678l-5.385-2.146z"
-        className="w-4 h-4 fill-current"
-        color={i < Math.round(rating) ? 'currentColor' : 'gray'} // Use gray for unfilled
-      />
-    ))}
-  </div>
-);
+// --- STAR RATING COMPONENT ---
+export const StarRating = ({ rating, size = 'md', interactive = false, onRate = null }) => {
+  const sizeMap = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6',
+    xl: 'w-8 h-8',
+  };
+
+  const handleStarClick = (index) => {
+    if (interactive && onRate) {
+      onRate(index + 1);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => (
+        <svg
+          key={i}
+          className={`${sizeMap[size]} ${interactive ? 'cursor-pointer hover:scale-110' : ''} transition-transform fill-current ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'
+            }`}
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          onClick={() => handleStarClick(i)}
+        >
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      ))}
+    </div>
+  );
+};
 
 // --- ADDING PRODUCT CARD (from compiler hint) ---
 export const ProductCard = ({ product }) => {

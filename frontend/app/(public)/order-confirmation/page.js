@@ -232,6 +232,21 @@ function OrderConfirmationContent() {
                                         </span>
                                     </div>
                                 </div>
+                                {subOrder.orderStatus === 'Delivered' && (
+                                    <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                                        <p className="text-xs text-green-800 mr-4">
+                                            ✓ <strong>Ready to review!</strong> Click the button to write a review for this order and rate each item.
+                                        </p>
+                                        <div className="flex-shrink-0">
+                                            <Button
+                                                onClick={() => router.push(`/orders/${order._id}/review`)}
+                                                className="bg-white text-green-700 border border-green-200 hover:bg-green-50 px-3 py-1 text-sm"
+                                            >
+                                                Write Review
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                                 {subOrder.items.map((item, itemIdx) => (
                                     <div key={itemIdx} className="flex items-center gap-4 mb-2">
                                         <div className="relative w-16 h-16 rounded overflow-hidden">
@@ -241,7 +256,9 @@ function OrderConfirmationContent() {
                                             <p className="font-medium text-gray-900">{item.name}</p>
                                             <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                                         </div>
-                                        <p className="font-medium text-gray-900">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                                        <div className="flex flex-col items-end">
+                                            <p className="font-medium text-gray-900">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

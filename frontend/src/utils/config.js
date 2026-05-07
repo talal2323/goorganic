@@ -59,6 +59,7 @@ export const adminNavItems = [
     { id: 'AdminUsersVendors', label: 'Users & Vendors', href: '/admin/users-vendors', path: 'M17 20h-10a2 2 0 01-2-2v-1a2 2 0 012-2h10a2 2 0 012 2v1a2 2 0 01-2 2zM9 9a3 3 0 106 0 3 3 0 00-6 0z' },
     { id: 'AdminOrders', label: 'Orders', href: '/admin/orders', path: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { id: 'AdminProductsCategories', label: 'Products & Categories', href: '/admin/products-categories', path: 'M5 8h14M5 12h14M5 16h14M12 3v18' },
+    { id: 'AdminReviews', label: 'Reviews', href: '/admin/reviews', path: 'M11.049 2.222a.75.75 0 00-.707 0l-5.385 2.146a.75.75 0 00-.401.678v11.754a.75.75 0 00.401.678l5.385 2.146a.75.75 0 00.707 0l5.385-2.146a.75.75 0 00.401-.678V5.046a.75.75 0 00-.401-.678l-5.385-2.146zM12 18.75V5.25' },
     { id: 'DeletionRequests', label: 'Deletion Requests', href: '/admin/deletion-requests', path: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' },
     { id: 'AdminSubscriptionsControl', label: 'Subscriptions', href: '/admin/subscriptions', path: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
     { id: 'AdminFAQs', label: 'FAQs', href: '/admin/faqs', path: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },

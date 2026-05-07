@@ -60,7 +60,7 @@ export const getFeaturedProducts = async (req, res) => {
                 vendor: vendorId,
                 status: 'Active'
             })
-                .populate('vendor', 'name shopName avatar')
+                .populate('vendor', 'name shopName avatar averageRating reviewCount vendorStatus')
                 .populate('category', 'name')
                 .limit(3)
                 .sort({ createdAt: -1 });
@@ -111,7 +111,7 @@ export const getAllProducts = async (req, res) => {
         const totalProducts = await Product.countDocuments(filter);
 
         const products = await Product.find(filter)
-            .populate('vendor', 'name shopName')
+            .populate('vendor', 'name shopName averageRating reviewCount vendorStatus')
             .populate('category', 'name')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
@@ -132,7 +132,7 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-            .populate('vendor', 'name shopName averageRating vendorStatus')
+            .populate('vendor', 'name shopName averageRating reviewCount vendorStatus')
             .populate('category', 'name');
 
         if (!product) {
@@ -294,7 +294,7 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
                 status: 'Active',
                 stock: { $gt: 0 },
             })
-                .populate('vendor', 'name shopName')
+                .populate('vendor', 'name shopName averageRating reviewCount vendorStatus')
                 .populate('category', 'name');
 
             const scoreMap = new Map(
@@ -319,7 +319,7 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
                 status: 'Active',
                 stock: { $gt: 0 },
             })
-                .populate('vendor', 'name shopName')
+                .populate('vendor', 'name shopName averageRating reviewCount vendorStatus')
                 .populate('category', 'name')
                 .sort({ averageRating: -1, createdAt: -1 })
                 .limit(remaining);

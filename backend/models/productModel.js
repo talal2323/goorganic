@@ -32,6 +32,7 @@ const productSchema = new mongoose.Schema({
 
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
   averageRating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 },
 }, { timestamps: true });
 
 productSchema.path('images').validate(function (value) {

@@ -252,7 +252,9 @@ export const getOrderById = async (req, res) => {
         }
 
         // Get all sub-orders for this order
-        const subOrders = await SubOrder.find({ order: id }).populate('vendor', 'name email shopName');
+        const subOrders = await SubOrder.find({ order: id })
+            .populate('vendor', 'name email shopName')
+            .populate('items.product', '_id name averageRating reviewCount');
 
         res.status(200).json({ order, subOrders });
     } catch (error) {
