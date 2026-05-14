@@ -38,6 +38,9 @@ const VendorListPage = () => {
         router.push(`/vendors/${vendor._id}`);
     };
 
+    const isFeatured = (vendor) =>
+        vendor.subscription?.plan === 'paid' && vendor.subscription?.status === 'active';
+
     if (loading) {
         return (
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -73,6 +76,11 @@ const VendorListPage = () => {
                                         className="object-cover"
                                         onError={(e) => { e.target.src = 'https://placehold.co/800x400/E9F5E9/164A26?text=Vendor+Cover'; }}
                                     />
+                                    {isFeatured(vendor) && (
+                                        <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                                            ⭐ +20 Points
+                                        </div>
+                                    )}
                                     <div className="absolute -bottom-12 left-6 w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
                                         <Image
                                             src={vendor.avatar?.url || 'https://placehold.co/150x150/E9F5E9/164A26?text=Vendor'}

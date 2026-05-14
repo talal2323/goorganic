@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import Product from '../models/productModel.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/generateToken.js';
 import { createNotification } from './notificationController.js';
+import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
 
 //      Register a new customer
 
@@ -108,9 +109,22 @@ export const verifyEmail = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP.' });
         }
 
+        const isFirstTimeVerification = !user.isEmailVerified;
+        
         user.isEmailVerified = true;
         user.emailOtp = undefined;
         user.emailOtpExpires = undefined;
+        
+        if (isFirstTimeVerification) {
+            user.loyaltyPoints = (user.loyaltyPoints || 0) + 25;
+            await LoyaltyTransaction.create({
+                user: user._id,
+                points: 25,
+                type: 'earned',
+                reason: 'Registration Bonus'
+            });
+        }
+        
         await user.save({ validateBeforeSave: false });
 
         const accessToken = generateAccessToken(user);
@@ -507,7 +521,7 @@ export const getAllVendors = async (req, res) => {
         const totalVendors = await User.countDocuments(filter);
 
         const vendors = await User.find(filter)
-            .select('_id shopName shopDescription averageRating reviewCount avatar shopAddress.city name vendorStatus')
+            .select('_id shopName shopDescription averageRating reviewCount avatar shopAddress.city name vendorStatus subscription')
             .limit(pageSize)
             .skip(pageSize * (page - 1));
 
@@ -560,7 +574,7 @@ export const getFeaturedVendors = async (req, res) => {
 
         const vendors = await User.find(filter)
             .limit(limit)
-            .select('_id shopName shopDescription avatar shopAddress.city name');
+            .select('_id shopName shopDescription avatar shopAddress.city name averageRating reviewCount');
 
         res.status(200).json(vendors);
 
@@ -597,5 +611,22 @@ export const refreshAccessToken = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+export const getLoyaltyHistory = async (req, res) => {
+    try {
+        const history = await LoyaltyTransaction.find({ user: req.user._id })
+            .populate('orderId', 'orderNumber')
+            .sort({ createdAt: -1 });
+            
+        const user = await User.findById(req.user._id);
+            
+        res.status(200).json({
+            balance: user.loyaltyPoints || 0,
+            history
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching loyalty history' });
     }
 };

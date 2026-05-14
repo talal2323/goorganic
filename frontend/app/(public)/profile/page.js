@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/common/UIComponents';
-import { getProfile, updateProfile, changePassword, requestAccountDeletion, getAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } from '@/utils/userApi';
+import { getProfile, updateProfile, changePassword, requestAccountDeletion, getAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress, getLoyaltyHistory } from '@/utils/userApi';
 import { uploadAvatar } from '@/utils/uploadApi';
 import { showToast } from '@/utils/toast';
 import Layout from '@/components/layouts/Layout';
@@ -26,6 +26,8 @@ const ProfilePage = () => {
     const [pwdMessage, setPwdMessage] = useState('');
     const [pwdError, setPwdError] = useState('');
     const [avatarLoading, setAvatarLoading] = useState(false);
+    const [loyaltyHistory, setLoyaltyHistory] = useState([]);
+    const [loyaltyBalance, setLoyaltyBalance] = useState(0);
 
     // Deletion states
     const [showDeletionConfirm, setShowDeletionConfirm] = useState(false);
@@ -52,8 +54,19 @@ const ProfilePage = () => {
             }
         };
 
+        const fetchLoyalty = async () => {
+            try {
+                const historyData = await getLoyaltyHistory();
+                setLoyaltyBalance(historyData.balance || 0);
+                setLoyaltyHistory(historyData.history || []);
+            } catch (err) {
+                console.error('Error fetching loyalty:', err);
+            }
+        };
+
         if (state.isLoggedIn) {
             fetchUserProfile();
+            fetchLoyalty();
         } else {
             // Redirect to login if not logged in
             router.push('/auth/login');
@@ -487,7 +500,35 @@ const ProfilePage = () => {
                             </div>
                             <div className="md:col-span-2">
                                 <h3 className="text-lg font-semibold mb-2">Account Details</h3>
-                                <p className="text-gray-600">Manage your account information, addresses and payment methods.</p>
+                                <p className="text-gray-600">Manage your account information & addresses.</p>
+
+                                {/* Loyalty Points Display */}
+                                <div className="mt-8 border rounded-lg p-6 bg-gradient-to-r from-green-50 to-green-100 shadow-sm">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-lg font-bold text-green-900">My Loyalty Points</h4>
+                                        <div className="text-3xl font-extrabold text-green-700">{loyaltyBalance}</div>
+                                    </div>
+                                    <p className="text-sm text-green-800 mb-4">You can redeem your points at checkout (1 Point = 1 Rupee).</p>
+                                    
+                                    {loyaltyHistory.length > 0 && (
+                                        <div className="mt-4 bg-white rounded p-4 shadow-inner max-h-60 overflow-y-auto">
+                                            <h5 className="font-semibold text-gray-700 mb-2">Transaction History</h5>
+                                            <div className="space-y-3">
+                                                {loyaltyHistory.map(tx => (
+                                                    <div key={tx._id} className="flex justify-between items-center text-sm border-b pb-2 last:border-0">
+                                                        <div>
+                                                            <p className="font-medium text-gray-800">{tx.reason}</p>
+                                                            <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleDateString()} {tx.orderId ? `| Order #${tx.orderId.orderNumber || tx.orderId}` : ''}</p>
+                                                        </div>
+                                                        <div className={`font-bold ${tx.type === 'earned' ? 'text-green-600' : 'text-red-500'}`}>
+                                                            {tx.type === 'earned' ? '+' : '-'}{tx.points}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

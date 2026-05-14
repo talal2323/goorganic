@@ -15,7 +15,8 @@ import {
     getVendorById,
     getFeaturedVendors,
     refreshAccessToken,
-    requestAccountDeletion
+    requestAccountDeletion,
+    getLoyaltyHistory
 } from '../controllers/userController.js';
 
 import {
@@ -42,6 +43,8 @@ router.put('/reset-password/:token', resetPassword);
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
+
+router.get('/profile/loyalty-history', protect, getLoyaltyHistory);
 
 router.put('/profile/change-password', protect, changeUserPassword);
 

@@ -140,7 +140,12 @@ export default function Home() {
                 <section className="bg-gray-50 py-16">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Vendors</h2>
-                        <p className="text-gray-600 text-center mb-12">Discover our premium verified organic vendors</p>
+                        <p className="text-gray-600 text-center mb-2">Discover our premium verified organic vendors</p>
+                        <p className="text-center mb-12">
+                            <span className="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-300 text-yellow-700 text-sm font-semibold px-4 py-1.5 rounded-full">
+                                ⭐ Earn <span className="text-green-700 font-bold">+20 Bonus Loyalty Points</span> on every order from these vendors!
+                            </span>
+                        </p>
                         {loading ? (
                             <div className="text-center py-12">
                                 <p className="text-gray-500">Loading featured vendors...</p>
@@ -154,7 +159,7 @@ export default function Home() {
                                 {featuredVendors.slice(0, 6).map((vendor) => (
                                     <div
                                         key={vendor._id}
-                                        className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-2xl cursor-pointer border border-gray-100"
+                                        className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-2xl cursor-pointer border border-yellow-200"
                                         onClick={() => handleVendorClick(vendor)}
                                     >
                                         <div className="relative w-full h-56">
@@ -165,6 +170,10 @@ export default function Home() {
                                                 className="object-cover"
                                                 onError={(e) => { e.target.src = 'https://placehold.co/800x400/164A26/FFFFFF?text=Vendor'; }}
                                             />
+                                            {/* Featured Loyalty Badge */}
+                                            <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                                                ⭐ +20 Points
+                                            </div>
                                         </div>
                                         <div className="p-6">
                                             <div className="flex items-center justify-center gap-2 mb-3">
@@ -173,12 +182,12 @@ export default function Home() {
                                                 </h3>
                                                 <VerificationBadge />
                                             </div>
-                                            {vendor.businessCategory && (
-                                                <p className="text-xs text-center text-gray-500 mb-2">
-                                                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-primary font-medium">
-                                                        {vendor.businessCategory}
-                                                    </span>
-                                                </p>
+                                            {vendor.averageRating > 0 && (
+                                                <div className="flex items-center justify-center mt-2 mb-1">
+                                                    <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                                    <span className="ml-1 text-sm font-semibold text-gray-700">{vendor.averageRating.toFixed(1)}</span>
+                                                    <span className="ml-1 text-xs text-gray-400">({vendor.reviewCount || 0})</span>
+                                                </div>
                                             )}
                                             <p className="text-sm text-gray-600 mt-2 line-clamp-3 text-center">
                                                 {vendor.shopDescription || 'Premium organic vendor'}
@@ -247,6 +256,13 @@ export default function Home() {
                                             <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.description}</p>
                                             {product.vendor?.shopName && (
                                                 <p className="text-xs text-gray-500 mt-2">by {product.vendor.shopName}</p>
+                                            )}
+                                            {product.averageRating > 0 && (
+                                                <div className="flex items-center mt-2">
+                                                    <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                                    <span className="ml-1 text-sm font-semibold text-gray-700">{product.averageRating.toFixed(1)}</span>
+                                                    <span className="ml-1 text-xs text-gray-400">({product.reviewCount || 0})</span>
+                                                </div>
                                             )}
                                             <div className="flex items-center justify-between mt-4">
                                                 <p className="text-primary font-bold text-2xl">

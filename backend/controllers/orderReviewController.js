@@ -3,6 +3,7 @@ import OrderReview from '../models/orderReviewModel.js';
 import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
+import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
 
 const REVIEW_POPULATE_PUBLIC = [
     { path: 'customer', select: 'name avatar' },
@@ -290,6 +291,20 @@ export const createOrderReview = async (req, res) => {
         }
 
         const populatedReview = await OrderReview.findById(review._id).populate(REVIEW_POPULATE_PUBLIC);
+
+        // Give 5 points for placing a review
+        const customerToUpdate = await User.findById(req.user._id);
+        if (customerToUpdate) {
+            customerToUpdate.loyaltyPoints = (customerToUpdate.loyaltyPoints || 0) + 5;
+            await customerToUpdate.save();
+            await LoyaltyTransaction.create({
+                user: customerToUpdate._id,
+                points: 5,
+                type: 'earned',
+                reason: 'Order Review',
+                orderId: orderId
+            });
+        }
 
         res.status(201).json({
             message: 'Review submitted successfully',

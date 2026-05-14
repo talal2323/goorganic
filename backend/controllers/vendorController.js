@@ -5,6 +5,7 @@ import Product from '../models/productModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
 import { createNotification } from './notificationController.js';
+import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
 
 //     Get dashboard statistics for a logged-in vendor
 
@@ -489,6 +490,30 @@ export const updateOrderStatus = async (req, res) => {
         if (status === 'Delivered') {
             subOrder.deliveredAt = Date.now();
 
+            const vendor = await User.findById(req.user._id);
+            const isFeatured = vendor && vendor.subscription && vendor.subscription.plan === 'paid' && vendor.subscription.status === 'active';
+            const pointsEarned = Math.floor(subOrder.subTotal / 100) + (isFeatured ? 20 : 0);
+
+            if (pointsEarned > 0 && subOrder.order.customer) {
+                const customer = await User.findById(subOrder.order.customer._id);
+                if (customer) {
+                    customer.loyaltyPoints = (customer.loyaltyPoints || 0) + pointsEarned;
+                    await customer.save();
+                    
+                    await LoyaltyTransaction.create({
+                        user: customer._id,
+                        points: pointsEarned,
+                        type: 'earned',
+                        reason: isFeatured ? 'Order Purchase (Featured Vendor Bonus)' : 'Order Purchase',
+                        orderId: subOrder.order._id
+                    });
+                    
+                    await Order.findByIdAndUpdate(subOrder.order._id, {
+                        $inc: { pointsEarned: pointsEarned }
+                    });
+                }
+            }
+
             // Check if all sub-orders for this parent order are delivered
             const allSubOrders = await SubOrder.find({ order: subOrder.order._id });
             const allDelivered = allSubOrders.every(so =>
@@ -523,7 +548,7 @@ export const updateOrderStatus = async (req, res) => {
                 await sendEmail({
                     email: customer.email,
                     subject: `${statusEmoji} Order Update: ${status} - GOorganic`,
-                    message: `Hi ${customer.name},\n\nGreat news! Your order status has been updated to: ${status}\n\nVendor: ${req.user.shopName || req.user.name}\n\nItems:\n${itemsList}\n\nOrder Total: Rs. ${subOrder.subTotal.toLocaleString()}\n\nYou can view full order details in your dashboard.\n\nThank you for shopping with GOorganic!`,
+                    message: `Hi ${customer.name},\n\nGreat news! Your order status has been updated to: ${status}\n\nVendor: ${req.user.shopName || req.user.name}\n\nItems:\n${itemsList}\n\nOrder Total: Rs. ${subOrder.subTotal.toLocaleString()}\n\n${status === 'Delivered' ? 'You have earned loyalty points for this purchase! You can also place a review for this order for an extra 5 points!' : ''}\n\nYou can view full order details in your dashboard.\n\nThank you for shopping with GOorganic!`,
                     html: `
                         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
                             <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -543,6 +568,7 @@ export const updateOrderStatus = async (req, res) => {
                                         ${subOrder.items.map(item => `<li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">• ${item.name} <strong>x${item.quantity}</strong></li>`).join('')}
                                     </ul>
                                 </div>
+                                ${status === 'Delivered' ? '<div style="background-color: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;"><p style="margin: 0; color: #1e40af; font-size: 14px;">🌟 <strong>Bonus:</strong> You have earned loyalty points for this purchase! You can also place a review for this order for an extra 5 points!</p></div>' : ''}
                                 <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Thank you for shopping with GOorganic!</p>
                             </div>
                         </div>

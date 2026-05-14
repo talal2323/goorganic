@@ -18,7 +18,8 @@ import {
     rejectDeletion,
     restoreAccount,
     suspendUser,
-    unsuspendUser
+    unsuspendUser,
+    getCustomerLoyaltyHistory
 } from '../controllers/adminController.js';
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 router.use(protect, isAdmin);
@@ -26,6 +27,7 @@ router.use(protect, isAdmin);
 router.get('/dashboard/stats', getAdminDashboardStats);
 
 router.get('/customers', getAllCustomers);
+router.get('/customers/:id/loyalty-history', getCustomerLoyaltyHistory);
 
 router.get('/products', getAllProductsForAdmin);
 router.put('/products/:id/status', updateProductStatus);

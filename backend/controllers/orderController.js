@@ -5,12 +5,13 @@ import User from '../models/userModel.js';
 import sendEmail from '../utils/sendEmail.js';
 import { createNotification } from './notificationController.js';
 import { generateInvoice } from '../utils/generateInvoice.js';
+import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
 
 //   Create a new order from the user's cart
 export const createOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { shippingAddress, phoneNumber, saveAddress, addressLabel, paymentMethod, paymentIntentId, shippingFee } = req.body;
+        const { shippingAddress, phoneNumber, saveAddress, addressLabel, paymentMethod, paymentIntentId, shippingFee, pointsToRedeem } = req.body;
 
         if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
             return res.status(400).json({ message: 'Please provide a complete shipping address.' });
@@ -49,9 +50,23 @@ export const createOrder = async (req, res) => {
             });
         }
 
+        const user = await User.findById(userId);
+        let actualPointsToRedeem = 0;
+        if (pointsToRedeem && pointsToRedeem > 0) {
+            if (user.loyaltyPoints < pointsToRedeem) {
+                return res.status(400).json({ message: 'Insufficient loyalty points.' });
+            }
+            actualPointsToRedeem = pointsToRedeem;
+        }
+
         // Calculate total amount including shipping fee
         const shippingFeeAmount = shippingFee || 0;
-        const totalAmount = productsTotal + shippingFeeAmount;
+        let totalAmount = productsTotal + shippingFeeAmount;
+
+        if (actualPointsToRedeem > 0) {
+            totalAmount -= actualPointsToRedeem;
+            if (totalAmount < 0) totalAmount = 0;
+        }
 
         const parentOrder = await Order.create({
             customer: userId,
@@ -66,11 +81,24 @@ export const createOrder = async (req, res) => {
                 status: 'paid',
                 paidAt: new Date(),
             } : undefined,
+            pointsRedeemed: actualPointsToRedeem
         });
 
         // Generate and save order number
         parentOrder.orderNumber = `ORD-${parentOrder._id.toString().slice(-8).toUpperCase()}`;
         await parentOrder.save();
+
+        if (actualPointsToRedeem > 0) {
+            user.loyaltyPoints -= actualPointsToRedeem;
+            await user.save();
+            await LoyaltyTransaction.create({
+                user: userId,
+                points: actualPointsToRedeem,
+                type: 'redeemed',
+                reason: 'Order Purchase',
+                orderId: parentOrder._id
+            });
+        }
 
         for (const [vendorId, items] of vendorItems.entries()) {
             const subTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -156,8 +184,6 @@ export const createOrder = async (req, res) => {
 
         // Save address if requested
         if (saveAddress) {
-            const user = await User.findById(userId);
-
             // Check if this exact address already exists
             const addressExists = user.savedAddresses.some(addr =>
                 addr.address === shippingAddress.address &&
