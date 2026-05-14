@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useAppContext } from '@/context/AppContext';
+import { useAppContext, useCart } from '@/context/AppContext';
 import { Button, Icon, StarRating, VerificationBadge } from '@/components/common/UIComponents';
 import { getVendorByIdUser } from '@/utils/userApi';
 import { getProducts } from '@/utils/productApi';
@@ -13,6 +13,7 @@ const VendorDetailPage = () => {
     const router = useRouter();
     const params = useParams();
     const { dispatch, state } = useAppContext();
+    const { addItemToCart } = useCart();
 
     const [vendor, setVendor] = useState(null);
     const [products, setProducts] = useState([]);
@@ -73,6 +74,22 @@ const VendorDetailPage = () => {
         }
 
         router.push(chatRoute);
+    };
+
+    const handleAddToCart = async (e, product) => {
+        e.stopPropagation();
+        if (!state?.isLoggedIn) {
+            showToast.error('Please log in to add items to cart');
+            router.push('/auth/login');
+            return;
+        }
+        try {
+            await addItemToCart(product._id, 1);
+            showToast.success(`${product.name} added to cart`);
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to add item to cart';
+            showToast.error(message);
+        }
     };
 
     if (loading && !vendor) {
@@ -298,6 +315,13 @@ const VendorDetailPage = () => {
                                     <div className="p-6">
                                         <h2 className="text-lg font-semibold text-gray-900">{product.name}</h2>
                                         <p className="text-sm text-gray-600 line-clamp-2 mt-2">{product.description}</p>
+                                        {product.averageRating > 0 && (
+                                            <div className="flex items-center mt-2">
+                                                <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                                                <span className="ml-1 text-sm font-semibold text-gray-700">{product.averageRating.toFixed(1)}</span>
+                                                <span className="ml-1 text-xs text-gray-400">({product.reviewCount || 0})</span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between mt-4">
                                             <p className="text-primary font-bold text-2xl">Rs. {product.price}</p>
                                             {product.stock > 0 ? (
@@ -306,13 +330,19 @@ const VendorDetailPage = () => {
                                                 <span className="text-xs text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full">Out of Stock</span>
                                             )}
                                         </div>
-                                        {/* Low Stock Warning */}
                                         {product.stock > 0 && product.stock <= 3 && (
                                             <div className="mt-2 flex items-center text-xs text-orange-600 font-medium">
                                                 <Icon path="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" className="w-3 h-3 mr-1" />
                                                 <span>Only {product.stock} left in stock!</span>
                                             </div>
                                         )}
+                                        <button
+                                            className="mt-4 w-full py-2.5 px-4 border-2 border-primary text-primary rounded-lg font-medium hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={(e) => handleAddToCart(e, product)}
+                                            disabled={product.stock === 0}
+                                        >
+                                            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                        </button>
                                     </div>
                                 </div>
                             ))}

@@ -239,6 +239,21 @@ export const getAllCustomers = async () => {
 };
 
 /**
+ * Get customer loyalty history (Admin only)
+ * @param {string} id - Customer ID
+ * @returns {Promise} Loyalty history array
+ */
+export const getCustomerLoyaltyHistory = async (id) => {
+    try {
+        const response = await api.get(`/admin/customers/${id}/loyalty-history`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching customer loyalty history:', error);
+        throw error;
+    }
+};
+
+/**
  * Request account deletion
  * @param {string} reason - Deletion reason
  * @returns {Promise} Deletion request result
@@ -355,6 +370,20 @@ export const unsuspendUser = async (userId) => {
         return response.data;
     } catch (error) {
         console.error('Error unsuspending user:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get user loyalty history
+ * @returns {Promise} Loyalty history
+ */
+export const getLoyaltyHistory = async () => {
+    try {
+        const response = await api.get('/users/profile/loyalty-history');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching loyalty history:', error);
         throw error;
     }
 };

@@ -34,6 +34,9 @@ const CheckoutPage = () => {
     const [addressLabel, setAddressLabel] = React.useState('');
     const [clientSecret, setClientSecret] = React.useState('');
     const [paymentIntentId, setPaymentIntentId] = React.useState('');
+    const [userPoints, setUserPoints] = React.useState(0);
+    const [pointsToRedeem, setPointsToRedeem] = React.useState('');
+    const [appliedPoints, setAppliedPoints] = React.useState(0);
 
     // Calculate cart totals
     const toNumber = (price) => {
@@ -45,7 +48,8 @@ const CheckoutPage = () => {
 
     const subtotal = cartItems.reduce((sum, it) => sum + (toNumber(it.price) * (it.qty || 1)), 0);
     const shipping = subtotal >= 3000 ? 0 : 200;
-    const total = subtotal + shipping;
+    const initialTotal = subtotal + shipping;
+    const total = Math.max(0, initialTotal - appliedPoints);
 
     // Refresh cart and load user profile on mount
     React.useEffect(() => {
@@ -61,6 +65,7 @@ const CheckoutPage = () => {
                         fullName: profile.name || '',
                         email: profile.email || ''
                     }));
+                    setUserPoints(profile.loyaltyPoints || 0);
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -111,6 +116,29 @@ const CheckoutPage = () => {
 
         initializeStripePayment();
     }, [formData.paymentMethod, total]);
+
+    const handleApplyPoints = () => {
+        const points = parseInt(pointsToRedeem);
+        if (isNaN(points) || points <= 0) {
+            showToast.error('Please enter a valid number of points');
+            return;
+        }
+        if (points > userPoints) {
+            showToast.error('You do not have enough points');
+            return;
+        }
+        if (points > initialTotal) {
+            showToast.error('You cannot redeem more points than the order total');
+            return;
+        }
+        setAppliedPoints(points);
+        showToast.success(`${points} points applied successfully`);
+    };
+
+    const handleRemovePoints = () => {
+        setAppliedPoints(0);
+        setPointsToRedeem('');
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -187,6 +215,7 @@ const CheckoutPage = () => {
                 addressLabel: saveAddress ? addressLabel : undefined,
                 paymentMethod: 'COD',
                 shippingFee: shipping,
+                pointsToRedeem: appliedPoints > 0 ? appliedPoints : undefined,
             };
 
             const order = await createOrder(orderData);
@@ -233,6 +262,7 @@ const CheckoutPage = () => {
                 paymentMethod: 'Stripe',
                 paymentIntentId: paymentIntentId,
                 shippingFee: shipping,
+                pointsToRedeem: appliedPoints > 0 ? appliedPoints : undefined,
             };
 
             const order = await createOrder(orderData);
@@ -426,6 +456,45 @@ const CheckoutPage = () => {
                                     <div className="pt-4">
                                         <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span>Rs. {subtotal.toLocaleString()}</span></div>
                                         <div className="flex justify-between mt-2"><span className="text-gray-600">Shipping</span><span>Rs. {shipping.toLocaleString()}</span></div>
+                                        
+                                        {/* Loyalty Points Section */}
+                                        <div className="mt-4 p-4 border rounded-md bg-green-50">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-medium text-green-800">Loyalty Points</span>
+                                                <span className="text-green-800 font-semibold">{userPoints} Available</span>
+                                            </div>
+                                            {appliedPoints === 0 ? (
+                                                <div className="flex space-x-2">
+                                                    <input 
+                                                        type="number" 
+                                                        value={pointsToRedeem} 
+                                                        onChange={(e) => setPointsToRedeem(e.target.value)} 
+                                                        placeholder="Points to redeem" 
+                                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        max={Math.min(userPoints, initialTotal)}
+                                                        disabled={userPoints <= 0}
+                                                    />
+                                                    <Button 
+                                                        onClick={handleApplyPoints} 
+                                                        type="button" 
+                                                        className="whitespace-nowrap px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        disabled={userPoints <= 0 || !pointsToRedeem}
+                                                    >
+                                                        Apply
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-between items-center text-sm text-green-700">
+                                                    <span>{appliedPoints} points applied (-Rs. {appliedPoints})</span>
+                                                    <button type="button" onClick={handleRemovePoints} className="text-red-500 hover:text-red-700 underline font-medium">Remove</button>
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-green-600 mt-2">1 Point = 1 Rupee</p>
+                                        </div>
+                                        
+                                        {appliedPoints > 0 && (
+                                            <div className="flex justify-between mt-2 text-green-600"><span className="font-medium">Points Redeemed</span><span>- Rs. {appliedPoints.toLocaleString()}</span></div>
+                                        )}
                                         <div className="flex justify-between mt-4 pt-4 border-t font-semibold"><span>Total</span><span style={{ color: COLORS.secondary }}>Rs. {total.toLocaleString()}</span></div>
                                     </div>
                                 </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Button, Icon } from '@/components/common/UIComponents';
-import { getAllCustomers, suspendUser, unsuspendUser } from '@/utils/userApi';
+import { getAllCustomers, suspendUser, unsuspendUser, getCustomerLoyaltyHistory } from '@/utils/userApi';
 import { getAllVendorsAdmin, approveVendor, rejectVendor } from '@/utils/vendorApi';
 import { showToast } from '@/utils/toast';
 
@@ -24,6 +24,9 @@ const AdminUsersVendors = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [suspensionReason, setSuspensionReason] = useState('');
+    const [showLoyaltyModal, setShowLoyaltyModal] = useState(false);
+    const [loyaltyHistoryData, setLoyaltyHistoryData] = useState({ balance: 0, history: [] });
+    const [loyaltyLoading, setLoyaltyLoading] = useState(false);
 
     // Fetch all vendors
     const fetchVendors = async () => {
@@ -184,6 +187,22 @@ const AdminUsersVendors = () => {
             showToast.error(error.response?.data?.message || 'Failed to unsuspend user');
         } finally {
             setActionLoading(false);
+        }
+    };
+
+    // View Loyalty History
+    const handleViewLoyalty = async (user) => {
+        setSelectedUser(user);
+        setLoyaltyLoading(true);
+        setShowLoyaltyModal(true);
+        try {
+            const data = await getCustomerLoyaltyHistory(user._id);
+            setLoyaltyHistoryData(data);
+        } catch (error) {
+            showToast.error('Failed to fetch loyalty history');
+            setLoyaltyHistoryData({ balance: 0, history: [] });
+        } finally {
+            setLoyaltyLoading(false);
         }
     };
 
@@ -460,6 +479,7 @@ const AdminUsersVendors = () => {
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Info</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loyalty Points</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -484,6 +504,9 @@ const AdminUsersVendors = () => {
                                                     <td className="px-4 py-4 text-sm text-gray-700">
                                                         {user.phoneNumber || '-'}
                                                     </td>
+                                                    <td className="px-4 py-4 text-sm font-semibold text-green-600">
+                                                        {user.loyaltyPoints || 0}
+                                                    </td>
                                                     <td className="px-4 py-4 text-sm text-gray-500">
                                                         {new Date(user.createdAt).toLocaleDateString()}
                                                     </td>
@@ -499,6 +522,12 @@ const AdminUsersVendors = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-4 text-sm space-x-2">
+                                                        <button
+                                                            onClick={() => handleViewLoyalty(user)}
+                                                            className="text-blue-600 hover:text-blue-800 font-medium"
+                                                        >
+                                                            Loyalty History
+                                                        </button>
                                                         {user.isSuspended ? (
                                                             <button
                                                                 onClick={() => handleUnsuspend(user._id)}
@@ -951,6 +980,49 @@ const AdminUsersVendors = () => {
                             >
                                 {actionLoading ? 'Suspending...' : 'Suspend User'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Loyalty Modal */}
+            {showLoyaltyModal && selectedUser && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full">
+                        <div className="bg-primary text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+                            <h3 className="text-xl font-bold">Loyalty Points History</h3>
+                            <button onClick={() => setShowLoyaltyModal(false)} className="text-white hover:text-gray-200">
+                                <span className="text-2xl">×</span>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <div className="mb-4">
+                                <h4 className="font-semibold text-gray-800">{selectedUser.name}'s Balance</h4>
+                                <p className="text-3xl font-bold text-green-600">{loyaltyHistoryData.balance} Points</p>
+                            </div>
+                            
+                            <h5 className="font-semibold text-gray-700 border-b pb-2 mb-3">Transaction History</h5>
+                            {loyaltyLoading ? (
+                                <p className="text-gray-500 py-4 text-center">Loading history...</p>
+                            ) : loyaltyHistoryData.history?.length === 0 ? (
+                                <p className="text-gray-500 py-4 text-center">No transaction history found.</p>
+                            ) : (
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                                    {loyaltyHistoryData.history.map(tx => (
+                                        <div key={tx._id} className="flex justify-between items-center bg-gray-50 p-3 rounded border">
+                                            <div>
+                                                <p className="font-medium text-gray-800">{tx.reason}</p>
+                                                <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleDateString()} {tx.orderId ? `| Order #${tx.orderId.orderNumber || tx.orderId}` : ''}</p>
+                                            </div>
+                                            <div className={`font-bold ${tx.type === 'earned' ? 'text-green-600' : 'text-red-500'}`}>
+                                                {tx.type === 'earned' ? '+' : '-'}{tx.points}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end">
+                            <button onClick={() => setShowLoyaltyModal(false)} className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Close</button>
                         </div>
                     </div>
                 </div>

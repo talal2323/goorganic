@@ -43,6 +43,8 @@ const orderSchema = new mongoose.Schema({
         status: String,
         paidAt: Date,
     },
+    pointsRedeemed: { type: Number, default: 0 },
+    pointsEarned: { type: Number, default: 0 },
 }, { timestamps: true });
 
 

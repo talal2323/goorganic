@@ -248,12 +248,24 @@ const AdminOrders = () => {
                                     <div className="space-y-2 mb-3">
                                         <div className="flex justify-between text-sm text-gray-700">
                                             <span>Subtotal:</span>
-                                            <span>Rs. {(selectedOrder.totalAmount - (selectedOrder.shippingFee || 0)).toLocaleString()}</span>
+                                            <span>Rs. {(selectedOrder.totalAmount - (selectedOrder.shippingFee || 0) + (selectedOrder.pointsRedeemed || 0)).toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between text-sm text-gray-700">
                                             <span>Shipping Fee:</span>
                                             <span>Rs. {(selectedOrder.shippingFee || 0).toLocaleString()}</span>
                                         </div>
+                                        {(selectedOrder.pointsRedeemed > 0) && (
+                                            <div className="flex justify-between text-sm text-green-700">
+                                                <span>Points Redeemed:</span>
+                                                <span>- Rs. {selectedOrder.pointsRedeemed.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        {(selectedOrder.pointsEarned > 0) && (
+                                            <div className="flex justify-between text-sm text-green-700 font-medium mt-1 border-t border-green-200 pt-1">
+                                                <span>Points Earned from this order:</span>
+                                                <span>+ {selectedOrder.pointsEarned.toLocaleString()} Points</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex justify-between items-center border-t border-green-300 pt-3">
                                         <span className="text-base font-medium text-gray-900">Total Order Amount</span>

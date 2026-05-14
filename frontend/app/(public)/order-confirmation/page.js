@@ -269,12 +269,24 @@ function OrderConfirmationContent() {
                         <div className="space-y-2 mb-3">
                             <div className="flex justify-between text-sm text-gray-600">
                                 <span>Subtotal:</span>
-                                <span>Rs. {(order.totalAmount - (order.shippingFee || 0)).toLocaleString()}</span>
+                                <span>Rs. {(order.totalAmount - (order.shippingFee || 0) + (order.pointsRedeemed || 0)).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-sm text-gray-600">
                                 <span>Shipping Fee:</span>
                                 <span>Rs. {(order.shippingFee || 0).toLocaleString()}</span>
                             </div>
+                            {(order.pointsRedeemed > 0) && (
+                                <div className="flex justify-between text-sm text-green-700">
+                                    <span>Points Redeemed:</span>
+                                    <span>- Rs. {order.pointsRedeemed.toLocaleString()}</span>
+                                </div>
+                            )}
+                            {(order.pointsEarned > 0) && (
+                                <div className="flex justify-between text-sm text-green-700 font-medium">
+                                    <span>Points Earned:</span>
+                                    <span>+ {order.pointsEarned.toLocaleString()} Points</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex justify-between text-lg font-semibold border-t pt-3">
                             <span>Total Amount</span>
