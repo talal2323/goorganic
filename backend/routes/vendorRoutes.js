@@ -17,6 +17,12 @@ import {
     cancelOrder
 } from '../controllers/vendorController.js';
 import {
+    createSubscriptionBox,
+    getMySubscriptionBoxes,
+    updateSubscriptionBox,
+    deleteSubscriptionBox
+} from '../controllers/subscriptionBoxController.js';
+import {
     createSubscriptionCheckout,
     verifySubscriptionSession,
     cancelStripeSubscription
@@ -40,6 +46,15 @@ router.get('/orders', isApprovedVendor, getMyVendorOrders);
 router.put('/orders/:id/status', isApprovedVendor, updateOrderStatus);
 router.put('/orders/:id/accept', isApprovedVendor, acceptOrder);
 router.put('/orders/:id/cancel', isApprovedVendor, cancelOrder);
+
+// Subscription Boxes (vendor-created)
+router.route('/subscription-boxes')
+    .get(isApprovedVendor, getMySubscriptionBoxes)
+    .post(isApprovedVendor, createSubscriptionBox);
+
+router.route('/subscription-boxes/:id')
+    .put(isApprovedVendor, updateSubscriptionBox)
+    .delete(isApprovedVendor, deleteSubscriptionBox);
 
 router.route('/profile/shop-images')
     .post(isApprovedVendor, addShopImage);

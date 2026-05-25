@@ -21,6 +21,11 @@ import {
     unsuspendUser,
     getCustomerLoyaltyHistory
 } from '../controllers/adminController.js';
+import {
+    getAllSubscriptionBoxes,
+    adminDeleteSubscriptionBox,
+    adminToggleBoxStatus
+} from '../controllers/subscriptionBoxController.js';
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 router.use(protect, isAdmin);
 
@@ -38,6 +43,10 @@ router.put('/vendors/:id/approve', approveVendor);
 router.put('/vendors/:id/reject', rejectVendor);
 
 router.get('/orders', getAllOrders);
+
+router.get('/subscription-boxes', getAllSubscriptionBoxes);
+router.put('/subscription-boxes/:id/status', adminToggleBoxStatus);
+router.delete('/subscription-boxes/:id', adminDeleteSubscriptionBox);
 
 router.route('/subscriptions/:id')
     .put(updateSubscriptionPlan)
