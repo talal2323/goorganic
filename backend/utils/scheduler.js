@@ -3,11 +3,76 @@ import cron from 'node-cron';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
+import BoxSubscription from '../models/boxSubscriptionModel.js';
+import SubscriptionBox from '../models/subscriptionBoxModel.js';
 import sendEmail from './sendEmail.js';
 import { createNotification } from '../controllers/notificationController.js';
+import { addDeliveryInterval, createSubscriptionBoxOrder } from './subscriptionBoxOrders.js';
+
+const processDueBoxSubscriptions = async () => {
+    try {
+        console.log('Running scheduled job: Creating subscription-box orders...');
+
+        const now = new Date();
+
+        const dueSubscriptions = await BoxSubscription.find({
+            status: 'active',
+            nextDeliveryDate: { $lte: now }
+        })
+            .populate({
+                path: 'box',
+                select: 'title price frequency products vendor isActive',
+                populate: { path: 'products', select: 'name price stock images status vendor' }
+            })
+            .limit(200);
+
+        if (!dueSubscriptions.length) {
+            return;
+        }
+
+        for (const subscription of dueSubscriptions) {
+            try {
+                // Ensure the SubscriptionBox model is registered for populate()
+                void SubscriptionBox;
+
+                const box = subscription.box;
+                if (!box || box.isActive === false) {
+                    console.warn(`Skipping subscription ${subscription._id}: box missing/inactive`);
+                    continue;
+                }
+
+                const products = (box.products || []).filter(Boolean);
+                if (!products.length) {
+                    console.warn(`Skipping subscription ${subscription._id}: box has no products`);
+                    continue;
+                }
+
+                await createSubscriptionBoxOrder({
+                    customerId: subscription.customer,
+                    vendorId: subscription.vendor,
+                    boxTitle: box.title,
+                    boxPrice: subscription.price,
+                    products,
+                    shippingAddress: subscription.shippingAddress,
+                    phoneNumber: subscription.phoneNumber,
+                });
+
+                subscription.lastOrderCreatedAt = now;
+                subscription.nextDeliveryDate = addDeliveryInterval(now, subscription.frequency);
+                await subscription.save();
+            } catch (error) {
+                console.error(`Failed creating recurring order for subscription ${subscription._id}:`, error);
+            }
+        }
+    } catch (error) {
+        console.error('Subscription-box scheduler failed:', error);
+    }
+};
 
 const checkSubscriptions = async () => {
     console.log('Running scheduled job: Checking subscriptions...');
+
+    await processDueBoxSubscriptions();
 
     const today = new Date();
 

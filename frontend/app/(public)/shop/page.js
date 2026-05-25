@@ -7,6 +7,7 @@ import { useAppContext, useCart } from '@/context/AppContext';
 import { Icon, Button } from '@/components/common/UIComponents';
 import { getProducts } from '@/utils/productApi';
 import { getCategories } from '@/utils/categoryApi';
+import { getSubscriptionBoxes } from '@/utils/subscriptionBoxApi';
 import { showToast } from '@/utils/toast';
 
 // Product Card Component with Image Slider
@@ -160,13 +161,82 @@ const ProductCard = ({ product, onProductClick, onAddToCart }) => {
     );
 };
 
+// Subscription Box Card Component
+const SubscriptionBoxCard = ({ box, onBoxClick, onSubscribe }) => {
+    const router = useRouter();
+
+    const handleVendorClick = (e) => {
+        e.stopPropagation();
+        if (box.vendor?._id) {
+            router.push(`/vendors/${box.vendor._id}`);
+        }
+    };
+
+    return (
+        <div
+            className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-2xl border border-gray-100"
+        >
+            <div className="relative h-56 bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+                <div className="text-center px-6">
+                    <Icon path="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" className="w-16 h-16 mx-auto text-secondary mb-2" />
+                    <p className="text-xs text-gray-500">Recurring Subscription</p>
+                </div>
+            </div>
+            <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-800 hover:text-secondary">
+                    {box.title}
+                </h3>
+                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{box.description}</p>
+
+                {/* Vendor Information */}
+                {box.vendor && (
+                    <div className="mt-2 flex items-center text-xs text-gray-500">
+                        <Icon path="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" className="w-3 h-3 mr-1" />
+                        <span>Sold by </span>
+                        <button
+                            onClick={handleVendorClick}
+                            className="ml-1 text-secondary hover:text-secondary-dark font-medium hover:underline"
+                        >
+                            {box.vendor.shopName || box.vendor.name}
+                        </button>
+                    </div>
+                )}
+
+                {/* Frequency Badge */}
+                <div className="mt-3 flex items-center gap-2">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full capitalize">
+                        {box.frequency}
+                    </span>
+                    <span className="text-xs text-gray-500">{box.products?.length || 0} products</span>
+                </div>
+
+                <div className="flex items-center justify-between mt-4">
+                    <p className="text-primary font-bold text-2xl">Rs. {box.price}</p>
+                </div>
+
+                <button
+                    className="mt-4 w-full py-2.5 px-4 border-2 border-primary text-primary rounded-lg font-medium hover:bg-primary hover:text-white transition-all"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSubscribe(e, box);
+                    }}
+                >
+                    Subscribe Now
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const ShopPage = () => {
     const router = useRouter();
     const { dispatch, state } = useAppContext();
     const { addItemToCart } = useCart();
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [subscriptionBoxes, setSubscriptionBoxes] = useState([]);
+    const [allCategories, setAllCategories] = useState([]);
+    const [filterOptions, setFilterOptions] = useState([]); // All, categories, Subscription Boxes
+    const [selectedFilter, setSelectedFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -196,14 +266,17 @@ const ShopPage = () => {
 
     useEffect(() => {
         fetchProducts();
-    }, [currentPage, selectedCategory, searchQuery, priceRange]);
+    }, [currentPage, selectedFilter, searchQuery, priceRange]);
 
     const fetchCategories = async () => {
         try {
             const data = await getCategories();
             // Categories API returns array directly
             const categoryList = Array.isArray(data) ? data : (data.categories || []);
-            setCategories(['All', ...categoryList.map(cat => cat.name)]);
+            setAllCategories(categoryList);
+            // Build filter options: All, categories, Subscription Boxes
+            const options = ['All', ...categoryList.map(cat => cat.name), 'Subscription Boxes'];
+            setFilterOptions(options);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
@@ -212,26 +285,57 @@ const ShopPage = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const params = {
-                page: currentPage
-            };
 
-            if (searchQuery) params.keyword = searchQuery;
-            if (selectedCategory && selectedCategory !== 'All') {
-                // Find category ID from name
-                const categoriesData = await getCategories();
-                // Categories API returns array directly
-                const categoryList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.categories || []);
-                const category = categoryList.find(cat => cat.name === selectedCategory);
-                if (category) params.category = category._id;
+            const isShowingBoxes = selectedFilter === 'All' || selectedFilter === 'Subscription Boxes';
+            const isShowingProducts = selectedFilter === 'All' || (selectedFilter !== 'Subscription Boxes');
+
+            // Fetch products
+            if (isShowingProducts) {
+                const params = {
+                    page: currentPage
+                };
+
+                if (searchQuery) params.keyword = searchQuery;
+
+                // If a specific category is selected
+                if (selectedFilter !== 'All' && selectedFilter !== 'Subscription Boxes') {
+                    const category = allCategories.find(cat => cat.name === selectedFilter);
+                    if (category) params.category = category._id;
+                }
+
+                if (priceRange.min > 0) params.price_min = priceRange.min;
+                if (priceRange.max < 10000) params.price_max = priceRange.max;
+
+                const data = await getProducts(params);
+                setProducts(data.products || []);
+                setTotalPages(data.totalPages || 1);
+                setTotalProducts(data.totalProducts || 0);
+            } else {
+                setProducts([]);
             }
-            if (priceRange.min > 0) params.price_min = priceRange.min;
-            if (priceRange.max < 10000) params.price_max = priceRange.max;
 
-            const data = await getProducts(params);
-            setProducts(data.products || []);
-            setTotalPages(data.totalPages || 1);
-            setTotalProducts(data.totalProducts || 0);
+            // Fetch subscription boxes
+            if (isShowingBoxes) {
+                try {
+                    const boxData = await getSubscriptionBoxes();
+                    let boxes = Array.isArray(boxData) ? boxData : (boxData.boxes || []);
+
+                    // Filter by search query if provided
+                    if (searchQuery) {
+                        boxes = boxes.filter(box =>
+                            box.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            box.description.toLowerCase().includes(searchQuery.toLowerCase())
+                        );
+                    }
+
+                    setSubscriptionBoxes(boxes);
+                } catch (error) {
+                    console.error('Failed to fetch subscription boxes:', error);
+                    setSubscriptionBoxes([]);
+                }
+            } else {
+                setSubscriptionBoxes([]);
+            }
         } catch (error) {
             showToast.error(error.response?.data?.message || 'Failed to fetch products');
             setProducts([]);
@@ -265,6 +369,20 @@ const ShopPage = () => {
         }
     };
 
+    const handleSubscribe = (e, box) => {
+        e.stopPropagation();
+
+        // Check if user is logged in
+        if (!state.isLoggedIn) {
+            showToast.error('Please log in to subscribe');
+            router.push('/auth/login');
+            return;
+        }
+
+        // Redirect to subscription checkout page
+        router.push(`/subscription-boxes/${box._id}`);
+    };
+
     return (
         <div className="bg-gray-50">
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -292,80 +410,78 @@ const ShopPage = () => {
                     </div>
 
                     {/* Filters Container */}
-                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full lg:w-auto">
-                        {/* Category Filters */}
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {categories.map(category => (
-                                <button
-                                    key={category}
-                                    onClick={() => {
-                                        setSelectedCategory(category);
-                                        setCurrentPage(1);
-                                    }}
-                                    className={`px-4 py-2 text-sm rounded-full transition-colors ${selectedCategory === category
+                    <div className="flex flex-wrap items-center gap-2 w-full justify-center">
+                        {/* Unified Filters */}
+                        {filterOptions.map(option => (
+                            <button
+                                key={option}
+                                onClick={() => {
+                                    setSelectedFilter(option);
+                                    setCurrentPage(1);
+                                }}
+                                className={`px-4 py-2 text-sm rounded-full transition-colors whitespace-nowrap ${selectedFilter === option
                                         ? 'bg-secondary text-white font-bold'
-                                        : 'bg-white text-gray-700 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
+                                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                    }`}
+                            >
+                                {option}
+                            </button>
+                        ))}
 
-                        {/* Price Range Slider */}
-                        <div className="bg-white rounded-lg shadow-sm px-4 py-2 w-full md:w-auto md:min-w-[300px]">
-                            <h3 className="text-center text-gray-600 font-medium mb-1.5 text-xs">Price Range</h3>
+                        {/* Price Range Slider - Only show for products */}
+                        {selectedFilter !== 'Subscription Boxes' && (
+                            <div className="bg-white rounded-lg shadow-sm px-3 py-2 flex flex-col gap-2 min-w-max">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-gray-600 whitespace-nowrap">Price:</span>
 
-                            {/* Slider Container */}
-                            <div className="relative">
-                                {/* Price Labels Above Sliders */}
-                                <div className="flex justify-between mb-1.5">
-                                    <div className="bg-gray-50 text-black px-1.5 py-0.5 rounded text-xs font-medium">
-                                        Rs.{minPrice.toLocaleString()}
+                                    {/* Slider Container */}
+                                    <div className="relative w-48">
+                                        {/* Price Labels */}
+                                        <div className="flex justify-between mb-1 text-xs">
+                                            <span className="text-gray-600">Rs.{minPrice}</span>
+                                            <span className="text-gray-600">Rs.{maxPrice}</span>
+                                        </div>
+
+                                        {/* Slider Track */}
+                                        <div className="relative h-1 bg-gray-200 rounded-full mb-1">
+                                            {/* Green Active Range */}
+                                            <div
+                                                className="absolute h-1 bg-secondary rounded-full"
+                                                style={{
+                                                    left: `${(minPrice / 10000) * 100}%`,
+                                                    right: `${100 - (maxPrice / 10000) * 100}%`
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Min Range Input */}
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="10000"
+                                            step="100"
+                                            value={minPrice}
+                                            onChange={(e) => handlePriceChange('min', e.target.value)}
+                                            onMouseUp={applyPriceFilter}
+                                            onTouchEnd={applyPriceFilter}
+                                            className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
+                                            style={{ zIndex: minPrice > maxPrice - 1000 ? 5 : 3 }}
+                                        />
+
+                                        {/* Max Range Input */}
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="10000"
+                                            step="100"
+                                            value={maxPrice}
+                                            onChange={(e) => handlePriceChange('max', e.target.value)}
+                                            onMouseUp={applyPriceFilter}
+                                            onTouchEnd={applyPriceFilter}
+                                            className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
+                                            style={{ zIndex: 4 }}
+                                        />
                                     </div>
-                                    <div className="bg-gray-50 text-black px-1.5 py-0.5 rounded text-xs font-medium">
-                                        Rs.{maxPrice.toLocaleString()}
-                                    </div>
-                                </div>
-
-                                {/* Slider Track */}
-                                <div className="relative h-1 bg-gray-200 rounded-full mb-1">
-                                    {/* Green Active Range */}
-                                    <div
-                                        className="absolute h-1 bg-secondary rounded-full"
-                                        style={{
-                                            left: `${(minPrice / 10000) * 100}%`,
-                                            right: `${100 - (maxPrice / 10000) * 100}%`
-                                        }}
-                                    />
-
-                                    {/* Min Range Input */}
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="10000"
-                                        step="100"
-                                        value={minPrice}
-                                        onChange={(e) => handlePriceChange('min', e.target.value)}
-                                        onMouseUp={applyPriceFilter}
-                                        onTouchEnd={applyPriceFilter}
-                                        className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
-                                        style={{ zIndex: minPrice > maxPrice - 1000 ? 5 : 3 }}
-                                    />
-
-                                    {/* Max Range Input */}
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="10000"
-                                        step="100"
-                                        value={maxPrice}
-                                        onChange={(e) => handlePriceChange('max', e.target.value)}
-                                        onMouseUp={applyPriceFilter}
-                                        onTouchEnd={applyPriceFilter}
-                                        className="absolute w-full h-1 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime-700 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gray-100 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow"
-                                        style={{ zIndex: 4 }}
-                                    />
                                 </div>
 
                                 {/* Clear Filter Button */}
@@ -377,26 +493,36 @@ const ShopPage = () => {
                                             setPriceRange({ min: 0, max: 10000 });
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full mt-2 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                        className="w-full px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
                                     >
                                         Clear Filter
                                     </button>
                                 )}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
                 {loading ? (
                     <div className="text-center py-12">
-                        <p className="text-gray-500">Loading products...</p>
+                        <p className="text-gray-500">Loading...</p>
                     </div>
-                ) : products.length === 0 ? (
+                ) : (products.length === 0 && subscriptionBoxes.length === 0) ? (
                     <div className="text-center py-12">
-                        <p className="text-gray-500">No products found. Try adjusting your filters.</p>
+                        <p className="text-gray-500">No items found. Try adjusting your filters.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Display Subscription Boxes */}
+                        {subscriptionBoxes.map((box) => (
+                            <SubscriptionBoxCard
+                                key={box._id}
+                                box={box}
+                                onSubscribe={handleSubscribe}
+                            />
+                        ))}
+
+                        {/* Display Products */}
                         {products.map((product) => (
                             <ProductCard
                                 key={product._id}
@@ -408,7 +534,7 @@ const ShopPage = () => {
                     </div>
                 )}
 
-                {totalPages > 1 && (
+                {totalPages > 1 && selectedFilter !== 'Subscription Boxes' && (
                     <div className="mt-12 flex justify-center items-center space-x-2">
                         <Button
                             onClick={() => setCurrentPage(currentPage - 1)}
