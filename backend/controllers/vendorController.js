@@ -1,49 +1,157 @@
+import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
 import sendEmail from '../utils/sendEmail.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
+import OrderReview from '../models/orderReviewModel.js';
+import Dispute from '../models/disputeModel.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
 import { createNotification } from './notificationController.js';
 import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const buildMonthlySeries = (records, valueKey = 'totalSales', monthsBack = 6) => {
+    const lookup = new Map(
+        records.map((record) => [
+            `${record._id.year}-${record._id.month}`,
+            Number(record[valueKey] || 0),
+        ])
+    );
+
+    const series = [];
+    const cursor = new Date();
+    cursor.setDate(1);
+    cursor.setHours(0, 0, 0, 0);
+    cursor.setMonth(cursor.getMonth() - (monthsBack - 1));
+
+    for (let index = 0; index < monthsBack; index += 1) {
+        const year = cursor.getFullYear();
+        const month = cursor.getMonth() + 1;
+        series.push({
+            label: `${MONTH_LABELS[cursor.getMonth()]} ${String(year).slice(-2)}`,
+            totalSales: lookup.get(`${year}-${month}`) || 0,
+        });
+        cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return series;
+};
 
 //     Get dashboard statistics for a logged-in vendor
 
 export const getVendorStats = async (req, res) => {
     try {
         const vendorId = req.user._id;
+        const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
 
-        const revenueResult = await SubOrder.aggregate([
-            { $match: { vendor: vendorId, orderStatus: 'Delivered' } },
-            { $group: { _id: null, totalRevenue: { $sum: '$subTotal' } } }
-        ]);
-        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
-
-        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        const salesMonthResult = await SubOrder.aggregate([
-            {
-                $match: {
-                    vendor: vendorId,
-                    orderStatus: 'Delivered',
-                    createdAt: { $gte: startOfMonth }
+        const [revenueResult, thisMonthResult, pendingOrders, totalProducts, completedOrders, cancelledOrders, reviewStats, reviewCountStats, lowRatingReviews, monthlySalesRaw, topProductsRaw, openDisputes, resolvedDisputes] = await Promise.all([
+            SubOrder.aggregate([
+                { $match: { vendor: vendorObjectId, orderStatus: 'Delivered' } },
+                { $group: { _id: null, totalRevenue: { $sum: '$subTotal' } } }
+            ]),
+            SubOrder.aggregate([
+                {
+                    $match: {
+                        vendor: vendorObjectId,
+                        orderStatus: 'Delivered',
+                        createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: '$subTotal' } } }
+            ]),
+            SubOrder.countDocuments({ vendor: vendorObjectId, orderStatus: 'Processing' }),
+            Product.countDocuments({ vendor: vendorObjectId }),
+            SubOrder.countDocuments({ vendor: vendorObjectId, orderStatus: 'Delivered' }),
+            SubOrder.countDocuments({ vendor: vendorObjectId, orderStatus: 'Cancelled' }),
+            OrderReview.aggregate([
+                { $match: { status: 'Published' } },
+                { $unwind: '$items' },
+                { $match: { 'items.vendor': vendorObjectId } },
+                {
+                    $group: {
+                        _id: null,
+                        averageRating: { $avg: '$items.rating' },
+                    }
                 }
-            },
-            { $group: { _id: null, total: { $sum: '$subTotal' } } }
+            ]),
+            OrderReview.aggregate([
+                { $match: { status: 'Published' } },
+                { $unwind: '$items' },
+                { $match: { 'items.vendor': vendorObjectId } },
+                { $group: { _id: '$_id' } },
+                { $count: 'totalReviews' }
+            ]),
+            OrderReview.aggregate([
+                { $match: { status: 'Published' } },
+                { $unwind: '$items' },
+                { $match: { 'items.vendor': vendorObjectId, 'items.rating': { $lte: 2 } } },
+                { $group: { _id: '$_id' } },
+                { $count: 'totalLowRatingReviews' }
+            ]),
+            SubOrder.aggregate([
+                {
+                    $match: {
+                        vendor: vendorObjectId,
+                        orderStatus: 'Delivered',
+                        createdAt: {
+                            $gte: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1)
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: '$createdAt' },
+                            month: { $month: '$createdAt' }
+                        },
+                        totalSales: { $sum: '$subTotal' }
+                    }
+                },
+                { $sort: { '_id.year': 1, '_id.month': 1 } }
+            ]),
+            SubOrder.aggregate([
+                { $match: { vendor: vendorObjectId, orderStatus: { $ne: 'Cancelled' } } },
+                { $unwind: '$items' },
+                {
+                    $group: {
+                        _id: '$items.product',
+                        productName: { $first: '$items.name' },
+                        totalUnits: { $sum: '$items.quantity' },
+                        totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }
+                    }
+                },
+                { $sort: { totalUnits: -1 } },
+                { $limit: 5 }
+            ]),
+            Dispute.countDocuments({ vendor: vendorObjectId, status: { $in: ['Open', 'Under Review'] } }),
+            Dispute.countDocuments({ vendor: vendorObjectId, status: 'Resolved' })
         ]);
-        const salesThisMonth = salesMonthResult.length > 0 ? salesMonthResult[0].total : 0;
 
-        const pendingOrders = await SubOrder.countDocuments({
-            vendor: vendorId,
-            orderStatus: 'Processing'
-        });
-
-        const totalProducts = await Product.countDocuments({ vendor: vendorId });
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+        const salesThisMonth = thisMonthResult.length > 0 ? thisMonthResult[0].total : 0;
+        const averageRating = reviewStats[0]?.averageRating || 0;
+        const reviewCount = reviewCountStats[0]?.totalReviews || 0;
 
         res.status(200).json({
             totalRevenue,
             salesThisMonth,
             pendingOrders,
-            totalProducts
+            totalProducts,
+            completedOrders,
+            cancelledOrders,
+            averageRating,
+            reviewCount,
+            openDisputes,
+            resolvedDisputes,
+            monthlySales: buildMonthlySeries(monthlySalesRaw),
+            topProducts: topProductsRaw,
+            disputeSummary: {
+                openDisputes,
+                resolvedDisputes,
+                cancelledOrders,
+            }
         });
 
     } catch (error) {
@@ -499,7 +607,7 @@ export const updateOrderStatus = async (req, res) => {
                 if (customer) {
                     customer.loyaltyPoints = (customer.loyaltyPoints || 0) + pointsEarned;
                     await customer.save();
-                    
+
                     await LoyaltyTransaction.create({
                         user: customer._id,
                         points: pointsEarned,
@@ -507,7 +615,7 @@ export const updateOrderStatus = async (req, res) => {
                         reason: isFeatured ? 'Order Purchase (Featured Vendor Bonus)' : 'Order Purchase',
                         orderId: subOrder.order._id
                     });
-                    
+
                     await Order.findByIdAndUpdate(subOrder.order._id, {
                         $inc: { pointsEarned: pointsEarned }
                     });

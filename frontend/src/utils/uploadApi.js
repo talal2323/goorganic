@@ -85,3 +85,20 @@ export const uploadCnic = async (side, formData) => {
         throw error;
     }
 };
+
+/**
+ * Upload dispute proof image
+ * @param {FormData} formData - FormData with proof image
+ * @returns {Promise} Upload result with URL
+ */
+export const uploadDisputeProof = async (formData) => {
+    try {
+        const response = await api.post('/upload/dispute-proof', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading dispute proof:', error);
+        throw error;
+    }
+};

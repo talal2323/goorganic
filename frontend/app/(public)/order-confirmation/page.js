@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/common/UIComponents';
 import { getOrderById, downloadInvoice } from '@/utils/orderApi';
+import { createDispute } from '@/utils/disputeApi';
+import { uploadDisputeProof } from '@/utils/uploadApi';
 import { showToast } from '@/utils/toast';
 import { COLORS } from '@/utils/config';
 
@@ -17,6 +19,9 @@ function OrderConfirmationContent() {
     const [subOrders, setSubOrders] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [downloadingInvoice, setDownloadingInvoice] = React.useState(false);
+    const [activeDisputeSubOrderId, setActiveDisputeSubOrderId] = React.useState(null);
+    const [disputeForm, setDisputeForm] = React.useState({ issueType: 'Quality issue', priority: 'Medium', subject: '', description: '', proofImageFile: null, proofImageUrl: null });
+    const [submittingDispute, setSubmittingDispute] = React.useState(false);
 
     React.useEffect(() => {
         const fetchOrderDetails = async () => {
@@ -74,6 +79,53 @@ function OrderConfirmationContent() {
             showToast.error('Failed to download invoice');
         } finally {
             setDownloadingInvoice(false);
+        }
+    };
+
+    const openDisputeForm = (subOrder) => {
+        setActiveDisputeSubOrderId(subOrder._id);
+        setDisputeForm({
+            issueType: 'Quality issue',
+            priority: 'Medium',
+            subject: `Issue with ${subOrder.vendor?.shopName || subOrder.vendor?.name || 'this order'}`,
+            description: '',
+            proofImageFile: null,
+            proofImageUrl: null,
+        });
+    };
+
+    const submitDispute = async (subOrder) => {
+        try {
+            if (!disputeForm.subject.trim() || !disputeForm.description.trim()) {
+                showToast.error('Please add a subject and description');
+                return;
+            }
+
+            setSubmittingDispute(true);
+            let proofImage = null;
+            if (disputeForm.proofImageFile) {
+                const formData = new FormData();
+                formData.append('proof_image_file', disputeForm.proofImageFile);
+                const uploadRes = await uploadDisputeProof(formData);
+                proofImage = { public_id: uploadRes.public_id, url: uploadRes.url };
+            }
+
+            await createDispute(order._id, {
+                subOrderId: subOrder._id,
+                issueType: disputeForm.issueType,
+                priority: disputeForm.priority,
+                subject: disputeForm.subject,
+                description: disputeForm.description,
+                proofImage: proofImage
+            });
+
+            showToast.success('Dispute submitted successfully');
+            setActiveDisputeSubOrderId(null);
+        } catch (error) {
+            console.error('Error submitting dispute:', error);
+            showToast.error(error.response?.data?.message || 'Failed to submit dispute');
+        } finally {
+            setSubmittingDispute(false);
         }
     };
 
@@ -218,7 +270,7 @@ function OrderConfirmationContent() {
                                     <p className="text-sm text-gray-600">
                                         Vendor: <span className="font-medium text-gray-900">{subOrder.vendor?.shopName || subOrder.vendor?.name || 'N/A'}</span>
                                     </p>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         {subOrder.vendor?._id && (
                                             <Button
                                                 onClick={() => router.push(`/chat/${subOrder.vendor._id}`)}
@@ -227,6 +279,12 @@ function OrderConfirmationContent() {
                                                 Chat with Vendor
                                             </Button>
                                         )}
+                                        <Button
+                                            onClick={() => openDisputeForm(subOrder)}
+                                            className="bg-white text-red-700 border border-red-200 hover:bg-red-50"
+                                        >
+                                            Raise Dispute
+                                        </Button>
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(subOrder.orderStatus)}`}>
                                             {subOrder.orderStatus}
                                         </span>
@@ -261,6 +319,93 @@ function OrderConfirmationContent() {
                                         </div>
                                     </div>
                                 ))}
+                                {activeDisputeSubOrderId === subOrder._id && (
+                                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <label className="block">
+                                                <span className="text-xs font-medium text-gray-700">Issue Type</span>
+                                                <select
+                                                    value={disputeForm.issueType}
+                                                    onChange={(event) => setDisputeForm((current) => ({ ...current, issueType: event.target.value }))}
+                                                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                >
+                                                    <option>Quality issue</option>
+                                                    <option>Damaged item</option>
+                                                    <option>Wrong item</option>
+                                                    <option>Missing item</option>
+                                                    <option>Late delivery</option>
+                                                    <option>Other</option>
+                                                </select>
+                                            </label>
+                                            <label className="block">
+                                                <span className="text-xs font-medium text-gray-700">Priority</span>
+                                                <select
+                                                    value={disputeForm.priority}
+                                                    onChange={(event) => setDisputeForm((current) => ({ ...current, priority: event.target.value }))}
+                                                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                >
+                                                    <option>Low</option>
+                                                    <option>Medium</option>
+                                                    <option>High</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <label className="block mt-3">
+                                            <span className="text-xs font-medium text-gray-700">Subject</span>
+                                            <input
+                                                value={disputeForm.subject}
+                                                onChange={(event) => setDisputeForm((current) => ({ ...current, subject: event.target.value }))}
+                                                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                placeholder="Short summary of the issue"
+                                            />
+                                        </label>
+                                        <label className="block mt-3">
+                                            <span className="text-xs font-medium text-gray-700">Description</span>
+                                            <textarea
+                                                value={disputeForm.description}
+                                                onChange={(event) => setDisputeForm((current) => ({ ...current, description: event.target.value }))}
+                                                rows={4}
+                                                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                placeholder="Describe what went wrong, what you expected, and what resolution you want."
+                                            />
+                                        </label>
+                                        <label className="block mt-3">
+                                            <span className="text-xs font-medium text-gray-700">Proof Image (Optional)</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(event) => {
+                                                    const file = event.target.files[0];
+                                                    if (file) {
+                                                        const url = URL.createObjectURL(file);
+                                                        setDisputeForm((current) => ({ ...current, proofImageFile: file, proofImageUrl: url }));
+                                                    }
+                                                }}
+                                                className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                            />
+                                        </label>
+                                        {disputeForm.proofImageUrl && (
+                                            <div className="mt-2 relative w-24 h-24 rounded overflow-hidden">
+                                                <Image src={disputeForm.proofImageUrl} alt="Proof" fill sizes="96px" className="object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="mt-4 flex flex-wrap gap-3">
+                                            <Button
+                                                onClick={() => submitDispute(subOrder)}
+                                                disabled={submittingDispute}
+                                                className="bg-red-600 hover:bg-red-700 text-white"
+                                            >
+                                                {submittingDispute ? 'Submitting...' : 'Submit Dispute'}
+                                            </Button>
+                                            <Button
+                                                onClick={() => setActiveDisputeSubOrderId(null)}
+                                                className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
