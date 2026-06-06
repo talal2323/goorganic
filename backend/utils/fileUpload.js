@@ -31,3 +31,4 @@ export const uploadCertification = multer({ storage: createStorage('certificatio
 export const uploadAvatar = multer({ storage: createStorage('avatars', 'image') });
 export const uploadShopImage = multer({ storage: createStorage('shop_images', 'image') });
 export const uploadProductImage = multer({ storage: createStorage('product_images', 'image') });
+export const uploadDisputeProof = multer({ storage: createStorage('dispute_proofs', 'image') });

@@ -7,7 +7,8 @@ import {
     uploadCnic,
     uploadCertification,
     uploadAvatar,
-    uploadShopImage
+    uploadShopImage,
+    uploadDisputeProof
 } from '../utils/fileUpload.js';
 
 
@@ -29,5 +30,8 @@ router.post('/avatar', uploadAvatar.single('avatar_file'), uploadFile);
 
 // Route for uploading general shop/farm images
 router.post('/shop-image', uploadShopImage.single('shop_image_file'), uploadFile);
+
+// Route for uploading a dispute proof image
+router.post('/dispute-proof', uploadDisputeProof.single('proof_image_file'), uploadFile);
 
 export default router;

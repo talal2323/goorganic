@@ -1,10 +1,42 @@
+import mongoose from 'mongoose';
 import User from '../models/userModel.js';
 import sendEmail from '../utils/sendEmail.js';
 import { SubscriptionPlan } from '../models/subscriptionPlanModel.js';
 import Product from '../models/productModel.js';
 import { Order, SubOrder } from '../models/orderModel.js';
+import OrderReview from '../models/orderReviewModel.js';
+import Dispute from '../models/disputeModel.js';
 import { createNotification } from './notificationController.js';
 import LoyaltyTransaction from '../models/loyaltyTransactionModel.js';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const buildMonthlySeries = (records, valueKey = 'totalSales', monthsBack = 6) => {
+    const lookup = new Map(
+        records.map((record) => [
+            `${record._id.year}-${record._id.month}`,
+            Number(record[valueKey] || 0),
+        ])
+    );
+
+    const series = [];
+    const cursor = new Date();
+    cursor.setDate(1);
+    cursor.setHours(0, 0, 0, 0);
+    cursor.setMonth(cursor.getMonth() - (monthsBack - 1));
+
+    for (let index = 0; index < monthsBack; index += 1) {
+        const year = cursor.getFullYear();
+        const month = cursor.getMonth() + 1;
+        series.push({
+            label: `${MONTH_LABELS[cursor.getMonth()]} ${String(year).slice(-2)}`,
+            totalSales: lookup.get(`${year}-${month}`) || 0,
+        });
+        cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return series;
+};
 
 export const approveVendor = async (req, res) => {
     const vendor = await User.findById(req.params.id);
@@ -430,19 +462,35 @@ export const getAllCustomers = async (req, res) => {
 
 export const getAdminDashboardStats = async (req, res) => {
     try {
-        const totalVendors = await User.countDocuments({ roles: 'vendor' });
-        const pendingVendors = await User.countDocuments({ roles: 'vendor', vendorStatus: 'Pending' });
-        const totalCustomers = await User.countDocuments({ roles: 'customer' });
-        const totalProducts = await Product.countDocuments({});
-
-        const salesResult = await Order.aggregate([
-            { $match: { paymentStatus: 'Completed' } },
-            { $group: { _id: null, totalSales: { $sum: '$totalAmount' } } }
+        const [totalVendors, pendingVendors, totalCustomers, totalProducts, salesResult, newOrdersToday, openDisputes, resolvedDisputes, salesByMonthRaw] = await Promise.all([
+            User.countDocuments({ roles: 'vendor' }),
+            User.countDocuments({ roles: 'vendor', vendorStatus: 'Pending' }),
+            User.countDocuments({ roles: 'customer' }),
+            Product.countDocuments({}),
+            Order.aggregate([
+                { $match: { paymentStatus: 'Completed' } },
+                { $group: { _id: null, totalSales: { $sum: '$totalAmount' } } }
+            ]),
+            Order.countDocuments({ createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) } }),
+            Dispute.countDocuments({ status: { $in: ['Open', 'Under Review'] } }),
+            Dispute.countDocuments({ status: 'Resolved' }),
+            Order.aggregate([
+                { $match: { paymentStatus: 'Completed' } },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: '$createdAt' },
+                            month: { $month: '$createdAt' }
+                        },
+                        totalSales: { $sum: '$totalAmount' }
+                    }
+                },
+                { $sort: { '_id.year': 1, '_id.month': 1 } }
+            ])
         ]);
         const totalSales = salesResult.length > 0 ? salesResult[0].totalSales : 0;
-
-        const startOfDay = new Date(new Date().setHours(0, 0, 0, 0));
-        const newOrdersToday = await Order.countDocuments({ createdAt: { $gte: startOfDay } });
+        const totalDisputes = openDisputes + resolvedDisputes;
+        const resolutionRate = totalDisputes > 0 ? Math.round((resolvedDisputes / totalDisputes) * 100) : 100;
 
         res.status(200).json({
             totalVendors,
@@ -450,11 +498,168 @@ export const getAdminDashboardStats = async (req, res) => {
             totalCustomers,
             totalProducts,
             totalSales,
-            newOrdersToday
+            newOrdersToday,
+            openDisputes,
+            resolvedDisputes,
+            resolutionRate,
+            salesByMonth: buildMonthlySeries(salesByMonthRaw),
         });
 
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+export const getAdminAnalyticsOverview = async (req, res) => {
+    try {
+        const [salesByMonthRaw, categorySalesRaw, vendorRevenueRaw, vendorRatingsRaw, disputes] = await Promise.all([
+            Order.aggregate([
+                { $match: { paymentStatus: 'Completed' } },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: '$createdAt' },
+                            month: { $month: '$createdAt' }
+                        },
+                        totalSales: { $sum: '$totalAmount' }
+                    }
+                },
+                { $sort: { '_id.year': 1, '_id.month': 1 } }
+            ]),
+            SubOrder.aggregate([
+                { $match: { orderStatus: 'Delivered' } },
+                { $unwind: '$items' },
+                {
+                    $lookup: {
+                        from: 'products',
+                        localField: 'items.product',
+                        foreignField: '_id',
+                        as: 'product'
+                    }
+                },
+                { $unwind: '$product' },
+                {
+                    $lookup: {
+                        from: 'categories',
+                        localField: 'product.category',
+                        foreignField: '_id',
+                        as: 'category'
+                    }
+                },
+                { $unwind: '$category' },
+                {
+                    $group: {
+                        _id: '$category.name',
+                        totalSales: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+                        orderCount: { $sum: 1 }
+                    }
+                },
+                { $sort: { totalSales: -1 } },
+                { $limit: 8 }
+            ]),
+            SubOrder.aggregate([
+                { $match: { orderStatus: 'Delivered' } },
+                {
+                    $group: {
+                        _id: '$vendor',
+                        totalSales: { $sum: '$subTotal' },
+                        totalOrders: { $sum: 1 }
+                    }
+                },
+                { $sort: { totalSales: -1 } },
+                { $limit: 8 },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: '_id',
+                        foreignField: '_id',
+                        as: 'vendor'
+                    }
+                },
+                { $unwind: '$vendor' },
+                {
+                    $project: {
+                        vendorId: '$_id',
+                        shopName: { $ifNull: ['$vendor.shopName', '$vendor.name'] },
+                        totalSales: 1,
+                        totalOrders: 1,
+                    }
+                }
+            ]),
+            OrderReview.aggregate([
+                { $match: { status: 'Published' } },
+                { $unwind: '$items' },
+                {
+                    $group: {
+                        _id: '$items.vendor',
+                        averageRating: { $avg: '$items.rating' },
+                        reviewCount: { $sum: 1 }
+                    }
+                }
+            ]),
+            Dispute.find({})
+                .populate('customer', 'name email')
+                .populate('vendor', 'name shopName')
+                .populate('order', 'orderNumber')
+                .populate('subOrder', 'orderStatus')
+                .sort({ createdAt: -1 })
+                .limit(12)
+        ]);
+
+        const vendorRatingsMap = new Map(
+            vendorRatingsRaw.map((entry) => [entry._id.toString(), entry])
+        );
+
+        const vendorPerformance = vendorRevenueRaw.map((entry) => {
+            const vendorId = entry.vendorId?.toString?.() || String(entry.vendorId || '');
+            const rating = vendorRatingsMap.get(vendorId);
+            return {
+                ...entry,
+                averageRating: rating?.averageRating || 0,
+                reviewCount: rating?.reviewCount || 0,
+            };
+        });
+
+        const lowestRatedVendors = [...vendorPerformance]
+            .filter((entry) => entry.reviewCount > 0)
+            .sort((a, b) => a.averageRating - b.averageRating)
+            .slice(0, 5);
+
+        const combinedDisputes = [];
+
+        disputes.forEach((dispute) => {
+            combinedDisputes.push({
+                id: dispute._id,
+                type: dispute.issueType,
+                title: dispute.subject,
+                vendor: dispute.vendor?.shopName || dispute.vendor?.name || 'Vendor',
+                customer: dispute.customer?.name || 'Customer',
+                reason: dispute.description,
+                createdAt: dispute.createdAt,
+                link: '/admin/disputes',
+                severity: dispute.priority === 'High' ? 'high' : 'medium',
+                proofImage: dispute.proofImage,
+                status: dispute.status,
+                vendorComment: dispute.vendorComment
+            });
+        });
+
+        combinedDisputes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        res.status(200).json({
+            salesByMonth: buildMonthlySeries(salesByMonthRaw),
+            categorySales: categorySalesRaw,
+            vendorPerformance,
+            lowestRatedVendors,
+            disputeSummary: {
+                openDisputes: disputes.filter((item) => ['Open', 'Under Review'].includes(item.status)).length,
+                resolvedDisputes: disputes.filter((item) => item.status === 'Resolved').length,
+                rejectedDisputes: disputes.filter((item) => item.status === 'Rejected').length,
+            },
+            disputeCases: combinedDisputes.slice(0, 12),
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 
@@ -477,11 +682,11 @@ export const getCustomerLoyaltyHistory = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         const history = await LoyaltyTransaction.find({ user: id })
             .populate('orderId', 'orderNumber')
             .sort({ createdAt: -1 });
-            
+
         res.status(200).json({ balance: user.loyaltyPoints || 0, history });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });

@@ -96,6 +96,7 @@ const AccountMenuButton = ({ state }) => {
             <button onClick={() => goto('/profile')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Profile</button>
             <button onClick={() => goto('/orders')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Order History</button>
             <button onClick={() => goto('/subscriptions')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Subscriptions</button>
+            <button onClick={() => goto('/disputes')} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">My Disputes</button>
             <hr className="my-1 border-gray-200" />
             {state.isLoggedIn ? (
               <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</button>

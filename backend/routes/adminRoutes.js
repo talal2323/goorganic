@@ -9,6 +9,7 @@ import {
     updateProductStatus,
     getAllCustomers,
     getAdminDashboardStats,
+    getAdminAnalyticsOverview,
     getAllSubscriptionPlans,
     updateSubscriptionPlan,
     deleteSubscriptionPlan,
@@ -30,6 +31,7 @@ import { protect, isAdmin } from '../middleware/authMiddleware.js';
 router.use(protect, isAdmin);
 
 router.get('/dashboard/stats', getAdminDashboardStats);
+router.get('/analytics/overview', getAdminAnalyticsOverview);
 
 router.get('/customers', getAllCustomers);
 router.get('/customers/:id/loyalty-history', getCustomerLoyaltyHistory);

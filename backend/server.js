@@ -18,6 +18,7 @@ import contactRoutes from './routes/contactRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import orderReviewRoutes from './routes/orderReviewRoutes.js';
+import disputeRoutes from './routes/disputeRoutes.js';
 import subscriptionBoxRoutes from './routes/subscriptionBoxRoutes.js';
 import boxSubscriptionRoutes from './routes/boxSubscriptionRoutes.js';
 import { startScheduler } from './utils/scheduler.js';
@@ -60,6 +61,7 @@ app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/reviews', orderReviewRoutes);
+app.use('/api/v1/disputes', disputeRoutes);
 app.use('/api/v1/subscription-boxes', subscriptionBoxRoutes);
 app.use('/api/v1/box-subscriptions', boxSubscriptionRoutes);
 
