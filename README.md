@@ -213,10 +213,6 @@ npm start
 - Socket.IO is initialized from the backend and used for chat and real-time updates
 - The project includes scheduled jobs for subscription and order lifecycle tasks
 
-## License
-
-This project is for academic/final-year project use and is not currently published under a public open-source license.
-
 ## Contact
 
 For project questions or deployment support, contact the project maintainer or team repository owner.
