@@ -21,7 +21,7 @@ const AuthLayout = ({ children, title }) => (
                 {/* Image Section */}
                 <div className="hidden md:block w-[400px] relative min-h-[620px]">
                     <Image
-                        src="/images/login-reg.png"
+                        src="https://res.cloudinary.com/dzldaebmd/image/upload/v1793106752/login-reg_jlni5n.png"
                         alt="Organic products background"
                         fill
                         className="object-cover"

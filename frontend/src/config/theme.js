@@ -16,7 +16,7 @@ export const posts = [
         author: 'GOorganic Team',
         date: '2025-12-12',
         tags: ['Health & Wellness', 'Nutrition', 'Organic Benefits'],
-        cover: '/images/10_health_benefits_img.png',
+        cover: 'https://res.cloudinary.com/dzldaebmd/image/upload/v1793106761/10_health_benefits_img_ewk575.png',
         content: `In a world dominated by industrial agriculture and processed convenience, choosing what to put on your plate is one of the most powerful health decisions you can make. While organic food often comes with a slightly higher price tag, the investment in your long-term well-being is undeniable. Here are 10 distinct, detailed health benefits of making the switch to organic on GOorganic.
 
 **1. Drastically Reduced Pesticide Load**
@@ -67,7 +67,7 @@ While taste is subjective, the science backs up the flavor. Conventional crops a
         author: 'GOorganic Team',
         date: '2025-12-15',
         tags: ['Education', 'Food Facts', 'Smart Shopping'],
-        cover: '/images/organic_vs_non-organic_img.png',
+        cover: 'https://res.cloudinary.com/dzldaebmd/image/upload/v1793106755/organic_vs_non-organic_img_baburm.png',
         content: `When you are scrolling through the GOorganic marketplace, you might see a basket of organic apples listed next to a cheaper, conventional alternative. Visually, they might look similar—in fact, the conventional apple might even look bigger and shinier due to synthetic wax coatings. However, the real difference is invisible to the eye but massive in impact. It lies in how the food was grown, processed, and the philosophy behind its production.
 
 **1. The Soil and Fertilizer Approach**
@@ -96,7 +96,7 @@ Ultimately, the difference between organic and non-organic is the difference bet
         author: 'GOorganic Team',
         date: '2025-12-18',
         tags: ['Platform News', 'Safety', 'Trust & Safety'],
-        cover: '/images/vendor_verification_img.png',
+        cover: 'https://res.cloudinary.com/dzldaebmd/image/upload/v1793106753/vendor_verification_img_lg8cj6.png',
         content: `In the organic food industry, mislabeling is a massive problem. Terms like "natural," "farm-fresh," or "chemical-free" are often used loosely to mislead customers into thinking they are buying certified organic products. At GOorganic, we realized early on that to build a premier marketplace, we had to solve this trust deficit. We don't just let anyone sell on our site; we maintain a "Verified Marketplace" model. Here is a detailed look at the rigorous vetting process every vendor faces.
 
 **Step 1: The Strict Documentation Audit**
@@ -116,12 +116,12 @@ By strictly controlling who sells on our platform and how they operate, GOorgani
     {
         id: 'post-4',
         title: 'Why Organic Farming Is Better for the Environment',
-        excerpt:
+        excerpt: 
             'Every time you shop organic, you are voting for a greener planet. From conserving water to fighting climate change via carbon sequestration, discover the profound environmental impact of supporting organic agriculture.',
         author: 'GOorganic Team',
         date: '2025-12-21',
         tags: ['Sustainability', 'Eco-Friendly', 'Climate Action'],
-        cover: '/images/organic_environment_img.png',
+        cover: 'https://res.cloudinary.com/dzldaebmd/image/upload/v1793106776/organic_environment_img_ornmtw.png',
         content: `Climate change and environmental degradation are the defining challenges of our time. While we often think about transportation or heavy industry as the main culprits, agriculture plays a massive role in the health of our planet. This is where organic farming shines as a beacon of sustainability. Choosing GOorganic isn't just a personal health choice; it's an act of environmental stewardship. Here is exactly how organic farming heals the earth.
 
 **1. Preventing Water Pollution (The Runoff Effect)**
