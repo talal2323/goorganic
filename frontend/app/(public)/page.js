@@ -91,7 +91,7 @@ export default function Home() {
                             playsInline
                             className="w-full h-full object-cover"
                         >
-                            <source src="/videos/Video_for_Organic_Brand_Website.mp4" type="video/mp4" />
+                            <source src="https://res.cloudinary.com/dzldaebmd/video/upload/v1793106851/Video_for_Organic_Brand_Website_hmwi9g.mp4" type="video/mp4" />
                         </video>
                         {/* Dark overlay for better text visibility */}
                         <div className="absolute inset-0 bg-black/30"></div>
