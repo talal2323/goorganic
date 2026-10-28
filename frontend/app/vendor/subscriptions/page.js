@@ -180,7 +180,7 @@ const VendorSubscriptions = () => {
                         {currentPlanData && (
                             <div>
                                 <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Current Plan Features</h3>
-                                <ul className="grid grid-cols-2 gap-4 text-sm text-gray-700 mt-4">
+                                <ul className="grid grid-cols-1 gap-4 text-sm text-gray-700 mt-4 sm:grid-cols-2">
                                     <li className="flex items-center">
                                         <Icon path="M5 13l4 4L19 7" className="w-4 h-4 mr-2 text-green-600" />
                                         {currentPlanData.productLimit} Product Listings
@@ -297,4 +297,3 @@ const VendorSubscriptions = () => {
 };
 
 export default VendorSubscriptions;
-

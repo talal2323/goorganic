@@ -700,7 +700,7 @@ const AdminUsersVendors = () => {
                                 {selectedVendor.shopImages && selectedVendor.shopImages.length > 0 && (
                                     <div className="col-span-2">
                                         <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Shop Images</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                                             {selectedVendor.shopImages.map((img, idx) => (
                                                 <div key={idx} className="relative w-full h-32 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:opacity-80" onClick={() => window.open(img.url, '_blank')}>
                                                     <Image
@@ -987,14 +987,14 @@ const AdminUsersVendors = () => {
             {/* Loyalty Modal */}
             {showLoyaltyModal && selectedUser && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-2xl w-full">
+                    <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white">
                         <div className="bg-primary text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
                             <h3 className="text-xl font-bold">Loyalty Points History</h3>
                             <button onClick={() => setShowLoyaltyModal(false)} className="text-white hover:text-gray-200">
                                 <span className="text-2xl">×</span>
                             </button>
                         </div>
-                        <div className="p-6">
+                        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
                             <div className="mb-4">
                                 <h4 className="font-semibold text-gray-800">{selectedUser.name}'s Balance</h4>
                                 <p className="text-3xl font-bold text-green-600">{loyaltyHistoryData.balance} Points</p>
@@ -1032,4 +1032,3 @@ const AdminUsersVendors = () => {
 };
 
 export default AdminUsersVendors;
-

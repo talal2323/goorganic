@@ -130,7 +130,7 @@ const ShoppingCartSidebar = () => {
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={closeCart} />
 
-      <aside className="fixed right-0 top-0 h-full w-full sm:w-[28rem] bg-white z-50 shadow-xl flex flex-col">
+      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[28rem] flex-col bg-white shadow-xl sm:w-[28rem]">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold">Shopping Cart</h3>
           <div className="flex items-center space-x-2">

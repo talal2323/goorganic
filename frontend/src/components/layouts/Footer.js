@@ -48,19 +48,19 @@ const Footer = () => {
 
   return (
     <footer className="bg-black text-gray-300 w-full overflow-x-hidden">
-      <div className="container mx-auto py-12">
+      <div className="container mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-8 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12">
 
           {/* Column 1: Logo & Tagline */}
-          <div className="md:col-span-4 lg:col-span-3 -ml-4 sm:-ml-6 lg:-ml-8 pl-4 sm:pl-6 lg:pl-8">
+          <div className="md:col-span-4 lg:col-span-3">
             <Link href="/" className="inline-block">
               <Logo src="/images/logo.png" alt="GOorganic" className="h-10 cursor-pointer mb-4" />
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed mb-6">
               Connecting you with the best organic products from verified vendors.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-4">
               {socialLinks.map((item) => (
                 <a
                   key={item.name}

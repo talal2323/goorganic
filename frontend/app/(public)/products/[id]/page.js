@@ -160,7 +160,7 @@ const ProductDetailPage = () => {
                             </div>
 
                             {product.images && product.images.length > 1 && (
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                                     {product.images.map((image, index) => (
                                         <button
                                             key={index}

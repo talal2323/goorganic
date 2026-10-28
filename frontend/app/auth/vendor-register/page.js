@@ -291,14 +291,14 @@ const Step2Form = React.memo(function Step2Form({ vendorData, error, handleInput
                     <label className="block text-sm font-medium text-gray-700">Business Address <span className="text-red-500">*</span></label>
                     <input type="text" name="shopAddress.address" value={vendorData.shopAddress.address} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="Street, Building, Unit" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></label>
                         <input type="text" name="shopAddress.city" value={vendorData.shopAddress.city} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3" placeholder="City" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Business Category <span className="text-red-500">*</span></label>
-                        <select name="businessCategory" value={vendorData.businessCategory} onChange={handleInputChange} required className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 bg-white">
+                        <select name="businessCategory" value={vendorData.businessCategory} onChange={handleInputChange} required className="mt-1 block min-w-0 w-full max-w-full border border-gray-300 rounded-lg shadow-sm p-3 bg-white">
                             <option value="">Select Category</option>
                             <option>Farmer</option>
                             <option>Retailer</option>
@@ -356,4 +356,3 @@ const Step3Form = React.memo(function Step3Form({ error, handleUploadCertificati
         </>
     );
 });
-

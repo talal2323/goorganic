@@ -321,13 +321,13 @@ function OrderConfirmationContent() {
                                 ))}
                                 {activeDisputeSubOrderId === subOrder._id && (
                                     <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                                             <label className="block">
                                                 <span className="text-xs font-medium text-gray-700">Issue Type</span>
                                                 <select
                                                     value={disputeForm.issueType}
                                                     onChange={(event) => setDisputeForm((current) => ({ ...current, issueType: event.target.value }))}
-                                                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                    className="mt-1 block min-w-0 w-full max-w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                                                 >
                                                     <option>Quality issue</option>
                                                     <option>Damaged item</option>
@@ -342,7 +342,7 @@ function OrderConfirmationContent() {
                                                 <select
                                                     value={disputeForm.priority}
                                                     onChange={(event) => setDisputeForm((current) => ({ ...current, priority: event.target.value }))}
-                                                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                    className="mt-1 block min-w-0 w-full max-w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                                                 >
                                                     <option>Low</option>
                                                     <option>Medium</option>

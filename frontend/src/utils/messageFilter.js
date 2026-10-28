@@ -9,4 +9,4 @@ const reasonLabels = {
 export const getFilterReasonLabel = (reason) => reasonLabels[reason] || 'Sensitive Content';
 
 export const blockedMessageText =
-    'Sensitive contact or payment details were blocked to keep transactions safe on GoOrganic.';
+    'Sensitive contact or payment details were blocked to keep transactions safe on GOorganic.';

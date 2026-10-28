@@ -183,12 +183,12 @@ export const Header = () => {
     <>
       <header className="sticky top-0 z-50 bg-white shadow-md w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="flex justify-between items-center h-16 w-full">
+          <div className="flex min-w-0 justify-between items-center h-16 w-full gap-2">
             <Link href="/">
               <Logo
                 src="/images/logo.png"
                 alt="GOorganic"
-                className="h-8 cursor-pointer"
+                className="h-7 w-auto cursor-pointer sm:h-8"
               />
             </Link>
 
@@ -207,7 +207,7 @@ export const Header = () => {
             </nav>
 
             {/* Vendor/Admin quick link (if role matches) + Cart, Account Icons */}
-            <div className="flex items-center space-x-2 md:space-x-4 relative">
+            <div className="flex min-w-0 items-center space-x-1.5 md:space-x-4 relative">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

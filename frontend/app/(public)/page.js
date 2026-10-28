@@ -81,7 +81,7 @@ export default function Home() {
         <div>
             <main>
                 {/* Hero Section - Full Width */}
-                <div className="relative w-full h-[600px] overflow-hidden">
+                <div className="relative h-[520px] w-full overflow-hidden sm:h-[600px]">
                     {/* Background Video */}
                     <div className="absolute inset-0">
                         <video
@@ -99,11 +99,11 @@ export default function Home() {
 
                     {/* Glassmorphism Card */}
                     <div className="relative h-full flex items-center justify-center px-4">
-                        <div className="backdrop-blur-md bg-white/20 rounded-3xl shadow-2xl p-8 sm:p-12 max-w-2xl border border-white/30">
-                            <h1 className="text-5xl sm:text-7xl font-serif font-bold text-white leading-tight text-center">
+                        <div className="w-full max-w-2xl rounded-3xl border border-white/30 bg-white/20 p-5 shadow-2xl backdrop-blur-md sm:p-12">
+                            <h1 className="text-4xl font-serif font-bold leading-tight text-center text-white sm:text-6xl lg:text-7xl">
                                 GO<span className="text-green-300">organic</span>
                             </h1>
-                            <p className="text-xl mt-4 text-white/90 text-center font-light">
+                            <p className="mt-4 text-base font-light text-center text-white/90 sm:text-xl">
                                 Your path to natural living: Fresh, Verified, Sustainable.
                             </p>
                             <div className="flex justify-center mt-8">
@@ -142,7 +142,7 @@ export default function Home() {
                         <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">Featured Vendors</h2>
                         <p className="text-gray-600 text-center mb-2">Discover our premium verified organic vendors</p>
                         <p className="text-center mb-12">
-                            <span className="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-300 text-yellow-700 text-sm font-semibold px-4 py-1.5 rounded-full">
+                            <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1.5 text-center text-xs font-semibold text-yellow-700 sm:px-4 sm:text-sm">
                                 ⭐ Earn <span className="text-green-700 font-bold">+20 Bonus Loyalty Points</span> on every order from these vendors!
                             </span>
                         </p>

@@ -413,7 +413,7 @@ const VendorProducts = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs.) *</label>
                                     <input
@@ -467,7 +467,7 @@ const VendorProducts = () => {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary"
                                 />
                                 {imagePreviews.length > 0 && (
-                                    <div className="mt-2 grid grid-cols-4 gap-2">
+                                    <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-5">
                                         {imagePreviews.map((preview, index) => (
                                             <div key={index} className="relative h-24 w-24 rounded-lg overflow-hidden">
                                                 <Image src={preview} alt={`Preview ${index + 1}`} fill sizes="96px" className="object-cover" />
@@ -509,4 +509,3 @@ const VendorProducts = () => {
 };
 
 export default VendorProducts;
-

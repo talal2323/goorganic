@@ -25,7 +25,7 @@ const ChatBox = ({ vendorId, vendorName = 'Vendor' }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const anchorRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const initializeConversation = async () => {
     if (!vendorId) {
@@ -87,7 +87,10 @@ const ChatBox = ({ vendorId, vendorName = 'Vendor' }) => {
   }, [conversationId, token]);
 
   useEffect(() => {
-    anchorRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   }, [messages]);
 
   const handleSend = async () => {
@@ -137,7 +140,7 @@ const ChatBox = ({ vendorId, vendorName = 'Vendor' }) => {
         </div>
       </div>
 
-      <div className="h-80 overflow-y-auto rounded-xl border border-gray-200 bg-white p-3">
+      <div ref={messagesContainerRef} className="h-80 overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white p-3">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((item) => (
@@ -181,14 +184,19 @@ const ChatBox = ({ vendorId, vendorName = 'Vendor' }) => {
             );
           })
         )}
-        <div ref={anchorRef} />
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <form
+        className="mt-3 flex items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+      >
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none"
+          className="min-w-0 flex-grow resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-200"
           placeholder="Type your message..."
           rows="3"
           onKeyDown={(e) => {
@@ -199,13 +207,14 @@ const ChatBox = ({ vendorId, vendorName = 'Vendor' }) => {
           }}
         />
         <button
-          onClick={handleSend}
+          type="submit"
+          style={{ touchAction: 'manipulation' }}
           disabled={isSending || !input.trim()}
           className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-400"
         >
           {isSending ? 'Sending...' : 'Send'}
         </button>
-      </div>
+      </form>
 
       {error && (
         <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</p>

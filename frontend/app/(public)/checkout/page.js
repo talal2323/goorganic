@@ -323,7 +323,7 @@ const CheckoutPage = () => {
                                     <select
                                         value={selectedAddressId}
                                         onChange={handleAddressSelect}
-                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"
+                                        className="block min-w-0 w-full max-w-full appearance-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out"
                                     >
                                         <option value="new">+ Enter New Address</option>
                                         {savedAddresses.map(addr => (
@@ -336,7 +336,7 @@ const CheckoutPage = () => {
                             )}
 
                             <div><label className="block text-sm font-medium text-gray-700">Address</label><textarea name="address" value={formData.address} onChange={handleInputChange} required rows="3" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div>
-                            <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700">City</label><input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Postal Code</label><input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div></div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><div><label className="block text-sm font-medium text-gray-700">City</label><input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div><div><label className="block text-sm font-medium text-gray-700">Postal Code</label><input type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} required className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 sm:text-sm transition duration-150 ease-in-out" /></div></div>
 
                             {/* Save Address Checkbox - show when entering new address OR when no saved addresses exist */}
                             {(selectedAddressId === 'new' || savedAddresses.length === 0) && (
@@ -392,12 +392,6 @@ const CheckoutPage = () => {
                                     </label>
                                 </div>
                             </div>
-
-                            {formData.paymentMethod === 'cod' && (
-                                <Button type="button" onClick={handleSubmit} className="w-full" disabled={loading || cartLoading || cartItems.length === 0}>
-                                    {loading ? 'Placing Order...' : 'Place Order'}
-                                </Button>
-                            )}
 
                             {formData.paymentMethod === 'stripe' && clientSecret && (
                                 <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -500,6 +494,11 @@ const CheckoutPage = () => {
                                 </div>
                             )}
                         </div>
+                        {formData.paymentMethod === 'cod' && (
+                            <Button type="button" onClick={handleSubmit} className="mt-4 w-full" disabled={loading || cartLoading || cartItems.length === 0}>
+                                {loading ? 'Placing Order...' : 'Place Order'}
+                            </Button>
+                        )}
 
                         <div className="mt-6 bg-white p-6 rounded-lg shadow-md"><h3 className="font-medium mb-4">Need Help?</h3><div className="space-y-2 text-sm text-gray-600"><p>• For any queries, contact our support at goorganic.co.pk@gmail.com</p><p>• Free shipping for orders above Rs. 3000</p></div></div>
                     </div>
@@ -510,4 +509,3 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
-

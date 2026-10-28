@@ -371,7 +371,7 @@ const VendorBusinessInfo = () => {
                 {/* Tabs */}
                 <div className="bg-white rounded-lg shadow">
                     <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                        <nav className="-mb-px flex gap-4 overflow-x-auto px-4 sm:gap-8 sm:px-6" aria-label="Tabs">
                             <button
                                 onClick={() => setActiveTab('personal')}
                                 className={`${activeTab === 'personal'
@@ -716,7 +716,7 @@ const VendorBusinessInfo = () => {
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Shop Images <span className="text-sm text-gray-500 font-normal">(Max 10MB each)</span></h3>
                                 {formData.shopImages.length > 0 && (
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2 md:grid-cols-4">
                                         {formData.shopImages.map((image, index) => (
                                             <div key={image._id || index} className="relative group">
                                                 <div className="relative w-full h-32 rounded-md border overflow-hidden">
@@ -785,4 +785,3 @@ const VendorBusinessInfo = () => {
 };
 
 export default VendorBusinessInfo;
-

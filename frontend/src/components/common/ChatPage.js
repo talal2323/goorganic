@@ -55,7 +55,7 @@ const ChatPage = ({ userRole }) => {
     const [isSending, setIsSending] = useState(false);
     const [search, setSearch] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const scrollAnchorRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     const activeConversation = useMemo(
@@ -186,7 +186,10 @@ const ChatPage = ({ userRole }) => {
     }, [activeConversationId, token]);
 
     useEffect(() => {
-        scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
     }, [messages]);
 
     const handleSendMessage = async () => {
@@ -269,9 +272,9 @@ const ChatPage = ({ userRole }) => {
     return (
         <DashboardLayout title={userRole === 'admin' ? 'Chat Monitoring' : 'Customer Chat'} userRole={userRole}>
             <div className="rounded-2xl bg-gradient-to-br from-green-50 via-white to-emerald-100 p-3 sm:p-5 shadow-xl">
-                <DashboardCard className="h-[78vh] min-h-0 flex flex-col overflow-hidden p-0">
-                    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[320px_1fr]">
-                        <aside className="min-h-0 border-b border-gray-200 bg-white/90 backdrop-blur-sm md:border-b-0 md:border-r">
+                <DashboardCard className="h-[calc(100dvh-8rem)] min-h-0 flex flex-col overflow-hidden p-0 md:h-[78vh]">
+                    <div className="flex h-full min-h-0 flex-col md:grid md:grid-cols-[320px_minmax(0,1fr)]">
+                        <aside className="flex h-52 min-h-0 flex-none flex-col overflow-hidden border-b border-gray-200 bg-white/90 backdrop-blur-sm md:h-auto md:min-h-0 md:flex-1 md:border-b-0 md:border-r">
                             <div className="border-b border-gray-200 p-4">
                                 <h3 className="text-lg font-bold text-gray-900">
                                     {userRole === 'admin' ? 'All Conversations' : 'Customer Inbox'}
@@ -290,7 +293,7 @@ const ChatPage = ({ userRole }) => {
                                 />
                             </div>
 
-                            <div className="h-[calc(78vh-148px)] overflow-y-auto px-2 py-2">
+                            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
                                 {isLoading ? (
                                     <div className="space-y-2 p-2">
                                         {[1, 2, 3, 4].map((item) => (
@@ -333,7 +336,7 @@ const ChatPage = ({ userRole }) => {
                             </div>
                         </aside>
 
-                        <section className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-white to-green-50/40">
+                        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-white to-green-50/40 md:flex-none">
                             {activeConversation ? (
                                 <>
                                     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-sm">
@@ -343,7 +346,7 @@ const ChatPage = ({ userRole }) => {
                                         </p>
                                     </header>
 
-                                    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5">
+                                    <div ref={messagesContainerRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5">
                                         {messages.map((msg, index) => {
                                             const senderId = typeof msg?.sender === 'string' ? msg.sender : msg?.sender?._id;
                                             const mine = senderId && myUserId ? String(senderId) === String(myUserId) : false;
@@ -398,12 +401,17 @@ const ChatPage = ({ userRole }) => {
                                                 </div>
                                             );
                                         })}
-                                        <div ref={scrollAnchorRef} />
                                     </div>
 
                                     {userRole !== 'admin' && (
                                         <footer className="border-t border-gray-200 bg-white p-3 sm:p-4">
-                                            <div className="flex items-end gap-2">
+                                            <form
+                                                className="flex items-end gap-2"
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    handleSendMessage();
+                                                }}
+                                            >
                                                 <textarea
                                                     value={messageInput}
                                                     onChange={(e) => setMessageInput(e.target.value)}
@@ -415,17 +423,17 @@ const ChatPage = ({ userRole }) => {
                                                     }}
                                                     rows={1}
                                                     placeholder="Type your message..."
-                                                    className="max-h-32 min-h-[44px] flex-1 resize-y rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-200"
+                                                    className="max-h-32 min-h-[44px] min-w-0 flex-1 resize-y rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-200"
                                                 />
                                                 <button
-                                                    type="button"
-                                                    onClick={handleSendMessage}
+                                                    type="submit"
+                                                    style={{ touchAction: 'manipulation' }}
                                                     disabled={isSending || !messageInput.trim()}
                                                     className="h-11 rounded-xl bg-green-700 px-4 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-400"
                                                 >
                                                     {isSending ? 'Sending...' : 'Send'}
                                                 </button>
-                                            </div>
+                                            </form>
                                             <p className="mt-1 text-[11px] text-gray-500">
                                                 For your safety, sharing personal contact details and off-platform payment instructions is blocked.
                                             </p>

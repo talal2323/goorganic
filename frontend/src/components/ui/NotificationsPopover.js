@@ -126,7 +126,7 @@ const NotificationsPopover = ({ onClose, onRefresh }) => {
   };
 
   return (
-    <div ref={ref} className="absolute right-0 top-full mt-2 w-[22rem] sm:w-[28rem] bg-white border rounded-lg shadow-2xl z-[100]">
+    <div ref={ref} className="fixed left-2 right-2 top-16 z-[100] max-h-[calc(100vh-5rem)] overflow-hidden rounded-lg border bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[28rem] sm:max-h-none">
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-800">
